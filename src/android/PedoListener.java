@@ -46,7 +46,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     private Handler mainHandler=null;
 
-    private final int SENSOR_TYPE = Sensor.TYPE_STEP_COUNTER
+    private final int SENSOR_TYPE = Sensor.TYPE_STEP_COUNTER;
 
     /**
      * Constructor
