@@ -46,6 +46,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     private Handler mainHandler=null;
 
+    private final int SENSOR_TYPE = Sensor.TYPE_STEP_DETECTOR
+
     /**
      * Constructor
      */
@@ -80,7 +82,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.callbackContext = callbackContext;
 
         if (action.equals("isStepCountingAvailable")) {
-            List<Sensor> list = this.sensorManager.getSensorList(Sensor.TYPE_STEP_COUNTER);
+            List<Sensor> list = this.sensorManager.getSensorList(this.SENSOR_TYPE);
             if ((list != null) && (list.size() > 0)) {
                 this.win(true);
                 return true;
@@ -144,7 +146,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.setStatus(PedoListener.STARTING);
 
         // Get pedometer from sensor manager
-        List<Sensor> list = this.sensorManager.getSensorList(Sensor.TYPE_STEP_COUNTER);
+        List<Sensor> list = this.sensorManager.getSensorList(this.SENSOR_TYPE);
 
         // If found, then register as listener
         if ((list != null) && (list.size() > 0)) {
@@ -189,7 +191,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         // Only look at step counter events
-        if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) {
+        if (event.sensor.getType() != this.SENSOR_TYPE) {
             return;
         }
 
