@@ -149,7 +149,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         // If found, then register as listener
         if ((list != null) && (list.size() > 0)) {
             this.mSensor = list.get(0);
-            if (this.sensorManager.registerListener(this, this.mSensor, SensorManager.SENSOR_DELAY_UI)) {
+            if (this.sensorManager.registerListener(this, this.mSensor, SensorManager.SENSOR_DELAY_FASTEST)) {
                 this.setStatus(PedoListener.STARTING);
             } else {
                 this.setStatus(PedoListener.ERROR_FAILED_TO_START);
