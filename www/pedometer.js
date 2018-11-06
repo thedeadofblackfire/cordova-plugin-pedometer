@@ -37,4 +37,5 @@ Pedometer.prototype.stopService = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "stopService", []);
 };
 
+
 module.exports = new Pedometer();

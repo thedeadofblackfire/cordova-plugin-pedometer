@@ -54,6 +54,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 	// logger tag
     private static final String TAG = "cordova-plugin-pedometer";
 
+	private StepsDBHelper mStepsDBHelper;
+	
     /**
      * Constructor
      */
@@ -96,6 +98,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.callbackContext = callbackContext;
 
         if (action.equals("isStepCountingAvailable")) {
+			/*
 			this.mSensor = this.sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
 			if (this.mSensor != null) {
 				this.win(true);
@@ -105,7 +108,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 this.win(false);
                 return true;
 			}
-			/*	
+			*/
+			
             List<Sensor> list = this.sensorManager.getSensorList(this.SENSOR_TYPE);
             if ((list != null) && (list.size() > 0)) {
                 this.win(true);
@@ -115,17 +119,18 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 this.win(false);
                 return true;
             }
-			*/
+			
         } else if (action.equals("isDistanceAvailable")) {
             //distance is never available in Android
+			mStepsDBHelper = new StepsDBHelper(this);
+			mStepsDBHelper.createStepsEntry();
             this.win(false);
             return true;
         } else if (action.equals("isFloorCountingAvailable")) {
             //floor counting is never available in Android
             this.win(false);
             return true;
-        }
-        else if (action.equals("startPedometerUpdates")) {
+        } else if (action.equals("startPedometerUpdates")) {
             if (this.status != PedoListener.RUNNING) {
                 // If not running, then this is an async call, so don't worry about waiting
                 // We drop the callback onto our stack, call start, and let start and the sensor callback fire off the callback down the road
@@ -135,8 +140,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             result.setKeepCallback(true);
             callbackContext.sendPluginResult(result);
             return true;
-        }
-        else if (action.equals("stopPedometerUpdates")) {
+        } else if (action.equals("stopPedometerUpdates")) {
             if (this.status == PedoListener.RUNNING) {
                 this.stop();
             }
@@ -194,12 +198,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      * Stop listening to sensor.
      */
     private void stop() {
+		/*
         if (this.status != PedoListener.STOPPED) {
             this.sensorManager.unregisterListener(this);
         }
         this.setStatus(PedoListener.STOPPED);
+		*/
     }
-
+	
     /**
      * Called when the accuracy of the sensor has changed.
      */
@@ -298,6 +304,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             r.put("startDate", this.starttimestamp);
             r.put("endDate", System.currentTimeMillis());
             r.put("numberOfSteps", steps);
+			r.put("status", this.status);
+			r.put("startsteps", this.startsteps);
         } catch (JSONException e) {
             e.printStackTrace();
         }
