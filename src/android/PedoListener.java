@@ -232,7 +232,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
-		Log.i(TAG, "PedoListener onSensorChanged event=" + JSON.stringify(event));
+		Log.i(TAG, "PedoListener onSensorChanged");
 		
         // Only look at step counter events
         if (event.sensor.getType() != this.SENSOR_TYPE) {

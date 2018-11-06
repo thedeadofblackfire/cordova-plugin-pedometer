@@ -76,10 +76,10 @@ public class StepsService extends Service implements SensorEventListener {
 
   @Override
   public void onSensorChanged(SensorEvent event) {
-	  Log.i(TAG, "StepsService onSensorChanged event=" + JSON.stringify(event));
+	  Log.i(TAG, "StepsService onSensorChanged");
 		
         // Only look at step counter events
-        if (event.sensor.getType() != this.SENSOR_TYPE) {
+        if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) {
             return;
         }
 		
