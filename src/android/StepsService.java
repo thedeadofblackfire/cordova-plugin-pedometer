@@ -17,8 +17,12 @@ import android.support.annotation.Nullable;
 
 import org.json.JSONObject;
 
+import android.util.Log;
+
 public class StepsService extends Service implements SensorEventListener {
 
+  private static final String TAG = "cordova-plugin-pedometer";
+  
   private SensorManager mSensorManager;
   private Sensor mStepDetectorSensor;
   private StepsDBHelper mStepsDBHelper;
@@ -27,6 +31,8 @@ public class StepsService extends Service implements SensorEventListener {
   public void onCreate() {
     super.onCreate();
     //TYPE_STEP_DETECTOR
+	
+	Log.i(TAG, "StepsService onCreate");
     mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
     if(mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
     {
@@ -67,6 +73,7 @@ public class StepsService extends Service implements SensorEventListener {
 
   @Override
   public void onSensorChanged(SensorEvent event) {
+	Log.i(TAG, "StepsService onSensorChanged");
     mStepsDBHelper.createStepsEntry();
   }
   
