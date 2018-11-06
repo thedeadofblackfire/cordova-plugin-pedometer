@@ -54,7 +54,7 @@ public class StepsService extends Service implements SensorEventListener {
   @Override
   public void onDestroy() {
     //Toast.makeText(this, "Stop service...", Toast.LENGTH_LONG).show();
-	sensorManager.unregisterListener(listen);
+	//sensorManager.unregisterListener(listen);
     //Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
     super.onDestroy();
    }
