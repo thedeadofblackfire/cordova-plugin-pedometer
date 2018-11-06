@@ -32,6 +32,9 @@ import android.os.Handler;
  */
 public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
+	// logger tag
+    private static final String TAG = "cordova-plugin-pedometer";
+	
     public static int STOPPED = 0;
     public static int STARTING = 1;
     public static int RUNNING = 2;
@@ -51,8 +54,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     private final int SENSOR_TYPE = Sensor.TYPE_STEP_COUNTER; // TYPE_STEP_DETECTOR or TYPE_STEP_COUNTER
 	
-	// logger tag
-    private static final String TAG = "cordova-plugin-pedometer";
 
 	private StepsDBHelper mStepsDBHelper;
 	
@@ -78,6 +79,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
+		
+		Log.d(TAG, "initialize");
+		
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
 		
 		
@@ -100,6 +104,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      */
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
         this.callbackContext = callbackContext;
+		
+		Log.d(TAG, "execute action=" + action);
 
         if (action.equals("isStepCountingAvailable")) {
 			/*
