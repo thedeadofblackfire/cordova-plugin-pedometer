@@ -33,6 +33,11 @@
                 <param name="android-package" value="org.apache.cordova.pedometer.PedoListener" />
             </feature>
         </config-file>
+		<config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <service android:name="org.apache.cordova.pedometer.PedoListener.StepsService" />
+        </config-file>
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
+		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />
+		<source-file src="src/android/StepsService.java" target-dir="src/org/apache/cordova/pedometer" />
     </platform>
 </plugin>

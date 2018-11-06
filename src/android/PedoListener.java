@@ -22,6 +22,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import android.util.Log;
+
 import android.os.Handler;
 
 /**
@@ -47,6 +49,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     private Handler mainHandler=null;
 
     private final int SENSOR_TYPE = Sensor.TYPE_STEP_COUNTER; // TYPE_STEP_DETECTOR or TYPE_STEP_COUNTER
+	
+	// logger tag
+    private static final String TAG = "cordova-plugin-pedometer";
 
     /**
      * Constructor
@@ -55,6 +60,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.starttimestamp = 0;
         this.startsteps = 0;
         this.setStatus(PedoListener.STOPPED);
+		
+		//Log.i(TAG, "Init service for steps");
+		//pendingIntent = getTransitionPendingIntent();
     }
 
     /**
@@ -68,6 +76,11 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
+		
+		Intent mStepsIntent = new Intent(cordova.getActivity(), StepsService.class); // context
+        //logger.log(Log.DEBUG, "StepsService Intent created!");
+		Log.d(TAG, "StepsService Intent created!");
+		cordova.getActivity().startService(mStepsIntent);
     }
 
     /**
@@ -277,5 +290,17 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             e.printStackTrace();
         }
         return r;
+    }
+	
+	/*
+     * Create a PendingIntent that triggers an IntentService in your app when a
+     * geofence transition occurs.
+     */
+    private PendingIntent getTransitionPendingIntent() {
+        Intent mStepsIntent = new Intent(context, StepsService.class);
+        //logger.log(Log.DEBUG, "StepsService Intent created!");
+		Log.d(TAG, "StepsService Intent created!");
+		this.cordova.getActivity().startService(mStepsIntent);
+        //return PendingIntent.getService(context, 0, mStepsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 }
