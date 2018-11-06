@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.support.annotation.Nullable;
 
 import org.json.JSONObject;
 
@@ -39,17 +40,26 @@ public class StepsService extends Service implements SensorEventListener {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
 	 //Toast.makeText(this, "Service started...", Toast.LENGTH_LONG).show();
-    return Service.START_STICKY;
+	 /*
+	  sensorManager = (SensorManager) getApplicationContext()
+            .getSystemService(SENSOR_SERVICE);
+    lastUpdate = System.currentTimeMillis();
+    listen = new SensorListen();
+	*/
+    return START_STICKY;	
+    //return Service.START_STICKY;
   }
 
   
   @Override
   public void onDestroy() {
     //Toast.makeText(this, "Stop service...", Toast.LENGTH_LONG).show();
-
+	sensorManager.unregisterListener(listen);
+    //Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
+    super.onDestroy();
    }
 
-  @Nullable
+  //@Nullable
   @Override
   public IBinder onBind(Intent intent) {
     return null;
@@ -59,5 +69,12 @@ public class StepsService extends Service implements SensorEventListener {
   public void onSensorChanged(SensorEvent event) {
     mStepsDBHelper.createStepsEntry();
   }
+  
+  
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // TODO Auto-generated method stub
+
+    }
 
 }
