@@ -296,6 +296,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      * Create a PendingIntent that triggers an IntentService in your app when a
      * geofence transition occurs.
      */
+	 /*
     private PendingIntent getTransitionPendingIntent() {
         Intent mStepsIntent = new Intent(context, StepsService.class);
         //logger.log(Log.DEBUG, "StepsService Intent created!");
@@ -303,4 +304,5 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		this.cordova.getActivity().startService(mStepsIntent);
         //return PendingIntent.getService(context, 0, mStepsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
+	*/
 }

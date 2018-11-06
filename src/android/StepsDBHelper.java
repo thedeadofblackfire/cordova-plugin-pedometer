@@ -1,9 +1,11 @@
 package org.apache.cordova.pedometer;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import java.util.Calendar;
 
 /**
  * {@link SQLiteOpenHelper} that is used as replacement of the localStorage of
