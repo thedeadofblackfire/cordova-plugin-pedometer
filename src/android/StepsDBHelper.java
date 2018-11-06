@@ -44,8 +44,7 @@ public class StepsDBHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "StepsDatabase.db"; // geonotifications.db
 	
-	private static final String CREATE_TABLE_STEPS_SUMMARY = "CREATE TABLE "
-      + TABLE_STEPS_SUMMARY + "(" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + CREATION_DATE + " TEXT,"+ STEPS_COUNT + " INTEGER"+")";
+	private static final String CREATE_TABLE_STEPS_SUMMARY = "CREATE TABLE " + TABLE_STEPS_SUMMARY + "(" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + CREATION_DATE + " TEXT,"+ STEPS_COUNT + " INTEGER"+")";
 
 			
 	/*
@@ -93,9 +92,7 @@ public class StepsDBHelper extends SQLiteOpenHelper {
 		int currentDateStepCounts = 0;
 		Calendar mCalendar = Calendar.getInstance(); 
 		String todayDate = String.valueOf(mCalendar.get(Calendar.MONTH))+"/" + String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH))+"/"+String.valueOf(mCalendar.get(Calendar.YEAR));
-		String selectQuery = "SELECT " + STEPS_COUNT + " FROM " 
-		+ TABLE_STEPS_SUMMARY + " WHERE " + CREATION_DATE +" = 
-		 '"+ todayDate+"'";
+		String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS_SUMMARY + " WHERE " + CREATION_DATE + " = '"+ todayDate+"'";
 		try {
 		  
 			  SQLiteDatabase db = this.getReadableDatabase();
@@ -118,8 +115,7 @@ public class StepsDBHelper extends SQLiteOpenHelper {
 		  if(isDateAlreadyPresent)
 		  {
 			values.put(STEPS_COUNT, ++currentDateStepCounts);
-			int row = db.update(TABLE_STEPS_SUMMARY, values, 
-			 CREATION_DATE +" = '"+ todayDate+"'", null);
+			int row = db.update(TABLE_STEPS_SUMMARY, values, CREATION_DATE +" = '"+ todayDate+"'", null);
 			if(row == 1)
 			{
 			  createSuccessful = true;
