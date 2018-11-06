@@ -64,9 +64,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.starttimestamp = 0;
         this.startsteps = 0;
         this.setStatus(PedoListener.STOPPED);
-		
-		System.out.println(TAG+" Init service for steps");
-		
+				
 		Log.i(TAG, "Init service for steps");
 		//pendingIntent = getTransitionPendingIntent();
     }
@@ -83,14 +81,13 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         super.initialize(cordova, webView);
 		
 		Log.i(TAG, "initialize");
-		System.out.println("super");
 		
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
 		
 		
 		Intent mStepsIntent = new Intent(cordova.getActivity(), StepsService.class); // context
         //logger.log(Log.DEBUG, "StepsService Intent created!");
-		Log.d(TAG, "StepsService Intent created!");
+		Log.i(TAG, "StepsService Intent created!");
 		cordova.getActivity().startService(mStepsIntent);
 		
 		
@@ -108,8 +105,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
         this.callbackContext = callbackContext;
 		
-		Log.d(TAG, "execute action=" + action);
-		System.out.println("super1");
+		Log.i(TAG, "execute action=" + action);
+		System.out.println("super execute");
 
         if (action.equals("isStepCountingAvailable")) {
 			/*
