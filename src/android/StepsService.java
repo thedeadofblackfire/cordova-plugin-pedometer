@@ -1,12 +1,20 @@
 package org.apache.cordova.pedometer;
 
+
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.app.Service;
+
 
 import android.widget.Toast;
 import android.os.Handler;
@@ -26,6 +34,8 @@ public class StepsService extends Service implements SensorEventListener {
   private SensorManager mSensorManager;
   private Sensor mStepDetectorSensor;
   private StepsDBHelper mStepsDBHelper;
+  
+  private static int steps;
 
   @Override
   public void onCreate() {
@@ -47,7 +57,7 @@ public class StepsService extends Service implements SensorEventListener {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
 	  Log.i(TAG, "StepsService onStartCommand");
-	 //Toast.makeText(this, "Service started...", Toast.LENGTH_LONG).show();
+	 Toast.makeText(this, "StepsService Service started...", Toast.LENGTH_LONG).show();
 	 /*
 	  sensorManager = (SensorManager) getApplicationContext()
             .getSystemService(SENSOR_SERVICE);
@@ -62,7 +72,7 @@ public class StepsService extends Service implements SensorEventListener {
   @Override
   public void onDestroy() {
 	  Log.i(TAG, "StepsService onDestroy");
-    //Toast.makeText(this, "Stop service...", Toast.LENGTH_LONG).show();
+    Toast.makeText(this, "StepsService Stop service...", Toast.LENGTH_LONG).show();
 	//sensorManager.unregisterListener(listen);
     //Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
     super.onDestroy();
@@ -74,6 +84,19 @@ public class StepsService extends Service implements SensorEventListener {
     return null;
   }
 
+    @Override
+    public void onTaskRemoved(final Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        //if (BuildConfig.DEBUG) Logger.log("sensor service task removed");
+		Log.i(TAG, "sensor service task removed");
+		/*
+        // Restart service in 500 ms
+        ((AlarmManager) getSystemService(Context.ALARM_SERVICE))
+                .set(AlarmManager.RTC, System.currentTimeMillis() + 500, PendingIntent
+                        .getService(this, 3, new Intent(this, SensorListener.class), 0));
+	*/
+    }
+	
   @Override
   public void onSensorChanged(SensorEvent event) {
 	  Log.i(TAG, "StepsService onSensorChanged");
@@ -85,15 +108,17 @@ public class StepsService extends Service implements SensorEventListener {
 		
 	Log.i(TAG, "StepsService onSensorChanged " + event.sensor.getType());
     mStepsDBHelper.createStepsEntry();
-	float steps = event.values[0];
+	// float steps = event.values[0];
+	steps = (int) event.values[0];
 	Log.i(TAG, "StepsService onSensorChanged end steps="+steps);
   }
   
   
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // TODO Auto-generated method stub
-		
+		// nobody knows what happens here: step value might magically decrease
+        // when this method is called...
+        Log.i(TAG, sensor.getName() + " accuracy changed: " + accuracy);
     }
 
 }
