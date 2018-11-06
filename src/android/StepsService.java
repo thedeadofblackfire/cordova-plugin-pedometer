@@ -26,6 +26,7 @@ public class StepsService extends Service implements SensorEventListener {
       mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
       mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
       mStepsDBHelper = new StepsDBHelper(this);
+	  //mStepsDBHelper = StepsDBHelper.getInstance(this);
     }
   }
 

@@ -1,6 +1,7 @@
 package org.apache.cordova.pedometer;
 
 import android.content.Context;
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -63,6 +64,7 @@ public class StepsDBHelper extends SQLiteOpenHelper {
      * @return the instance of LocalStorage of the application or a new one if
      *         it has not been created before.
      */
+	 /*
     public static StepsDBHelper getInstance(Context ctx) {
         if (mInstance == null) {
             mInstance = new StepsDBHelper(ctx);
@@ -73,6 +75,11 @@ public class StepsDBHelper extends SQLiteOpenHelper {
     private StepsDBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
+	*/
+	
+	StepsDBHelper(Context context) {
+		super(context, DATABASE_NAME, null, DATABASE_VERSION);
+	}
 
     @Override
     public void onCreate(SQLiteDatabase db) {
