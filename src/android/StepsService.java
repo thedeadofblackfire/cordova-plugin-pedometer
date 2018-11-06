@@ -39,12 +39,14 @@ public class StepsService extends Service implements SensorEventListener {
       mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
       mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
       mStepsDBHelper = new StepsDBHelper(this);
+	  Log.i(TAG, "StepsService onCreate end");
 	  //mStepsDBHelper = StepsDBHelper.getInstance(this);
     }
   }
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+	  Log.i(TAG, "StepsService onStartCommand");
 	 //Toast.makeText(this, "Service started...", Toast.LENGTH_LONG).show();
 	 /*
 	  sensorManager = (SensorManager) getApplicationContext()
@@ -59,6 +61,7 @@ public class StepsService extends Service implements SensorEventListener {
   
   @Override
   public void onDestroy() {
+	  Log.i(TAG, "StepsService onDestroy");
     //Toast.makeText(this, "Stop service...", Toast.LENGTH_LONG).show();
 	//sensorManager.unregisterListener(listen);
     //Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
@@ -73,15 +76,24 @@ public class StepsService extends Service implements SensorEventListener {
 
   @Override
   public void onSensorChanged(SensorEvent event) {
-	Log.i(TAG, "StepsService onSensorChanged");
+	  Log.i(TAG, "StepsService onSensorChanged event=" + JSON.stringify(event));
+		
+        // Only look at step counter events
+        if (event.sensor.getType() != this.SENSOR_TYPE) {
+            return;
+        }
+		
+	Log.i(TAG, "StepsService onSensorChanged " + event.sensor.getType());
     mStepsDBHelper.createStepsEntry();
+	float steps = event.values[0];
+	Log.i(TAG, "StepsService onSensorChanged end steps="+steps);
   }
   
   
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         // TODO Auto-generated method stub
-
+		
     }
 
 }

@@ -65,7 +65,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.startsteps = 0;
         this.setStatus(PedoListener.STOPPED);
 				
-		Log.i(TAG, "Init service for steps");
+		Log.i(TAG, "PedoListener Init service for steps");
 		//pendingIntent = getTransitionPendingIntent();
     }
 
@@ -80,14 +80,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
 		
-		Log.i(TAG, "initialize");
+		Log.i(TAG, "PedoListener initialize");
 		
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
 		
 		
 		Intent mStepsIntent = new Intent(cordova.getActivity(), StepsService.class); // context
         //logger.log(Log.DEBUG, "StepsService Intent created!");
-		Log.i(TAG, "StepsService Intent created!");
+		Log.i(TAG, "PedoListener StepsService Intent created!");
 		cordova.getActivity().startService(mStepsIntent);
 		
 		
@@ -105,8 +105,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
         this.callbackContext = callbackContext;
 		
-		Log.i(TAG, "execute action=" + action);
-		System.out.println("super execute");
+		Log.i(TAG, "PedoListener execute action=" + action);
 
         if (action.equals("isStepCountingAvailable")) {
 			/*
@@ -167,6 +166,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      * Stop listener.
      */
     public void onDestroy() {
+		Log.i(TAG, "PedoListener onDestroy");
         this.stop();
     }
 
@@ -192,6 +192,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             this.mSensor = list.get(0);
             if (this.sensorManager.registerListener(this, this.mSensor, SensorManager.SENSOR_DELAY_FASTEST)) {
                 this.setStatus(PedoListener.STARTING);
+				Log.i(TAG, "PedoListener start status=" + this.status);
             } else {
                 this.setStatus(PedoListener.ERROR_FAILED_TO_START);
                 this.fail(PedoListener.ERROR_FAILED_TO_START, "Device sensor returned an error.");
@@ -231,6 +232,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
+		Log.i(TAG, "PedoListener onSensorChanged event=" + JSON.stringify(event));
+		
         // Only look at step counter events
         if (event.sensor.getType() != this.SENSOR_TYPE) {
             return;
