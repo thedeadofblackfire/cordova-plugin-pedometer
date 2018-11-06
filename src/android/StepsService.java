@@ -8,6 +8,12 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.app.Service;
 
+import android.widget.Toast;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.Looper;
+
 import org.json.JSONObject;
 
 public class StepsService extends Service implements SensorEventListener {
@@ -32,7 +38,21 @@ public class StepsService extends Service implements SensorEventListener {
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+	 //Toast.makeText(this, "Service started...", Toast.LENGTH_LONG).show();
     return Service.START_STICKY;
+  }
+
+  
+  @Override
+  public void onDestroy() {
+    //Toast.makeText(this, "Stop service...", Toast.LENGTH_LONG).show();
+
+   }
+
+  @Nullable
+  @Override
+  public IBinder onBind(Intent intent) {
+    return null;
   }
 
   @Override
