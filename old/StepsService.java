@@ -26,11 +26,11 @@ public class StepsService extends Service implements SensorEventListener {
   @Override
   public void onCreate() {
     super.onCreate();
-    //TYPE_STEP_DETECTOR
+
     mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
-    if(mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null)
+    if(mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR) != null)
     {
-      mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+      mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
       mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
       mStepsDBHelper = new StepsDBHelper(this);
 	  //mStepsDBHelper = StepsDBHelper.getInstance(this);

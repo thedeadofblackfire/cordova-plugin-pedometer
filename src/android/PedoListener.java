@@ -80,12 +80,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         super.initialize(cordova, webView);
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
 		
-		/*
+		
 		Intent mStepsIntent = new Intent(cordova.getActivity(), StepsService.class); // context
         //logger.log(Log.DEBUG, "StepsService Intent created!");
 		Log.d(TAG, "StepsService Intent created!");
 		cordova.getActivity().startService(mStepsIntent);
-		*/
+		
 		
 		mStepsDBHelper = new StepsDBHelper(cordova.getActivity());
     }
