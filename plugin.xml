@@ -34,7 +34,7 @@
             </feature>
         </config-file>
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
-            <service android:name="org.apache.cordova.pedometer.PedoListener.StepsService" />
+            <service android:name="org.apache.cordova.pedometer.StepsService" />
         </config-file>
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />

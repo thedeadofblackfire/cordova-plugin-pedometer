@@ -83,6 +83,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         super.initialize(cordova, webView);
 		
 		Log.i(TAG, "initialize");
+		System.out.println("super");
 		
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
 		
@@ -108,6 +109,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.callbackContext = callbackContext;
 		
 		Log.d(TAG, "execute action=" + action);
+		System.out.println("super1");
 
         if (action.equals("isStepCountingAvailable")) {
 			/*
