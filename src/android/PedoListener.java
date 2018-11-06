@@ -96,6 +96,16 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.callbackContext = callbackContext;
 
         if (action.equals("isStepCountingAvailable")) {
+			this.mSensor = this.sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+			if (this.mSensor != null) {
+				this.win(true);
+                return true;
+			} else {
+				this.setStatus(PedoListener.ERROR_NO_SENSOR_FOUND);
+                this.win(false);
+                return true;
+			}
+			/*	
             List<Sensor> list = this.sensorManager.getSensorList(this.SENSOR_TYPE);
             if ((list != null) && (list.size() > 0)) {
                 this.win(true);
@@ -105,6 +115,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 this.win(false);
                 return true;
             }
+			*/
         } else if (action.equals("isDistanceAvailable")) {
             //distance is never available in Android
             this.win(false);
