@@ -7,7 +7,7 @@
     <keywords>cordova, core motion, pedometer, steps, distance, pedestrian</keywords>
     <license>MIT</license>
     <engines>
-        <engine name="cordova" version=">=3.0.0" />
+        <engine name="cordova" version=">=3.4.0" />
     </engines>
     <js-module src="www/pedometer.js" name="Pedometer">
         <clobbers target="pedometer" />
@@ -34,6 +34,8 @@
 			<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 			<uses-permission android:name="android.permission.WAKE_LOCK" />
             <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+            <uses-feature android:name="android.hardware.sensor.stepcounter" />
+            <uses-feature android:name="android.hardware.sensor.stepdetector" />
 		</config-file>		
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Pedometer">
@@ -41,7 +43,7 @@
             </feature>
         </config-file>
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
-            <service android:name="org.apache.cordova.pedometer.StepsService" />
+            <service android:name="org.apache.cordova.pedometer.StepsService" android:enabled="true" />
         </config-file>
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />
