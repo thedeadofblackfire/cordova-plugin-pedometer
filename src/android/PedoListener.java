@@ -205,6 +205,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             //callbackContext.error("Invalid action called on class " + TAG + ", " + action);
             return false;
         }
+
+        return true;
     }
 
     /**
