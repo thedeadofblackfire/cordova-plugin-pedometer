@@ -26,7 +26,7 @@ import android.util.Log;
 //import de.j4velin.pedometer.util.API26Wrapper;
 //import de.j4velin.pedometer.util.Logger;
 
-public class BootRecevier extends BroadcastReceiver {
+public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(final Context context, final Intent intent) {

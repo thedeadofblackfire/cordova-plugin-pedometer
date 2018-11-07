@@ -52,7 +52,7 @@
              * This class is triggered upon reboot of the device. It needs to re-register
              * the STEP_COUNTER with the StepsService
              -->
-            <receiver android:name="org.apache.cordova.pedometer.BootRecevier">
+            <receiver android:name="org.apache.cordova.pedometer.BootReceiver">
                 <intent-filter>
                     <action android:name="android.intent.action.BOOT_COMPLETED" />
                 </intent-filter>
@@ -69,8 +69,8 @@
         <source-file src="src/android/StepsUtil.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/API23Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/API26Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
-        <source-file src="src/android/ShutdownRecevier.java" target-dir="src/org/apache/cordova/pedometer" />
-        <source-file src="src/android/BootRecevier.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/ShutdownReceiver.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/BootReceiver.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/AppUpdatedReceiver.java" target-dir="src/org/apache/cordova/pedometer" />        
     </platform>
 </plugin>

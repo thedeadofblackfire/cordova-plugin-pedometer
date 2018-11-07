@@ -48,7 +48,7 @@ public class StepsService extends Service implements SensorEventListener {
     private static int lastSaveSteps;
     private static long lastSaveTime;
 
-    private final BroadcastReceiver shutdownReceiver = new ShutdownRecevier();
+    private final BroadcastReceiver shutdownReceiver = new ShutdownReceiver();
 
     @Override
     public void onCreate() {
