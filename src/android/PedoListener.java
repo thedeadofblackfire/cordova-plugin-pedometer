@@ -80,7 +80,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
 		
-		Log.i(TAG, "PedoListener initialize");
+		Log.i(TAG, "PedoListener initialize debug="+BuildConfig.DEBUG);
 		
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
 		

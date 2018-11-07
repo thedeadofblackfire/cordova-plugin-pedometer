@@ -31,11 +31,15 @@
 	    <config-file target="AndroidManifest.xml" parent="/manifest">
 			<uses-permission android:name="android.permission.INTERNET"/>
 			<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-			<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 			<uses-permission android:name="android.permission.WAKE_LOCK" />
-            <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+            
             <uses-feature android:name="android.hardware.sensor.stepcounter" />
+            <!--
+            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="true"/>
             <uses-feature android:name="android.hardware.sensor.stepdetector" />
+            -->
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 		</config-file>		
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Pedometer">
@@ -44,6 +48,20 @@
         </config-file>
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
             <service android:name="org.apache.cordova.pedometer.StepsService" android:enabled="true" />
+             <!--
+             * This class is triggered upon reboot of the device. It needs to re-register
+             * the STEP_COUNTER with the StepsService
+             -->
+            <receiver android:name="org.apache.cordova.pedometer.BootRecevier">
+                <intent-filter>
+                    <action android:name="android.intent.action.BOOT_COMPLETED" />
+                </intent-filter>
+            </receiver>
+            <receiver android:name="org.apache.cordova.pedometer.AppUpdatedReceiver">
+                <intent-filter>
+                    <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                </intent-filter>
+            </receiver>
         </config-file>
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />
@@ -52,5 +70,7 @@
         <source-file src="src/android/API23Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/API26Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/ShutdownRecevier.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/BootRecevier.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/AppUpdatedReceiver.java" target-dir="src/org/apache/cordova/pedometer" />        
     </platform>
 </plugin>

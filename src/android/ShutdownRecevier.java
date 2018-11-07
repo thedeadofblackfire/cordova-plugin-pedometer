@@ -31,6 +31,9 @@ public class ShutdownRecevier extends BroadcastReceiver {
         //if (BuildConfig.DEBUG) Logger.log("shutting down");
         Log.i("cordova-plugin-pedometer", "shutting down");
 
+        //Intent stepCounterServiceIntent = new Intent(context, StepCounterService.class);
+        //context.startService(stepCounterServiceIntent);
+
         context.startService(new Intent(context, StepsService.class)); // SensorListener.class
 
         // if the user used a root script for shutdown, the DEVICE_SHUTDOWN
