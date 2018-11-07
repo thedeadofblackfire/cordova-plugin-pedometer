@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import android.util.Log;
 //import de.j4velin.pedometer.util.Logger;
 //import de.j4velin.pedometer.util.Util;
 
