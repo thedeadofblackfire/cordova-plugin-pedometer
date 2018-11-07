@@ -115,7 +115,7 @@ public class StepsService extends Service implements SensorEventListener {
             sm.unregisterListener(this);
         } catch (Exception e) {
             // if (BuildConfig.DEBUG) Logger.log(e);
-            Log.i(TAG, e);
+            Log.i(TAG, e.toString());
             e.printStackTrace();
         }
     }
@@ -212,7 +212,7 @@ public class StepsService extends Service implements SensorEventListener {
             sm.unregisterListener(this);
         } catch (Exception e) {
             // if (BuildConfig.DEBUG) Logger.log(e);
-            Log.i(TAG, e);
+            Log.i(TAG, e.toString());
             e.printStackTrace();
         }
 

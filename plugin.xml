@@ -33,6 +33,7 @@
 			<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 			<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 			<uses-permission android:name="android.permission.WAKE_LOCK" />
+            <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 		</config-file>		
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Pedometer">
@@ -48,5 +49,6 @@
         <source-file src="src/android/StepsUtil.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/API23Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/API26Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/ShutdownRecevier.java" target-dir="src/org/apache/cordova/pedometer" />
     </platform>
 </plugin>
