@@ -117,8 +117,11 @@ public class StepsService extends Service implements SensorEventListener {
         // Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
         // if (BuildConfig.DEBUG) Logger.log("SensorListener onDestroy");
         try {
+            unregisterReceiver(shutdownReceiver);
+
             SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
             sm.unregisterListener(this);
+
         } catch (Exception e) {
             // if (BuildConfig.DEBUG) Logger.log(e);
             Log.i(TAG, e.toString());
