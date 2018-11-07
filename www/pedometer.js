@@ -37,5 +37,8 @@ Pedometer.prototype.stopService = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "stopService", []);
 };
 
+Pedometer.prototype.deviceCanCountSteps = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "deviceCanCountSteps", []);
+};
 
 module.exports = new Pedometer();

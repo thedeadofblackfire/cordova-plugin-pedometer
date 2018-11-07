@@ -16,16 +16,23 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import android.app.Activity;
+
 import android.util.Log;
 
 import android.os.Handler;
+import android.os.Build;
+import android.os.IBinder;
 
 /**
  * This class listens to the pedometer sensor
@@ -54,9 +61,23 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     private final int SENSOR_TYPE = Sensor.TYPE_STEP_COUNTER; // TYPE_STEP_DETECTOR or TYPE_STEP_COUNTER
 	
+    private Intent stepCounterIntent;
 
 	private StepsDBHelper mStepsDBHelper;
-	
+    
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            Log.i(TAG, "onServiceConnected is called'");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            Log.i(TAG, "onServiceDisconnected is called'");
+        }
+    };
+
     /**
      * Constructor
      */
@@ -105,7 +126,10 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
         this.callbackContext = callbackContext;
 		
-		Log.i(TAG, "PedoListener execute action=" + action);
+        Log.i(TAG, "PedoListener execute action=" + action);
+        
+        Activity activity = this.cordova.getActivity();
+        stepCounterIntent = new Intent(activity, StepsService.class);
 
         if (action.equals("isStepCountingAvailable")) {
 			/*
@@ -155,8 +179,30 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             }
             this.win(null);
             return true;
+
+        } else if (action.equals("deviceCanCountSteps")) {
+            Log.i(TAG, "deviceCanCountSteps is called");
+            Boolean canStepCount = deviceHasStepCounter(activity.getPackageManager());
+            callbackContext.success(canStepCount ? 1 : 0);
+        } else if (action.equals("startService")) {
+            Log.i(TAG, "startService is called");
+            if (Build.VERSION.SDK_INT >= 26) {
+                API26Wrapper.startForegroundService(activity, stepCounterIntent);
+            } else {
+                activity.startService(stepCounterIntent);
+            }
+            //activity.startService(stepCounterIntent);
+            activity.bindService(stepCounterIntent, mConnection, Context.BIND_AUTO_CREATE);
+            callbackContext.success(1);
+        } else if (action.equals("stopService")) {
+            Log.i(TAG, "stopService is called");
+            activity.stopService(stepCounterIntent);
+            activity.unbindService(mConnection);
+            callbackContext.success(1);
         } else {
             // Unsupported action
+            Log.e(TAG, "Invalid action called on class " + TAG + ", " + action);
+            //callbackContext.error("Invalid action called on class " + TAG + ", " + action);
             return false;
         }
     }
@@ -166,8 +212,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      * Stop listener.
      */
     public void onDestroy() {
+        super.onDestroy();
 		Log.i(TAG, "PedoListener onDestroy");
-        this.stop();
+        //this.stop();
     }
 
 
@@ -337,5 +384,19 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		this.cordova.getActivity().startService(mStepsIntent);
         //return PendingIntent.getService(context, 0, mStepsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
-	*/
+    */
+    
+    public static boolean deviceHasStepCounter(PackageManager pm) {
+        // Require at least Android KitKat
+        int currentApiVersion = Build.VERSION.SDK_INT;
+
+        // Check that the device supports the step counter and detector sensors
+        return currentApiVersion >= 19
+                && pm.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER);
+        /*
+        return currentApiVersion >= 19
+                && pm.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
+                && pm.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
+        */                
+    }
 }
