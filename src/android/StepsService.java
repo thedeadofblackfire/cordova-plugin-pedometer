@@ -88,7 +88,7 @@ public class StepsService extends Service implements SensorEventListener {
     public void onTaskRemoved(final Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         //if (BuildConfig.DEBUG) Logger.log("sensor service task removed");
-		Log.i(TAG, "sensor service task removed");
+		Log.i(TAG, "StepsService sensor service task removed");
 		/*
         // Restart service in 500 ms
         ((AlarmManager) getSystemService(Context.ALARM_SERVICE))
@@ -99,17 +99,18 @@ public class StepsService extends Service implements SensorEventListener {
 	
   @Override
   public void onSensorChanged(SensorEvent event) {
-	  Log.i(TAG, "StepsService onSensorChanged");
+	  Log.i(TAG, "StepsService onSensorChanged type="+event.sensor.getType());
 		
         // Only look at step counter events
         if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) {
             return;
         }
 		
-	Log.i(TAG, "StepsService onSensorChanged " + event.sensor.getType());
-    mStepsDBHelper.createStepsEntry();
+	
+    //mStepsDBHelper.createStepsEntry();
 	// float steps = event.values[0];
 	steps = (int) event.values[0];
+	mStepsDBHelper.createStepsEntryValue(steps);
 	Log.i(TAG, "StepsService onSensorChanged end steps="+steps);
   }
   

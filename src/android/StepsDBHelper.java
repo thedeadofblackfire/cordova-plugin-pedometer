@@ -79,6 +79,7 @@ public class StepsDBHelper extends SQLiteOpenHelper {
 	
 	StepsDBHelper(Context context) {
 		//super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		// to put on /sdcard/Android/data/fr.dynacare.activucr/files/StepsDatabase.db
 		super(context, context.getExternalFilesDir(null).getAbsolutePath() + "/" +  DATABASE_NAME, null, DATABASE_VERSION );
 	}
 
@@ -135,6 +136,64 @@ public class StepsDBHelper extends SQLiteOpenHelper {
 		  else
 		  {
 			values.put(STEPS_COUNT, 1);
+			long row = db.insert(TABLE_STEPS_SUMMARY, null, 
+			values);
+			if(row!=-1)
+			{
+			  createSuccessful = true;
+			}
+			db.close();
+		  }
+		  
+		} catch (Exception e) {
+		  e.printStackTrace();
+		}
+		return createSuccessful;
+	}
+	
+	public boolean createStepsEntryValue(int steps) {
+		Log.i(StepsDBHelper.class.getName(), "StepsService createStepsEntryValue steps="+steps);
+		
+		boolean isDateAlreadyPresent = false;
+		boolean createSuccessful = false;
+		int currentDateStepCounts = 0;
+		Calendar mCalendar = Calendar.getInstance(); 
+		String todayDate = String.valueOf(mCalendar.get(Calendar.MONTH))+"/" + String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH))+"/"+String.valueOf(mCalendar.get(Calendar.YEAR));
+		String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS_SUMMARY + " WHERE " + CREATION_DATE + " = '"+ todayDate+"'";
+		try {
+		  
+			  SQLiteDatabase db = this.getReadableDatabase();
+			  Cursor c = db.rawQuery(selectQuery, null);
+			  if (c.moveToFirst()) {
+				  do {
+					isDateAlreadyPresent = true;
+					currentDateStepCounts = c.getInt((c.getColumnIndex(STEPS_COUNT)));
+				  } while (c.moveToNext());
+			  }
+			  db.close();
+		  } catch (Exception e) {
+		  e.printStackTrace();
+		}
+		
+		try {
+		  SQLiteDatabase db = this.getWritableDatabase();
+		  ContentValues values = new ContentValues();
+		  values.put(CREATION_DATE, todayDate);
+		  if(isDateAlreadyPresent)
+		  {
+			//values.put(STEPS_COUNT, ++currentDateStepCounts);
+			values.put(STEPS_COUNT, steps);
+			int row = db.update(TABLE_STEPS_SUMMARY, values, CREATION_DATE +" = '"+ todayDate+"'", null);
+			if(row == 1)
+			{
+			  createSuccessful = true;
+			}
+			db.close();
+		  }
+		  else
+		  {
+			//values.put(STEPS_COUNT, 1);
+			values.put(STEPS_COUNT, steps);			
 			long row = db.insert(TABLE_STEPS_SUMMARY, null, 
 			values);
 			if(row!=-1)
