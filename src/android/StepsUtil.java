@@ -36,4 +36,9 @@ public abstract class StepsUtil {
         c.add(Calendar.DATE, 1);
         return c.getTimeInMillis();
     }
+
+    public static boolean isDebug() {
+        //BuildConfig.DEBUG
+        return true;
+    }
 }
