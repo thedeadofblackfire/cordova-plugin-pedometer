@@ -45,5 +45,8 @@
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsService.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/StepsUtil.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/API23Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/API26Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
     </platform>
 </plugin>
