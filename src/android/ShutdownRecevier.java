@@ -29,7 +29,7 @@ public class ShutdownRecevier extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, final Intent intent) {
         //if (BuildConfig.DEBUG) Logger.log("shutting down");
-        Log.i("shutting down");
+        Log.i("cordova-plugin-pedometer", "shutting down");
 
         context.startService(new Intent(context, StepsService.class)); // SensorListener.class
 
