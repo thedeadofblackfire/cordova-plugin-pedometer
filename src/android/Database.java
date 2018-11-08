@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-//import android.util.Log;
+import android.util.Log;
 //import de.j4velin.pedometer.util.Logger;
 //import de.j4velin.pedometer.util.Util;
 import org.apache.cordova.pedometer.Logger;
