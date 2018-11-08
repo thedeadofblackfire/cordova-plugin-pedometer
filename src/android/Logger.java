@@ -25,6 +25,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 
+import android.util.Log;
+
 //import de.j4velin.pedometer.BuildConfig;
 
 public abstract class Logger {
@@ -61,6 +63,7 @@ public abstract class Logger {
 
     @SuppressWarnings("deprecation")
     public static void log(String msg) {
+        Log.i(TAG, msg);
         if (!StepsUtil.isDebug())
             return;
         // if (!BuildConfig.DEBUG) return;

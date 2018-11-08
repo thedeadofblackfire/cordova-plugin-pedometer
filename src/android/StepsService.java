@@ -30,6 +30,7 @@ import java.util.Locale;
 import org.json.JSONObject;
 
 import android.util.Log;
+import org.apache.cordova.pedometer.Logger;
 
 public class StepsService extends Service implements SensorEventListener {
 
