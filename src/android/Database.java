@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 //import android.util.Log;
 //import de.j4velin.pedometer.util.Logger;
 //import de.j4velin.pedometer.util.Util;
+import org.apache.cordova.pedometer.Logger;
+import org.apache.cordova.pedometer.StepsUtil;
 
 public class Database extends SQLiteOpenHelper {
 

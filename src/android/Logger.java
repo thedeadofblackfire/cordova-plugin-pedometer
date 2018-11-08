@@ -28,6 +28,7 @@ import java.util.Date;
 import android.util.Log;
 
 //import de.j4velin.pedometer.BuildConfig;
+import org.apache.cordova.pedometer.StepsUtil;
 
 public abstract class Logger {
 
@@ -67,7 +68,8 @@ public abstract class Logger {
         if (!StepsUtil.isDebug())
             return;
         // if (!BuildConfig.DEBUG) return;
-        android.util.Log.d(TAG, msg);
+        android.util.Log.i(TAG, msg);
+        Log.d(TAG, msg);
         // android.util.Log.d(APP, msg);
         /*
         try {
