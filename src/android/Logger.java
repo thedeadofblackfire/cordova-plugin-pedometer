@@ -64,12 +64,11 @@ public abstract class Logger {
 
     @SuppressWarnings("deprecation")
     public static void log(String msg) {
-        Log.i(TAG, msg);
         if (!StepsUtil.isDebug())
             return;
         // if (!BuildConfig.DEBUG) return;
-        android.util.Log.i(TAG, msg);
-        Log.d(TAG, msg);
+        Log.i(TAG, msg);
+        //Log.d(TAG, msg);
         // android.util.Log.d(APP, msg);
         /*
         try {

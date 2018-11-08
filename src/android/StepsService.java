@@ -39,7 +39,8 @@ public class StepsService extends Service implements SensorEventListener {
     public final static int NOTIFICATION_ID = 1;
     private final static long MICROSECONDS_IN_ONE_MINUTE = 60000000;
     private final static long SAVE_OFFSET_TIME = AlarmManager.INTERVAL_HOUR;
-    private final static int SAVE_OFFSET_STEPS = 500;
+    private final static int SAVE_OFFSET_STEPS = 2; //500;
+    private final static long RESTART_SERVICE_OFFSET_TIME = 120000;
 
     private SensorManager mSensorManager;
     private Sensor mStepDetectorSensor;
@@ -59,15 +60,16 @@ public class StepsService extends Service implements SensorEventListener {
         mStepsDBHelper = new StepsDBHelper(this);
         Log.i(TAG, "StepsService onCreate end");
         /*
-        mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
-        if (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
-            mStepDetectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-            mSensorManager.registerListener(this, mStepDetectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
-            mStepsDBHelper = new StepsDBHelper(this);
-            Log.i(TAG, "StepsService onCreate end");
-            // mStepsDBHelper = StepsDBHelper.getInstance(this);
-        }
-        */
+         * mSensorManager = (SensorManager)
+         * this.getSystemService(Context.SENSOR_SERVICE); if
+         * (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
+         * mStepDetectorSensor =
+         * mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+         * mSensorManager.registerListener(this, mStepDetectorSensor,
+         * SensorManager.SENSOR_DELAY_NORMAL); mStepsDBHelper = new StepsDBHelper(this);
+         * Log.i(TAG, "StepsService onCreate end"); // mStepsDBHelper =
+         * StepsDBHelper.getInstance(this); }
+         */
     }
 
     @Override
@@ -83,8 +85,9 @@ public class StepsService extends Service implements SensorEventListener {
          */
 
         // restart service every hour to save the current step count
-        long nextUpdate = Math.min(StepsUtil.getTomorrow(),
-                System.currentTimeMillis() + 120000); // INTERVAL_HOUR INTERVAL_HALF_HOUR=1800000 AlarmManager.INTERVAL_FIFTEEN_MINUTES=900000
+        long nextUpdate = Math.min(StepsUtil.getTomorrow(), System.currentTimeMillis() + RESTART_SERVICE_OFFSET_TIME); // INTERVAL_HOUR
+                                                                                                  // INTERVAL_HALF_HOUR=1800000
+                                                                                                  // AlarmManager.INTERVAL_FIFTEEN_MINUTES=900000
         Log.i(TAG, "StepsService [onStartCommand] - next update: " + new Date(nextUpdate).toLocaleString());
         // if (BuildConfig.DEBUG) Logger.log("next update: " + new
         // Date(nextUpdate).toLocaleString());
@@ -92,7 +95,7 @@ public class StepsService extends Service implements SensorEventListener {
         PendingIntent pi = PendingIntent.getService(getApplicationContext(), 2, new Intent(this, StepsService.class),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Log.i(TAG, "StepsService [onStartCommand] - Build.VERSION.SDK_INT="+Build.VERSION.SDK_INT);
+        Log.i(TAG, "StepsService [onStartCommand] - Build.VERSION.SDK_INT=" + Build.VERSION.SDK_INT);
         if (Build.VERSION.SDK_INT >= 23) {
             Log.i(TAG, "StepsService [onStartCommand] - API23Wrapper.setAlarmWhileIdle");
             API23Wrapper.setAlarmWhileIdle(am, AlarmManager.RTC, nextUpdate, pi);
@@ -140,7 +143,7 @@ public class StepsService extends Service implements SensorEventListener {
     public void onTaskRemoved(final Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         // if (BuildConfig.DEBUG) Logger.log("sensor service task removed");
-        Log.i(TAG, "StepsService [onTaskRemoved] - sensor service task removed");
+        //Log.i(TAG, "StepsService [onTaskRemoved] - sensor service task removed");
         Logger.log("StepsService [onTaskRemoved] - sensor service task removed");
 
         // Restart service in 500 ms
@@ -155,21 +158,24 @@ public class StepsService extends Service implements SensorEventListener {
             return;
         }
 
-        //Log.i(TAG, "StepsService [onSensorChanged] - start - type=" + event.sensor.getType());
+        // Log.i(TAG, "StepsService [onSensorChanged] - start - type=" +
+        // event.sensor.getType());
         Logger.log("StepsService [onSensorChanged] - start - type=" + event.sensor.getType());
 
         if (event.values[0] > Integer.MAX_VALUE) {
-            if (StepsUtil.isDebug()) Logger.log("StepsService [onSensorChanged] - probably not a real value: " + event.values[0]);
+            if (StepsUtil.isDebug())
+                Logger.log("StepsService [onSensorChanged] - probably not a real value: " + event.values[0]);
             // if (BuildConfig.DEBUG) Logger.log("probably not a real value: " +
             // event.values[0]);
-            //Log.i(TAG, "StepsService [onSensorChanged] - probably not a real value: " + event.values[0]);
+            // Log.i(TAG, "StepsService [onSensorChanged] - probably not a real value: " +
+            // event.values[0]);
             return;
         } else {
             // float steps = event.values[0];
             steps = (int) event.values[0];
             updateIfNecessary();
             // mStepsDBHelper.createStepsEntryValue(steps);
-            //Log.i(TAG, "StepsService [onSensorChanged] - end - steps=" + steps);
+            // Log.i(TAG, "StepsService [onSensorChanged] - end - steps=" + steps);
             Logger.log("StepsService [onSensorChanged] - end - steps=" + steps);
         }
     }
@@ -179,24 +185,36 @@ public class StepsService extends Service implements SensorEventListener {
      */
     private boolean updateIfNecessary() {
         mStepsDBHelper.createStepsEntryValue(steps);
-        return true;
-        /*
-         * if (steps > lastSaveSteps + SAVE_OFFSET_STEPS || (steps > 0 &&
-         * System.currentTimeMillis() > lastSaveTime + SAVE_OFFSET_TIME)) { if
-         * (BuildConfig.DEBUG) Logger.log("saving steps: steps=" + steps + " lastSave="
-         * + lastSaveSteps + " lastSaveTime=" + new Date(lastSaveTime)); Database db =
-         * Database.getInstance(this); if (db.getSteps(Util.getToday()) ==
-         * Integer.MIN_VALUE) { int pauseDifference = steps -
-         * getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("pauseCount",
-         * steps); db.insertNewDay(Util.getToday(), steps - pauseDifference); if
-         * (pauseDifference > 0) { // update pauseCount for the new day
-         * getSharedPreferences("pedometer",
-         * Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit(); } }
-         * db.saveCurrentSteps(steps); db.close(); lastSaveSteps = steps; lastSaveTime =
-         * System.currentTimeMillis(); showNotification(); // update notification
-         * startService(new Intent(this, WidgetUpdateService.class)); return true; }
-         * else { return false; }
-         */
+
+        if (steps > lastSaveSteps + SAVE_OFFSET_STEPS
+                || (steps > 0 && System.currentTimeMillis() > lastSaveTime + SAVE_OFFSET_TIME)) {
+            if (StepsUtil.isDebug())
+                Logger.log("StepsService [updateIfNecessary] - saving steps: steps=" + steps + " lastSave=" + lastSaveSteps + " lastSaveTime="
+                        + new Date(lastSaveTime));
+            Database db = Database.getInstance(this);
+            if (db.getSteps(Util.getToday()) == Integer.MIN_VALUE) {
+                int pauseDifference = steps
+                        - getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("pauseCount", steps);
+                db.insertNewDay(Util.getToday(), steps - pauseDifference);
+                if (pauseDifference > 0) {
+                    // update pauseCount for the new day
+                    getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
+                }
+            }
+            db.saveCurrentSteps(steps);
+            db.close();
+            lastSaveSteps = steps;
+            lastSaveTime = System.currentTimeMillis();
+            /*
+            showNotification(); // update notification
+            startService(new Intent(this, WidgetUpdateService.class));
+            */
+            return true;
+        } else {
+            return false;
+        }
+
+        //return true;
     }
 
     @Override
@@ -245,10 +263,10 @@ public class StepsService extends Service implements SensorEventListener {
          * sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER).getName()); }
          */
 
-         //SensorManager.SENSOR_DELAY_FASTEST
-         //SensorManager.SENSOR_DELAY_NORMAL
+        // SensorManager.SENSOR_DELAY_FASTEST
+        // SensorManager.SENSOR_DELAY_NORMAL
 
-        // enable batching with delay of max 5 min        
+        // enable batching with delay of max 5 min
         sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_FASTEST,
                 (int) (5 * MICROSECONDS_IN_ONE_MINUTE));
     }
