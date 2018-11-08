@@ -140,6 +140,7 @@ public class StepsService extends Service implements SensorEventListener {
         super.onTaskRemoved(rootIntent);
         // if (BuildConfig.DEBUG) Logger.log("sensor service task removed");
         Log.i(TAG, "StepsService [onTaskRemoved] - sensor service task removed");
+        Logger.log("StepsService [onTaskRemoved] - sensor service task removed");
 
         // Restart service in 500 ms
         ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 500,
@@ -153,19 +154,22 @@ public class StepsService extends Service implements SensorEventListener {
             return;
         }
 
-        Log.i(TAG, "StepsService [onSensorChanged] - start - type=" + event.sensor.getType());
+        //Log.i(TAG, "StepsService [onSensorChanged] - start - type=" + event.sensor.getType());
+        Logger.log("StepsService [onSensorChanged] - start - type=" + event.sensor.getType());
 
         if (event.values[0] > Integer.MAX_VALUE) {
+            if (StepsUtil.isDebug()) Logger.log("StepsService [onSensorChanged] - probably not a real value: " + event.values[0]);
             // if (BuildConfig.DEBUG) Logger.log("probably not a real value: " +
             // event.values[0]);
-            Log.i(TAG, "StepsService [onSensorChanged] - probably not a real value: " + event.values[0]);
+            //Log.i(TAG, "StepsService [onSensorChanged] - probably not a real value: " + event.values[0]);
             return;
         } else {
             // float steps = event.values[0];
             steps = (int) event.values[0];
             updateIfNecessary();
             // mStepsDBHelper.createStepsEntryValue(steps);
-            Log.i(TAG, "StepsService [onSensorChanged] - end - steps=" + steps);
+            //Log.i(TAG, "StepsService [onSensorChanged] - end - steps=" + steps);
+            Logger.log("StepsService [onSensorChanged] - end - steps=" + steps);
         }
     }
 
@@ -240,8 +244,11 @@ public class StepsService extends Service implements SensorEventListener {
          * sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER).getName()); }
          */
 
-        // enable batching with delay of max 5 min
-        sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_NORMAL,
+         //SensorManager.SENSOR_DELAY_FASTEST
+         //SensorManager.SENSOR_DELAY_NORMAL
+
+        // enable batching with delay of max 5 min        
+        sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_FASTEST,
                 (int) (5 * MICROSECONDS_IN_ONE_MINUTE));
     }
 

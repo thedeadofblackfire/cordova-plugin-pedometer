@@ -37,6 +37,7 @@ public abstract class StepsUtil {
         return c.getTimeInMillis();
     }
 
+    // https://tekeye.uk/android/examples/android-debug-vs-release-build
     public static boolean isDebug() {
         //BuildConfig.DEBUG
         return true;
