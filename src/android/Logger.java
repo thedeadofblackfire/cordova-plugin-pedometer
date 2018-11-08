@@ -42,8 +42,9 @@ public abstract class Logger {
     }
 
     public static void log(final Cursor c) {
-        if (!StepsUtil.isDebug()) return;
-        //if (!BuildConfig.DEBUG) return;
+        if (!StepsUtil.isDebug())
+            return;
+        // if (!BuildConfig.DEBUG) return;
         c.moveToFirst();
         String title = "";
         for (int i = 0; i < c.getColumnCount(); i++)
@@ -60,14 +61,16 @@ public abstract class Logger {
 
     @SuppressWarnings("deprecation")
     public static void log(String msg) {
-        if (!StepsUtil.isDebug()) return;
-        //if (!BuildConfig.DEBUG) return;
+        if (!StepsUtil.isDebug())
+            return;
+        // if (!BuildConfig.DEBUG) return;
         android.util.Log.d(TAG, msg);
-        //android.util.Log.d(APP, msg);
+        // android.util.Log.d(APP, msg);
+        /*
         try {
             if (fw == null) {
-                fw = new FileWriter(new File(
-                        Environment.getExternalStorageDirectory().toString() + "/" + APP + ".txt"),
+                // context.getExternalFilesDir(null).getAbsolutePath()
+                fw = new FileWriter(new File(Environment.getExternalStorageDirectory().toString() + "/" + APP + ".txt"),
                         true);
             }
             date.setTime(System.currentTimeMillis());
@@ -76,12 +79,37 @@ public abstract class Logger {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // }
+        */
     }
+
+    /*
+    public void appendLog(String text) {
+        File logFile = new File("sdcard/log.file");
+        if (!logFile.exists()) {
+            try {
+                logFile.createNewFile();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        try {
+            // BufferedWriter for performance, true to set append to file flag
+            BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
+            buf.append(text);
+            buf.newLine();
+            buf.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    */
 
     protected void finalize() throws Throwable {
         try {
-            if (fw != null) fw.close();
+            if (fw != null)
+                fw.close();
         } finally {
             super.finalize();
         }
