@@ -38,7 +38,7 @@ import org.apache.cordova.pedometer.StepsUtil;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "steps.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_STEPS = "steps";
     private static final String KEY_STEP_ID = "id";
@@ -49,14 +49,17 @@ public class Database extends SQLiteOpenHelper {
     private static final String KEY_STEP_PERIODTIME = "periodtime";
     private static final String KEY_STEP_STARTDATE = "startdate"; // period range in hour:minute
     private static final String KEY_STEP_ENDDATE = "enddate"; // period range in hour:minute
+    private static final String KEY_STEP_LASTUPDATE = "lastupdate";
     private static final String KEY_STEP_SYNCED = "synced";
+    private static final String KEY_STEP_SYNCEDDATE = "synceddate";
 
     // //db.execSQL("CREATE TABLE " + TABLE_STEPS + " (date INTEGER, steps
     // INTEGER)");
     private static final String CREATE_TABLE_STEPS = "CREATE TABLE IF NOT EXISTS " + TABLE_STEPS + "(" + KEY_STEP_ID
             + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_STEP_DATE + " INTEGER," + KEY_STEP_CREATION_DATE + " TEXT,"
             + KEY_STEP_PERIODTIME + " INTEGER," + KEY_STEP_STARTDATE + " TEXT," + KEY_STEP_ENDDATE + " TEXT,"
-            + KEY_STEP_STEPS + " INTEGER," + KEY_STEP_TOTAL + " INTEGER, " + KEY_STEP_SYNCED + " INTEGER)";
+            + KEY_STEP_LASTUPDATE + " INTEGER," + KEY_STEP_STEPS + " INTEGER," + KEY_STEP_TOTAL + " INTEGER, "
+            + KEY_STEP_SYNCED + " INTEGER, " + KEY_STEP_SYNCEDDATE + " INTEGER)";
 
     private static Database sInstance;
     private static final AtomicInteger openCounter = new AtomicInteger();
@@ -230,9 +233,9 @@ public class Database extends SQLiteOpenHelper {
      * @return number of steps taken, ignoring today
      */
     public int getTotalWithoutToday() {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM("+KEY_STEP_STEPS+")" },
-        KEY_STEP_STEPS+" > 0 AND date > 0 AND date < ?", new String[] { String.valueOf(StepsUtil.getToday()) }, null,
-                null, null);
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
+                KEY_STEP_STEPS + " > 0 AND date > 0 AND date < ?",
+                new String[] { String.valueOf(StepsUtil.getToday()) }, null, null, null);
         c.moveToFirst();
         int re = c.getInt(0);
         c.close();
@@ -245,8 +248,8 @@ public class Database extends SQLiteOpenHelper {
      * @return the maximum number of steps walked in one day
      */
     public int getRecord() {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "MAX("+KEY_STEP_STEPS+")" }, KEY_STEP_DATE+" > 0", null, null, null,
-                null);
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "MAX(" + KEY_STEP_STEPS + ")" },
+                KEY_STEP_DATE + " > 0", null, null, null, null);
         c.moveToFirst();
         int re = c.getInt(0);
         c.close();
@@ -260,8 +263,8 @@ public class Database extends SQLiteOpenHelper {
      *         value (Integer)
      */
     public Pair<Date, Integer> getRecordData() {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { KEY_STEP_DATE+", "+KEY_STEP_STEPS }, KEY_STEP_DATE+" > 0", null, null,
-                null, KEY_STEP_STEPS+" DESC", "1");
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { KEY_STEP_DATE + ", " + KEY_STEP_STEPS },
+                KEY_STEP_DATE + " > 0", null, null, null, KEY_STEP_STEPS + " DESC", "1");
         c.moveToFirst();
         Pair<Date, Integer> p = new Pair<Date, Integer>(new Date(c.getLong(0)), c.getInt(1));
         c.close();
@@ -279,8 +282,8 @@ public class Database extends SQLiteOpenHelper {
      *         exist in the database
      */
     public int getSteps(final long date) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { ""+KEY_STEP_STEPS }, KEY_STEP_DATE+" = ?",
-                new String[] { String.valueOf(date) }, null, null, null);
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "" + KEY_STEP_STEPS },
+                KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
         c.moveToFirst();
         int re;
         if (c.getCount() == 0)
@@ -299,8 +302,8 @@ public class Database extends SQLiteOpenHelper {
      *         the number of steps
      */
     public List<Pair<Long, Integer>> getLastEntries(int num) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { KEY_STEP_DATE, KEY_STEP_STEPS }, KEY_STEP_DATE+" > 0", null, null,
-                null, KEY_STEP_DATE+" DESC", String.valueOf(num));
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { KEY_STEP_DATE, KEY_STEP_STEPS },
+                KEY_STEP_DATE + " > 0", null, null, null, KEY_STEP_DATE + " DESC", String.valueOf(num));
         int max = c.getCount();
         List<Pair<Long, Integer>> result = new ArrayList<>(max);
         if (c.moveToFirst()) {
@@ -323,7 +326,8 @@ public class Database extends SQLiteOpenHelper {
      *         might have negative value
      */
     public int getSteps(final long start, final long end) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM("+KEY_STEP_STEPS+")" }, KEY_STEP_DATE + " >= ? AND "+KEY_STEP_DATE+" <= ?",
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
+                KEY_STEP_DATE + " >= ? AND " + KEY_STEP_DATE + " <= ?",
                 new String[] { String.valueOf(start), String.valueOf(end) }, null, null, null);
         int re;
         if (c.getCount() == 0) {
@@ -398,7 +402,7 @@ public class Database extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(KEY_STEP_STEPS, steps);
         values.put(KEY_STEP_TOTAL, steps);
-        if (getWritableDatabase().update(TABLE_STEPS, values, KEY_STEP_DATE+" = -1", null) == 0) {
+        if (getWritableDatabase().update(TABLE_STEPS, values, KEY_STEP_DATE + " = -1", null) == 0) {
             values.put(KEY_STEP_DATE, -1);
             getWritableDatabase().insert(TABLE_STEPS, null, values);
         }
@@ -430,34 +434,42 @@ public class Database extends SQLiteOpenHelper {
                 + String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH));
         Long date = StepsUtil.getToday();
         Long datePeriodTime = StepsUtil.getTodayPeriodTime();
-       
+
         // period start >= & < end in 5 min interval
         Calendar mCalendarPeriodStart = Calendar.getInstance();
         mCalendarPeriodStart.setTimeInMillis(datePeriodTime);
         String startDate = "";
-        if (mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY) < 10) startDate += "0" + String.valueOf(mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY));
-        else startDate += String.valueOf(mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY));
+        if (mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY) < 10)
+            startDate += "0" + String.valueOf(mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY));
+        else
+            startDate += String.valueOf(mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY));
         startDate += ":";
-        if (mCalendarPeriodStart.get(Calendar.MINUTE) < 10)  startDate += "0" + String.valueOf(mCalendarPeriodStart.get(Calendar.MINUTE));
-        else startDate += String.valueOf(mCalendarPeriodStart.get(Calendar.MINUTE));
-      
+        if (mCalendarPeriodStart.get(Calendar.MINUTE) < 10)
+            startDate += "0" + String.valueOf(mCalendarPeriodStart.get(Calendar.MINUTE));
+        else
+            startDate += String.valueOf(mCalendarPeriodStart.get(Calendar.MINUTE));
+
         Calendar mCalendarPeriodEnd = Calendar.getInstance();
         mCalendarPeriodEnd.setTimeInMillis(datePeriodTime);
         mCalendarPeriodEnd.add(Calendar.MINUTE, 5);
         String endDate = "";
-        if (mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY) < 10) endDate += "0" + String.valueOf(mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY));
-        else endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY));
+        if (mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY) < 10)
+            endDate += "0" + String.valueOf(mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY));
+        else
+            endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY));
         endDate += ":";
-        if (mCalendarPeriodEnd.get(Calendar.MINUTE) < 10)  endDate += "0" + String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
-        else endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
+        if (mCalendarPeriodEnd.get(Calendar.MINUTE) < 10)
+            endDate += "0" + String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
+        else
+            endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
 
         String selectQuery = "SELECT " + KEY_STEP_TOTAL + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
                 + " = " + datePeriodTime;
 
         /*
-         String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_CREATION_DATE
-                + " = '" + todayDate + "'";
-        */                
+         * String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS +
+         * " WHERE " + KEY_STEP_CREATION_DATE + " = '" + todayDate + "'";
+         */
         try {
 
             SQLiteDatabase db = this.getReadableDatabase();
@@ -477,47 +489,52 @@ public class Database extends SQLiteOpenHelper {
             SQLiteDatabase db = this.getWritableDatabase();
             ContentValues values = new ContentValues();
             /*
-            values.put(KEY_STEP_DATE, date);
-            values.put(KEY_STEP_CREATION_DATE, todayDate);           
-            values.put(KEY_STEP_PERIODTIME, datePeriodTime);
-            values.put(KEY_STEP_STARTDATE, startDate);
-            values.put(KEY_STEP_ENDDATE, endDate);
-            */
+             * values.put(KEY_STEP_DATE, date); values.put(KEY_STEP_CREATION_DATE,
+             * todayDate); values.put(KEY_STEP_PERIODTIME, datePeriodTime);
+             * values.put(KEY_STEP_STARTDATE, startDate); values.put(KEY_STEP_ENDDATE,
+             * endDate);
+             */
 
             // last save period time
-            lastSaveSteps = prefs.getInt("lastSaveSteps", 0); //pauseCount
+            lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // pauseCount
             if (lastSaveSteps == 0) {
                 lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
-                if (lastSaveSteps < 0) lastSaveSteps = 0; // to prevent zero with boot
-                //int pauseDifference = steps - getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("pauseCount", steps);
+                if (lastSaveSteps < 0)
+                    lastSaveSteps = 0; // to prevent zero with boot
+                // int pauseDifference = steps - getSharedPreferences("pedometer",
+                // Context.MODE_PRIVATE).getInt("pauseCount", steps);
 
-                //getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
+                // getSharedPreferences("pedometer",
+                // Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
             }
 
             int steps_diff = steps - lastSaveSteps;
             values.put(KEY_STEP_SYNCED, 0);
+            values.put(KEY_STEP_SYNCEDDATE, null);
             // use the negative steps as offset
-            //values.put(KEY_STEP_STEPS, -steps);
+            // values.put(KEY_STEP_STEPS, -steps);
             values.put(KEY_STEP_STEPS, steps_diff);
             values.put(KEY_STEP_TOTAL, steps);
-           
+            values.put(KEY_STEP_LASTUPDATE, System.currentTimeMillis());            
+
             if (isDateAlreadyPresent) {
                 // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
-                //values.put(KEY_STEP_TOTAL, steps);
+                // values.put(KEY_STEP_TOTAL, steps);
                 int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
-                //int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" + todayDate + "'", null);
+                // int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" +
+                // todayDate + "'", null);
                 if (row == 1) {
                     createSuccessful = true;
                 }
                 db.close();
             } else {
                 values.put(KEY_STEP_DATE, date);
-                values.put(KEY_STEP_CREATION_DATE, todayDate);           
+                values.put(KEY_STEP_CREATION_DATE, todayDate);
                 values.put(KEY_STEP_PERIODTIME, datePeriodTime);
                 values.put(KEY_STEP_STARTDATE, startDate);
                 values.put(KEY_STEP_ENDDATE, endDate);
                 // values.put(KEY_STEP_TOTAL, 1);
-                //values.put(KEY_STEP_TOTAL, steps);
+                // values.put(KEY_STEP_TOTAL, steps);
                 long row = db.insert(TABLE_STEPS, null, values);
                 if (row != -1) {
                     createSuccessful = true;
