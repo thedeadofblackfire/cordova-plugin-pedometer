@@ -64,6 +64,7 @@ public class Database extends SQLiteOpenHelper {
     private static int lastSaveSteps = 0;
     private static int lastPeriodSteps = 0;
     private static long lastSaveTime;
+    private SharedPreferences prefs;
 
     private Database(final Context context) {
         // for private directory
@@ -72,6 +73,8 @@ public class Database extends SQLiteOpenHelper {
         // to put on /sdcard/Android/data/{package}/files/StepsDatabase.db
         super(context, context.getExternalFilesDir(null).getAbsolutePath() + "/" + DATABASE_NAME, null,
                 DATABASE_VERSION);
+
+        prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
     }
 
     public static synchronized Database getInstance(final Context c) {
@@ -447,7 +450,7 @@ public class Database extends SQLiteOpenHelper {
         if (mCalendarPeriodEnd.get(Calendar.MINUTE) < 10)  endDate += "0" + String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
         else endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
 
-        String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
+        String selectQuery = "SELECT " + KEY_STEP_TOTAL + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
                 + " = " + datePeriodTime;
 
         /*
@@ -481,7 +484,7 @@ public class Database extends SQLiteOpenHelper {
             */
 
             // last save period time
-            lastSaveSteps = getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("lastSaveSteps", 0); //pauseCount
+            lastSaveSteps = prefs.getInt("lastSaveSteps", 0); //pauseCount
             if (lastSaveSteps == 0) {
                 lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
                 if (lastSaveSteps < 0) lastSaveSteps = 0; // to prevent zero with boot
@@ -520,7 +523,7 @@ public class Database extends SQLiteOpenHelper {
                 }
                 db.close();
 
-                getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("lastSaveSteps", steps).commit();
+                prefs.edit().putInt("lastSaveSteps", steps).commit();
                 lastSaveSteps = steps;
                 lastSaveTime = System.currentTimeMillis();
             }
