@@ -230,8 +230,8 @@ public class Database extends SQLiteOpenHelper {
      * @return number of steps taken, ignoring today
      */
     public int getTotalWithoutToday() {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(steps)" },
-                "steps > 0 AND date > 0 AND date < ?", new String[] { String.valueOf(StepsUtil.getToday()) }, null,
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM("+KEY_STEP_STEPS+")" },
+        KEY_STEP_STEPS+" > 0 AND date > 0 AND date < ?", new String[] { String.valueOf(StepsUtil.getToday()) }, null,
                 null, null);
         c.moveToFirst();
         int re = c.getInt(0);
@@ -245,7 +245,7 @@ public class Database extends SQLiteOpenHelper {
      * @return the maximum number of steps walked in one day
      */
     public int getRecord() {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "MAX(steps)" }, "date > 0", null, null, null,
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "MAX("+KEY_STEP_STEPS+")" }, KEY_STEP_DATE+" > 0", null, null, null,
                 null);
         c.moveToFirst();
         int re = c.getInt(0);
@@ -260,8 +260,8 @@ public class Database extends SQLiteOpenHelper {
      *         value (Integer)
      */
     public Pair<Date, Integer> getRecordData() {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "date, steps" }, "date > 0", null, null,
-                null, "steps DESC", "1");
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { KEY_STEP_DATE+", "+KEY_STEP_STEPS }, KEY_STEP_DATE+" > 0", null, null,
+                null, KEY_STEP_STEPS+" DESC", "1");
         c.moveToFirst();
         Pair<Date, Integer> p = new Pair<Date, Integer>(new Date(c.getLong(0)), c.getInt(1));
         c.close();
@@ -279,7 +279,7 @@ public class Database extends SQLiteOpenHelper {
      *         exist in the database
      */
     public int getSteps(final long date) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "steps" }, "date = ?",
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { ""+KEY_STEP_STEPS }, KEY_STEP_DATE+" = ?",
                 new String[] { String.valueOf(date) }, null, null, null);
         c.moveToFirst();
         int re;
@@ -299,8 +299,8 @@ public class Database extends SQLiteOpenHelper {
      *         the number of steps
      */
     public List<Pair<Long, Integer>> getLastEntries(int num) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "date", "steps" }, "date > 0", null, null,
-                null, "date DESC", String.valueOf(num));
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { KEY_STEP_DATE, KEY_STEP_STEPS }, KEY_STEP_DATE+" > 0", null, null,
+                null, KEY_STEP_DATE+" DESC", String.valueOf(num));
         int max = c.getCount();
         List<Pair<Long, Integer>> result = new ArrayList<>(max);
         if (c.moveToFirst()) {
@@ -323,7 +323,7 @@ public class Database extends SQLiteOpenHelper {
      *         might have negative value
      */
     public int getSteps(final long start, final long end) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(steps)" }, "date >= ? AND date <= ?",
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM("+KEY_STEP_STEPS+")" }, KEY_STEP_DATE + " >= ? AND "+KEY_STEP_DATE+" <= ?",
                 new String[] { String.valueOf(start), String.valueOf(end) }, null, null, null);
         int re;
         if (c.getCount() == 0) {
@@ -396,9 +396,10 @@ public class Database extends SQLiteOpenHelper {
      */
     public void saveCurrentSteps(int steps) {
         ContentValues values = new ContentValues();
-        values.put("steps", steps);
-        if (getWritableDatabase().update(TABLE_STEPS, values, "date = -1", null) == 0) {
-            values.put("date", -1);
+        values.put(KEY_STEP_STEPS, steps);
+        values.put(KEY_STEP_TOTAL, steps);
+        if (getWritableDatabase().update(TABLE_STEPS, values, KEY_STEP_DATE+" = -1", null) == 0) {
+            values.put(KEY_STEP_DATE, -1);
             getWritableDatabase().insert(TABLE_STEPS, null, values);
         }
         if (StepsUtil.isDebug()) {

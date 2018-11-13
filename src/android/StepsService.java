@@ -194,6 +194,7 @@ public class StepsService extends Service implements SensorEventListener {
             if (StepsUtil.isDebug())
                 Logger.log("StepsService [updateIfNecessary] - saving steps: steps=" + steps + " lastSave=" + lastSaveSteps + " lastSaveTime="
                         + new Date(lastSaveTime));
+                        /*
             //Database db = Database.getInstance(this);
             if (db.getSteps(StepsUtil.getToday()) == Integer.MIN_VALUE) {
                 int pauseDifference = steps
@@ -202,10 +203,12 @@ public class StepsService extends Service implements SensorEventListener {
                 if (pauseDifference > 0) {
                     // update pauseCount for the new day
                     getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
-                }
+                }                
             }
+            
             db.saveCurrentSteps(steps);
             db.close();
+            */
             lastSaveSteps = steps;
             lastSaveTime = System.currentTimeMillis();
             /*
