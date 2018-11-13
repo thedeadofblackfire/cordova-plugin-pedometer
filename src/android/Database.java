@@ -18,6 +18,7 @@ package org.apache.cordova.pedometer;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -27,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import java.util.Calendar;
 import android.util.Log;
 //import de.j4velin.pedometer.util.Logger;
 //import de.j4velin.pedometer.util.Util;
@@ -42,21 +43,27 @@ public class Database extends SQLiteOpenHelper {
     private static final String TABLE_STEPS = "steps";
     private static final String KEY_STEP_ID = "id";
     private static final String KEY_STEP_STEPS = "steps"; // stepscount
+    private static final String KEY_STEP_TOTAL = "total"; // total steps count since last boot = STEPS_COUNT
     private static final String KEY_STEP_DATE = "date"; // integer timestamp
-    private static final String KEY_STEP_CREATION_DATE = "creationdate"; // Date format is mm/dd/yyyy
-    private static final String KEY_STEP_STARTDATE = "startdate"; // range in minute
-    private static final String KEY_STEP_ENDDATE = "enddate"; // range in minute
+    private static final String KEY_STEP_CREATION_DATE = "creationdate"; // Date format is yyyy-dd-mm
+    private static final String KEY_STEP_PERIODTIME = "periodtime";
+    private static final String KEY_STEP_STARTDATE = "startdate"; // period range in hour:minute
+    private static final String KEY_STEP_ENDDATE = "enddate"; // period range in hour:minute
     private static final String KEY_STEP_SYNCED = "synced";
 
     // //db.execSQL("CREATE TABLE " + TABLE_STEPS + " (date INTEGER, steps
     // INTEGER)");
     private static final String CREATE_TABLE_STEPS = "CREATE TABLE IF NOT EXISTS " + TABLE_STEPS + "(" + KEY_STEP_ID
             + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_STEP_DATE + " INTEGER," + KEY_STEP_CREATION_DATE + " TEXT,"
-            + KEY_STEP_STARTDATE + " INTEGER," + KEY_STEP_ENDDATE + " INTEGER," + KEY_STEP_STEPS + " INTEGER,"
-            + KEY_STEP_SYNCED + " INTEGER)";
+            + KEY_STEP_PERIODTIME + " INTEGER," + KEY_STEP_STARTDATE + " TEXT," + KEY_STEP_ENDDATE + " TEXT,"
+            + KEY_STEP_STEPS + " INTEGER," + KEY_STEP_TOTAL + " INTEGER, " + KEY_STEP_SYNCED + " INTEGER)";
 
     private static Database sInstance;
     private static final AtomicInteger openCounter = new AtomicInteger();
+
+    private static int lastSaveSteps = 0;
+    private static int lastPeriodSteps = 0;
+    private static long lastSaveTime;
 
     private Database(final Context context) {
         // for private directory
@@ -89,7 +96,7 @@ public class Database extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(final SQLiteDatabase db, int oldVersion, int newVersion) {
-        Log.w(StepsDBHelper.class.getName(), "Upgrading database from version " + oldVersion + " to " + newVersion
+        Log.w(Database.class.getName(), "Upgrading database from version " + oldVersion + " to " + newVersion
                 + ", which will destroy all old data");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_STEPS);
         onCreate(db);
@@ -405,5 +412,122 @@ public class Database extends SQLiteOpenHelper {
     public int getCurrentSteps() {
         int re = getSteps(-1);
         return re == Integer.MIN_VALUE ? 0 : re;
+    }
+
+    public boolean createStepsEntryValue(int steps) {
+        Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue steps=" + steps);
+
+        boolean isDateAlreadyPresent = false;
+        boolean createSuccessful = false;
+        int currentDateStepCounts = 0;
+        Calendar mCalendar = Calendar.getInstance();
+        String todayDate = String.valueOf(mCalendar.get(Calendar.YEAR)) + "-"
+                + String.valueOf(mCalendar.get(Calendar.MONTH)) + "-"
+                + String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH));
+        Long date = StepsUtil.getToday();
+        Long datePeriodTime = StepsUtil.getTodayPeriodTime();
+       
+        // period start >= & < end in 5 min interval
+        Calendar mCalendarPeriodStart = Calendar.getInstance();
+        mCalendarPeriodStart.setTimeInMillis(datePeriodTime);
+        String startDate = "";
+        if (mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY) < 10) startDate += "0" + String.valueOf(mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY));
+        else startDate += String.valueOf(mCalendarPeriodStart.get(Calendar.HOUR_OF_DAY));
+        startDate += ":";
+        if (mCalendarPeriodStart.get(Calendar.MINUTE) < 10)  startDate += "0" + String.valueOf(mCalendarPeriodStart.get(Calendar.MINUTE));
+        else startDate += String.valueOf(mCalendarPeriodStart.get(Calendar.MINUTE));
+      
+        Calendar mCalendarPeriodEnd = Calendar.getInstance();
+        mCalendarPeriodEnd.setTimeInMillis(datePeriodTime);
+        mCalendarPeriodEnd.add(Calendar.MINUTE, 5);
+        String endDate = "";
+        if (mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY) < 10) endDate += "0" + String.valueOf(mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY));
+        else endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.HOUR_OF_DAY));
+        endDate += ":";
+        if (mCalendarPeriodEnd.get(Calendar.MINUTE) < 10)  endDate += "0" + String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
+        else endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
+
+        String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
+                + " = " + datePeriodTime;
+
+        /*
+         String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_CREATION_DATE
+                + " = '" + todayDate + "'";
+        */                
+        try {
+
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor c = db.rawQuery(selectQuery, null);
+            if (c.moveToFirst()) {
+                do {
+                    isDateAlreadyPresent = true;
+                    currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
+                } while (c.moveToNext());
+            }
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            /*
+            values.put(KEY_STEP_DATE, date);
+            values.put(KEY_STEP_CREATION_DATE, todayDate);           
+            values.put(KEY_STEP_PERIODTIME, datePeriodTime);
+            values.put(KEY_STEP_STARTDATE, startDate);
+            values.put(KEY_STEP_ENDDATE, endDate);
+            */
+
+            // last save period time
+            lastSaveSteps = getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("lastSaveSteps", 0); //pauseCount
+            if (lastSaveSteps == 0) {
+                lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
+                if (lastSaveSteps < 0) lastSaveSteps = 0; // to prevent zero with boot
+                //int pauseDifference = steps - getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("pauseCount", steps);
+
+                //getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
+            }
+
+            int steps_diff = steps - lastSaveSteps;
+            values.put(KEY_STEP_SYNCED, 0);
+            // use the negative steps as offset
+            //values.put(KEY_STEP_STEPS, -steps);
+            values.put(KEY_STEP_STEPS, steps_diff);
+            values.put(KEY_STEP_TOTAL, steps);
+           
+            if (isDateAlreadyPresent) {
+                // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
+                //values.put(KEY_STEP_TOTAL, steps);
+                int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
+                //int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" + todayDate + "'", null);
+                if (row == 1) {
+                    createSuccessful = true;
+                }
+                db.close();
+            } else {
+                values.put(KEY_STEP_DATE, date);
+                values.put(KEY_STEP_CREATION_DATE, todayDate);           
+                values.put(KEY_STEP_PERIODTIME, datePeriodTime);
+                values.put(KEY_STEP_STARTDATE, startDate);
+                values.put(KEY_STEP_ENDDATE, endDate);
+                // values.put(KEY_STEP_TOTAL, 1);
+                //values.put(KEY_STEP_TOTAL, steps);
+                long row = db.insert(TABLE_STEPS, null, values);
+                if (row != -1) {
+                    createSuccessful = true;
+                }
+                db.close();
+
+                getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("lastSaveSteps", steps).commit();
+                lastSaveSteps = steps;
+                lastSaveTime = System.currentTimeMillis();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return createSuccessful;
     }
 }
