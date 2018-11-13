@@ -510,7 +510,7 @@ public class Database extends SQLiteOpenHelper {
 
             int steps_diff = steps - lastSaveSteps;
             values.put(KEY_STEP_SYNCED, 0);
-            values.put(KEY_STEP_SYNCEDDATE, null);
+            values.put(KEY_STEP_SYNCEDDATE, 0); // force to 0 for date or -1
             // use the negative steps as offset
             // values.put(KEY_STEP_STEPS, -steps);
             values.put(KEY_STEP_STEPS, steps_diff);
