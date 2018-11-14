@@ -39,6 +39,12 @@ import android.util.Log;
 import org.apache.cordova.pedometer.Logger;
 import org.apache.cordova.pedometer.StepsUtil;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.MalformedURLException;
+import java.io.IOException;
+import java.io.*;
+
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "steps.db";
@@ -561,13 +567,14 @@ public class Database extends SQLiteOpenHelper {
         // String myPath = DB_PATH + DB_NAME;// Set path to your database
         // SQLiteDatabase myDataBase = SQLiteDatabase.openDatabase(myPath, null,
         // SQLiteDatabase.OPEN_READONLY);
+        String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = 0";
+
+        JSONArray resultSet = new JSONArray();
+        JSONObject returnObj = new JSONObject();
+
         try {
-            String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = 0";
             SQLiteDatabase db = this.getReadableDatabase();
             Cursor cursor = db.rawQuery(selectQuery, null);
-
-            JSONArray resultSet = new JSONArray();
-            JSONObject returnObj = new JSONObject();
 
             cursor.moveToFirst();
             while (cursor.isAfterLast() == false) {
@@ -629,5 +636,33 @@ public class Database extends SQLiteOpenHelper {
             e.printStackTrace();
         }
         return returnObj;
+    }
+
+    private JSONObject apiSyncToServer(String query, String json) throws IOException, JSONException {
+        //String query = "https://example.com"; // + user_id
+        //String json = "{\"key\":1}";
+    
+        URL url = new URL(query);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setConnectTimeout(5000);
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        //  conn.setRequestProperty ("Content-Type","application/x-www-form-urlencoded");
+        conn.setDoOutput(true);
+        conn.setDoInput(true);
+        conn.setRequestMethod("POST"); // GET
+    
+        OutputStream os = conn.getOutputStream();
+        os.write(json.getBytes("UTF-8"));
+        os.close();
+    
+        // read the response
+        InputStream in = new BufferedInputStream(conn.getInputStream());
+        String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
+        JSONObject jsonObject = new JSONObject(result);
+        
+        in.close();
+        conn.disconnect();
+    
+        return jsonObject;
     }
 }
