@@ -572,11 +572,12 @@ public class Database extends SQLiteOpenHelper {
     }
 
     // public JSONArray getNoSyncResults() {
-    public JSONObject getNoSyncResults() {
+    public JSONObject getNoSyncResults(boolean strict) {
         // String myPath = DB_PATH + DB_NAME;// Set path to your database
         // SQLiteDatabase myDataBase = SQLiteDatabase.openDatabase(myPath, null,
         // SQLiteDatabase.OPEN_READONLY);
         String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = 0";
+        if (!strict) selectQuery += " and "+KEY_STEP_STEPS+" > 0";
 
         JSONArray resultSet = new JSONArray();
         JSONObject returnObj = new JSONObject();
@@ -694,6 +695,7 @@ public class Database extends SQLiteOpenHelper {
         JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8")); 
         //JSONObject jsonObject = reader.readObject();
         JSONObject jsonObject = new JSONObject(reader.toString());
+        Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + jsonObject.toString());
         reader.close();
 
         in.close();

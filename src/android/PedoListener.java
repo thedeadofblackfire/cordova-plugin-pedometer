@@ -65,7 +65,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 	
     private Intent stepCounterIntent;
 
-	private StepsDBHelper mStepsDBHelper;
+	//private StepsDBHelper mStepsDBHelper;
     
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -107,14 +107,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
 		
-		
+		/*
 		Intent mStepsIntent = new Intent(cordova.getActivity(), StepsService.class); // context
         //logger.log(Log.DEBUG, "StepsService Intent created!");
 		Log.i(TAG, "PedoListener StepsService Intent created!");
-		cordova.getActivity().startService(mStepsIntent);
-		
-		
-		mStepsDBHelper = new StepsDBHelper(cordova.getActivity());
+        cordova.getActivity().startService(mStepsIntent);
+        */
+				
+		//mStepsDBHelper = new StepsDBHelper(cordova.getActivity());
     }
 
     /**
@@ -158,7 +158,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 			
         } else if (action.equals("isDistanceAvailable")) {
             //distance is never available in Android
-			mStepsDBHelper.createStepsEntry();
+			//mStepsDBHelper.createStepsEntry();
             this.win(false);
             return true;
         } else if (action.equals("isFloorCountingAvailable")) {
@@ -207,7 +207,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         } else if (action.equals("sync")) {
             Log.i(TAG, "sync is called");
             Database db = Database.getInstance(activity);
-            JSONObject dataToSync = db.getNoSyncResults();
+            JSONObject dataToSync = db.getNoSyncResults(false);
             try {
                 JSONObject response = db.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
                 this.win(response);
@@ -221,11 +221,13 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         } else if (action.equals("queryData")) {
             Log.i(TAG, "queryData is called");
             Log.i(TAG, args.toString());
+            Log.i(TAG, args.getJSONObject(0));
             //JSONObject jo = args.getJSONObject(0);
+            //JSONObject jo = args[0].getJSONObject(0);
             //Log.i(TAG, "execute: jo=" + jo.toString());
 
             Database db = Database.getInstance(activity);
-            this.win(db.getNoSyncResults());
+            this.win(db.getNoSyncResults(false));
             //this.win(this.getStepsJSON(steps));
             return true;
         } else {
