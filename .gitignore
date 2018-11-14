@@ -1,2 +1,9 @@
 # Mac crap
 .DS_Store
+
+# IDE Files
+#-------------------------
+.idea/*
+.vscode/*
+typings/*
+jsconfig.json

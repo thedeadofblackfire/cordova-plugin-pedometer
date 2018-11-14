@@ -24,6 +24,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Pair;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -425,6 +429,7 @@ public class Database extends SQLiteOpenHelper {
     public boolean createStepsEntryValue(int steps) {
         Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue steps=" + steps);
 
+        boolean algoWithZeroSteps = false;
         boolean isDateAlreadyPresent = false;
         boolean createSuccessful = false;
         int currentDateStepCounts = 0;
@@ -463,92 +468,166 @@ public class Database extends SQLiteOpenHelper {
         else
             endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
 
-        String selectQuery = "SELECT " + KEY_STEP_TOTAL + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
-                + " = " + datePeriodTime;
+        // last save period time
+        lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // pauseCount
+        if (lastSaveSteps == 0) {
+            lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
+            if (lastSaveSteps < 0)
+                lastSaveSteps = 0; // to prevent zero with boot
+            // int pauseDifference = steps - getSharedPreferences("pedometer",
+            // Context.MODE_PRIVATE).getInt("pauseCount", steps);
 
-        /*
-         * String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS +
-         * " WHERE " + KEY_STEP_CREATION_DATE + " = '" + todayDate + "'";
-         */
-        try {
+            // getSharedPreferences("pedometer",
+            // Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
+        }
 
-            SQLiteDatabase db = this.getReadableDatabase();
-            Cursor c = db.rawQuery(selectQuery, null);
-            if (c.moveToFirst()) {
-                do {
-                    isDateAlreadyPresent = true;
-                    currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
-                } while (c.moveToNext());
+        int steps_diff = steps - lastSaveSteps;
+        if (steps_diff < 0)
+            steps_diff = 0;
+
+        if (algoWithZeroSteps || (!algoWithZeroSteps && steps_diff > 0)) {
+            String selectQuery = "SELECT " + KEY_STEP_TOTAL + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
+                    + " = " + datePeriodTime;
+
+            /*
+             * String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS +
+             * " WHERE " + KEY_STEP_CREATION_DATE + " = '" + todayDate + "'";
+             */
+            try {
+
+                SQLiteDatabase db = this.getReadableDatabase();
+                Cursor c = db.rawQuery(selectQuery, null);
+                if (c.moveToFirst()) {
+                    do {
+                        isDateAlreadyPresent = true;
+                        currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
+                    } while (c.moveToNext());
+                }
+                db.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+
+            try {
+                SQLiteDatabase db = this.getWritableDatabase();
+                ContentValues values = new ContentValues();
+
+                values.put(KEY_STEP_SYNCED, 0);
+                values.put(KEY_STEP_SYNCEDDATE, 0); // force to 0 for date or -1
+                // use the negative steps as offset
+                // values.put(KEY_STEP_STEPS, -steps);
+                values.put(KEY_STEP_STEPS, steps_diff);
+                values.put(KEY_STEP_TOTAL, steps);
+                values.put(KEY_STEP_LASTUPDATE, System.currentTimeMillis());
+
+                if (isDateAlreadyPresent) {
+                    // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
+                    // values.put(KEY_STEP_TOTAL, steps);
+                    int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
+                    // int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" +
+                    // todayDate + "'", null);
+                    if (row == 1) {
+                        createSuccessful = true;
+                    }
+                    db.close();
+                } else {
+                    values.put(KEY_STEP_DATE, date);
+                    values.put(KEY_STEP_CREATION_DATE, todayDate);
+                    values.put(KEY_STEP_PERIODTIME, datePeriodTime);
+                    values.put(KEY_STEP_STARTDATE, startDate);
+                    values.put(KEY_STEP_ENDDATE, endDate);
+                    // values.put(KEY_STEP_TOTAL, 1);
+                    // values.put(KEY_STEP_TOTAL, steps);
+                    long row = db.insert(TABLE_STEPS, null, values);
+                    if (row != -1) {
+                        createSuccessful = true;
+                    }
+                    db.close();
+
+                    prefs.edit().putInt("lastSaveSteps", steps).commit();
+                    lastSaveSteps = steps;
+                    lastSaveTime = System.currentTimeMillis();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return createSuccessful;
+    }
+
+    // public JSONArray getNoSyncResults() {
+    public JSONObject getNoSyncResults() {
+        // String myPath = DB_PATH + DB_NAME;// Set path to your database
+        // SQLiteDatabase myDataBase = SQLiteDatabase.openDatabase(myPath, null,
+        // SQLiteDatabase.OPEN_READONLY);
+        try {
+            String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = 0";
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.rawQuery(selectQuery, null);
+
+            JSONArray resultSet = new JSONArray();
+            JSONObject returnObj = new JSONObject();
+
+            cursor.moveToFirst();
+            while (cursor.isAfterLast() == false) {
+
+                int totalColumn = cursor.getColumnCount();
+                JSONObject rowObject = new JSONObject();
+
+                for (int i = 0; i < totalColumn; i++) {
+                    String cName = cursor.getColumnName(i);
+                    if (cName != null) {
+
+                        try {
+                            switch (cursor.getType(i)) {
+                            case Cursor.FIELD_TYPE_INTEGER:
+                                rowObject.put(cName, cursor.getInt(i));
+                                break;
+                            case Cursor.FIELD_TYPE_FLOAT:
+                                rowObject.put(cName, cursor.getFloat(i));
+                                break;
+                            case Cursor.FIELD_TYPE_STRING:
+                                rowObject.put(cName, cursor.getString(i));
+                                break;
+                            // case Cursor.FIELD_TYPE_BLOB:
+                            // rowObject.put(cName, DataUtils.bytesToHexString(cursor.getBlob(i)));
+                            // break;
+                            default:
+                                rowObject.put(cName, "");
+                                break;
+                            }
+                            /*
+                             if (cursor.getString(i) != null) { 
+                                 Log.d("TAG_NAME", cursor.getString(i));
+                             rowObject.put(cName, cursor.getString(i)); 
+                            } else { rowObject.put(cName, "");
+                             }
+                             */
+                        } catch (Exception e) {
+                            Log.i(TAG, "Exception converting cursor column to json field: " + cName);
+                            Log.i(TAG, e.getMessage());
+                        }
+                    }
+
+                }
+
+                resultSet.put(rowObject);
+                cursor.moveToNext();
+            }
+
+            cursor.close();
+
+            // Log.d("TAG_NAME", resultSet.toString());
+            Log.i(Database.class.getName(), "StepsService Database getNoSyncResults steps=" + resultSet.toString());
+
+            returnObj.put("items", resultSet);
+            returnObj.put("dateUpdate", System.currentTimeMillis());
+            
             db.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        try {
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            /*
-             * values.put(KEY_STEP_DATE, date); values.put(KEY_STEP_CREATION_DATE,
-             * todayDate); values.put(KEY_STEP_PERIODTIME, datePeriodTime);
-             * values.put(KEY_STEP_STARTDATE, startDate); values.put(KEY_STEP_ENDDATE,
-             * endDate);
-             */
-
-            // last save period time
-            lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // pauseCount
-            if (lastSaveSteps == 0) {
-                lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
-                if (lastSaveSteps < 0)
-                    lastSaveSteps = 0; // to prevent zero with boot
-                // int pauseDifference = steps - getSharedPreferences("pedometer",
-                // Context.MODE_PRIVATE).getInt("pauseCount", steps);
-
-                // getSharedPreferences("pedometer",
-                // Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
-            }
-
-            int steps_diff = steps - lastSaveSteps;
-            values.put(KEY_STEP_SYNCED, 0);
-            values.put(KEY_STEP_SYNCEDDATE, 0); // force to 0 for date or -1
-            // use the negative steps as offset
-            // values.put(KEY_STEP_STEPS, -steps);
-            values.put(KEY_STEP_STEPS, steps_diff);
-            values.put(KEY_STEP_TOTAL, steps);
-            values.put(KEY_STEP_LASTUPDATE, System.currentTimeMillis());            
-
-            if (isDateAlreadyPresent) {
-                // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
-                // values.put(KEY_STEP_TOTAL, steps);
-                int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
-                // int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" +
-                // todayDate + "'", null);
-                if (row == 1) {
-                    createSuccessful = true;
-                }
-                db.close();
-            } else {
-                values.put(KEY_STEP_DATE, date);
-                values.put(KEY_STEP_CREATION_DATE, todayDate);
-                values.put(KEY_STEP_PERIODTIME, datePeriodTime);
-                values.put(KEY_STEP_STARTDATE, startDate);
-                values.put(KEY_STEP_ENDDATE, endDate);
-                // values.put(KEY_STEP_TOTAL, 1);
-                // values.put(KEY_STEP_TOTAL, steps);
-                long row = db.insert(TABLE_STEPS, null, values);
-                if (row != -1) {
-                    createSuccessful = true;
-                }
-                db.close();
-
-                prefs.edit().putInt("lastSaveSteps", steps).commit();
-                lastSaveSteps = steps;
-                lastSaveTime = System.currentTimeMillis();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return createSuccessful;
+        return returnObj;
     }
 }

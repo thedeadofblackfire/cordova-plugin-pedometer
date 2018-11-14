@@ -37,6 +37,7 @@ public class StepsService extends Service implements SensorEventListener {
     private static final String TAG = "cordova-plugin-pedometer";
 
     public final static int NOTIFICATION_ID = 1;
+    private final static long MAX_REPORT_LATENCY_MINUTE = 1; // 5
     private final static long MICROSECONDS_IN_ONE_MINUTE = 60000000;
     private final static long SAVE_OFFSET_TIME = AlarmManager.INTERVAL_HOUR;
     private final static int SAVE_OFFSET_STEPS = 2; //500;
@@ -274,7 +275,7 @@ public class StepsService extends Service implements SensorEventListener {
 
         // enable batching with delay of max 5 min
         sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_FASTEST,
-                (int) (5 * MICROSECONDS_IN_ONE_MINUTE));
+                (int) (MAX_REPORT_LATENCY_MINUTE * MICROSECONDS_IN_ONE_MINUTE));
     }
 
 }

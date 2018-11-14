@@ -194,11 +194,24 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             //activity.startService(stepCounterIntent);
             activity.bindService(stepCounterIntent, mConnection, Context.BIND_AUTO_CREATE);
             callbackContext.success(1);
+
+            // @todo call BatteryOptimizationUtil
+            
         } else if (action.equals("stopService")) {
             Log.i(TAG, "stopService is called");
             activity.stopService(stepCounterIntent);
             activity.unbindService(mConnection);
             callbackContext.success(1);
+        } else if (action.equals("queryData")) {
+            Log.i(TAG, "queryData is called");
+            Log.i(TAG, args.toString());
+            JSONObject jo = args.getJSONObject(0).getJSONObject(ANDROID);
+            Log.i(TAG, "execute: jo=" + jo.toString());
+
+            Database db = Database.getInstance(this);
+            this.win(db.getNoSyncResults());
+            //this.win(this.getStepsJSON(steps));
+            return true;
         } else {
             // Unsupported action
             Log.e(TAG, "Invalid action called on class " + TAG + ", " + action);
