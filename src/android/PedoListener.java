@@ -205,7 +205,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         } else if (action.equals("queryData")) {
             Log.i(TAG, "queryData is called");
             Log.i(TAG, args.toString());
-            JSONObject jo = args.getJSONObject(0).getJSONObject(ANDROID);
+            JSONObject jo = args.getJSONObject(0);
             Log.i(TAG, "execute: jo=" + jo.toString());
 
             Database db = Database.getInstance(activity);
