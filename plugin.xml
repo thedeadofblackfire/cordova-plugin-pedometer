@@ -75,5 +75,6 @@
         <source-file src="src/android/Logger.java" target-dir="src/org/apache/cordova/pedometer" />  
         <source-file src="src/android/Database.java" target-dir="src/org/apache/cordova/pedometer" />  
         <source-file src="src/android/BatteryOptimizationUtil.java" target-dir="src/org/apache/cordova/pedometer" />
+        <source-file src="src/android/libs/commons-io-2.5.jar" target-dir="libs/" /> 
     </platform>
 </plugin>

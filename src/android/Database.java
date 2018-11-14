@@ -44,6 +44,7 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.IOException;
 import java.io.*;
+import org.apache.commons.io.IOUtils;
 
 public class Database extends SQLiteOpenHelper {
 
@@ -671,7 +672,7 @@ public class Database extends SQLiteOpenHelper {
     
         // read the response
         InputStream in = new BufferedInputStream(conn.getInputStream());
-        String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
+        String result = IOUtils.toString(in, "UTF-8");
         JSONObject jsonObject = new JSONObject(result);
         
         in.close();

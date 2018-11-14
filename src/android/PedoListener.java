@@ -207,7 +207,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             Database db = Database.getInstance(activity);
             JSONObject dataToSync = db.getNoSyncResults();
             JSONObject response = db.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
-            db.updateLinesSynced();
+            this.win(response);
+            return true;
+            //db.updateLinesSynced();
         } else if (action.equals("queryData")) {
             Log.i(TAG, "queryData is called");
             Log.i(TAG, args.toString());
