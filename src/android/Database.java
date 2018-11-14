@@ -496,7 +496,7 @@ public class Database extends SQLiteOpenHelper {
             steps_diff = 0;
 
         if (algoWithZeroSteps || (!algoWithZeroSteps && steps_diff > 0)) {
-            String selectQuery = "SELECT " + KEY_STEP_TOTAL + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
+            String selectQuery = "SELECT " + KEY_STEP_STEPS + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
                     + " = " + datePeriodTime;
 
             /*
