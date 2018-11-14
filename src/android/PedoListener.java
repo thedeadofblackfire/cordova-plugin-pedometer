@@ -217,7 +217,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 e.printStackTrace();
             }
             return true;
-            //db.updateLinesSynced();
+            //db.updateLinesSynced(0,1);
         } else if (action.equals("queryData")) {
             Log.i(TAG, "queryData is called");
             Log.i(TAG, args.toString());

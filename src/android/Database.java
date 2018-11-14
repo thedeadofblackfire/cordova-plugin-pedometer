@@ -438,7 +438,7 @@ public class Database extends SQLiteOpenHelper {
     public boolean createStepsEntryValue(int steps) {
         Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue steps=" + steps);
 
-        boolean algoWithZeroSteps = false;
+        boolean algoWithZeroSteps = true;
         boolean isDateAlreadyPresent = false;
         boolean createSuccessful = false;
         int currentDateStepCounts = 0;
@@ -561,6 +561,12 @@ public class Database extends SQLiteOpenHelper {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else if (!algoWithZeroSteps && steps_diff == 0) {
+            /*
+            prefs.edit().putInt("lastSaveSteps", steps).commit();
+            lastSaveSteps = steps;
+            lastSaveTime = System.currentTimeMillis();
+            */
         }
         return createSuccessful;
     }
@@ -592,10 +598,18 @@ public class Database extends SQLiteOpenHelper {
                         try {
                             switch (cursor.getType(i)) {
                             case Cursor.FIELD_TYPE_INTEGER:
-                                rowObject.put(cName, cursor.getInt(i));
+                                int intVal = cursor.getInt(i);
+                                long longVal = cursor.getLong(i);
+                                if(intVal == longVal) rowObject.put(cName, intVal);
+                                else rowObject.put(cName, longVal);
+                                //rowObject.put(cName, cursor.getInt(i));
                                 break;
                             case Cursor.FIELD_TYPE_FLOAT:
-                                rowObject.put(cName, cursor.getFloat(i));
+                                float floatVal = cursor.getFloat(i);
+                                double doubleVal = cursor.getDouble(i);
+                                if(floatVal == doubleVal) rowObject.put(cName, floatVal);
+                                else rowObject.put(cName, doubleVal);
+                                //rowObject.put(cName, cursor.getFloat(i));
                                 break;
                             case Cursor.FIELD_TYPE_STRING:
                                 rowObject.put(cName, cursor.getString(i));
@@ -645,11 +659,12 @@ public class Database extends SQLiteOpenHelper {
     /**
      * Adds the given number of steps to the last entry in the database
      *
-     * @param steps the number of steps to add
+     * @param oldStatus = 0
+     *  @param newStatus = 1
      */
-    public void updateLinesSynced() {
-        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 1, "+KEY_STEP_SYNCEDDATE+" = " + System.currentTimeMillis()
-                + " WHERE "+KEY_STEP_SYNCED+" = 0");
+    public void updateLinesSynced(int oldStatus, int newStatus) {
+        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = "+newStatus+", "+KEY_STEP_SYNCEDDATE+" = " + System.currentTimeMillis()
+                + " WHERE "+KEY_STEP_SYNCED+" = "+oldStatus);
     }
     
     /**
