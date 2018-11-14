@@ -672,7 +672,7 @@ public class Database extends SQLiteOpenHelper {
     
         // read the response
         InputStream in = new BufferedInputStream(conn.getInputStream());
-        String result = IOUtils.toString(in, "UTF-8");
+        String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
         JSONObject jsonObject = new JSONObject(result);
         
         in.close();
