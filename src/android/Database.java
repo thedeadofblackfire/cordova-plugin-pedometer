@@ -535,7 +535,8 @@ public class Database extends SQLiteOpenHelper {
                     // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
                     // values.put(KEY_STEP_TOTAL, steps);
                     if (lastPeriodTimeKey == datePeriodTime) {
-                        // to fix bug on steps when insert & update inside the same period of time
+                        Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue same lastPeriodTimeKey");
+                        // to fix bug on steps when insert & update inside the same period of time on the frontier border of 5min
                         values.remove(KEY_STEP_STEPS);
                         values.put(KEY_STEP_STEPS, steps_diff + currentDateStepCounts);                        
                     }
@@ -544,6 +545,12 @@ public class Database extends SQLiteOpenHelper {
                     // todayDate + "'", null);
                     if (row == 1) {
                         createSuccessful = true;
+                        // for to update the reference parameter
+                        if (lastPeriodTimeKey == datePeriodTime) {
+                            prefs.edit().putInt("lastSaveSteps", steps).commit();
+                            lastSaveSteps = steps;
+                            lastSaveTime = System.currentTimeMillis();
+                        }
                     }
                     db.close();
                 } else {
