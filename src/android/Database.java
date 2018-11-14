@@ -605,8 +605,8 @@ public class Database extends SQLiteOpenHelper {
                              }
                              */
                         } catch (Exception e) {
-                            Log.i(TAG, "Exception converting cursor column to json field: " + cName);
-                            Log.i(TAG, e.getMessage());
+                            Log.i(Database.class.getName(), "Exception converting cursor column to json field: " + cName);
+                            Log.i(Database.class.getName(), e.getMessage());
                         }
                     }
 

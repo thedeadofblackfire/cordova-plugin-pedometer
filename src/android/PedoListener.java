@@ -196,7 +196,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             callbackContext.success(1);
 
             // @todo call BatteryOptimizationUtil
-            
+
         } else if (action.equals("stopService")) {
             Log.i(TAG, "stopService is called");
             activity.stopService(stepCounterIntent);
@@ -208,7 +208,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             JSONObject jo = args.getJSONObject(0).getJSONObject(ANDROID);
             Log.i(TAG, "execute: jo=" + jo.toString());
 
-            Database db = Database.getInstance(this);
+            Database db = Database.getInstance(activity);
             this.win(db.getNoSyncResults());
             //this.win(this.getStepsJSON(steps));
             return true;
