@@ -44,7 +44,9 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.IOException;
 import java.io.*;
-import org.apache.commons.io.IOUtils;
+//import org.apache.commons.io.IOUtils;
+//import javax.json.JsonReader;
+import android.util.JsonReader;
 
 public class Database extends SQLiteOpenHelper {
 
@@ -672,9 +674,13 @@ public class Database extends SQLiteOpenHelper {
     
         // read the response
         InputStream in = new BufferedInputStream(conn.getInputStream());
-        String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
-        JSONObject jsonObject = new JSONObject(result);
-        
+        //String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
+        //JSONObject jsonObject = new JSONObject(result);
+        JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8")); 
+        //JSONObject jsonObject = reader.readObject();
+        JSONObject jsonObject = new JSONObject(reader.toString());
+        reader.close();
+
         in.close();
         conn.disconnect();
     
