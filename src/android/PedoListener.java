@@ -219,16 +219,20 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             return true;
             //db.updateLinesSynced(0,1);
         } else if (action.equals("queryData")) {
-            Log.i(TAG, "queryData is called");
-            Log.i(TAG, args.toString());
-            Log.i(TAG, args.getJSONObject(0).toString());
-            //JSONObject jo = args.getJSONObject(0);
-            //JSONObject jo = args[0].getJSONObject(0);
-            //Log.i(TAG, "execute: jo=" + jo.toString());
+            try {
+                Log.i(TAG, "queryData is called");
+                Log.i(TAG, args.toString());
+                Log.i(TAG, args.getJSONObject(0).toString());
+                //JSONObject jo = args.getJSONObject(0);
+                //JSONObject jo = args[0].getJSONObject(0);
+                //Log.i(TAG, "execute: jo=" + jo.toString());
 
-            Database db = Database.getInstance(activity);
-            this.win(db.getNoSyncResults(false));
-            //this.win(this.getStepsJSON(steps));
+                Database db = Database.getInstance(activity);
+                this.win(db.getNoSyncResults(false));
+                //this.win(this.getStepsJSON(steps));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             return true;
         } else {
             // Unsupported action
