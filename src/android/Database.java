@@ -80,6 +80,7 @@ public class Database extends SQLiteOpenHelper {
     private static int lastSaveSteps = 0;
     private static int lastPeriodSteps = 0;
     private static long lastSaveTime;
+    private static long lastPeriodTimeKey;
     private SharedPreferences prefs;
 
     private Database(final Context context) {
@@ -509,7 +510,8 @@ public class Database extends SQLiteOpenHelper {
                 if (c.moveToFirst()) {
                     do {
                         isDateAlreadyPresent = true;
-                        currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
+                        currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_STEPS)));
+                        //currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
                     } while (c.moveToNext());
                 }
                 db.close();
@@ -532,6 +534,11 @@ public class Database extends SQLiteOpenHelper {
                 if (isDateAlreadyPresent) {
                     // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
                     // values.put(KEY_STEP_TOTAL, steps);
+                    if (lastPeriodTimeKey == datePeriodTime) {
+                        // to fix bug on steps when insert & update inside the same period of time
+                        values.remove(KEY_STEP_STEPS);
+                        values.put(KEY_STEP_STEPS, steps_diff + currentDateStepCounts);                        
+                    }
                     int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
                     // int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" +
                     // todayDate + "'", null);
@@ -556,6 +563,7 @@ public class Database extends SQLiteOpenHelper {
                     prefs.edit().putInt("lastSaveSteps", steps).commit();
                     lastSaveSteps = steps;
                     lastSaveTime = System.currentTimeMillis();
+                    lastPeriodTimeKey = datePeriodTime;
                 }
 
             } catch (Exception e) {
