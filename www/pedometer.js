@@ -41,4 +41,8 @@ Pedometer.prototype.deviceCanCountSteps = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "deviceCanCountSteps", []);
 };
 
+Pedometer.prototype.sync = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "sync", []);
+};
+
 module.exports = new Pedometer();

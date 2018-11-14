@@ -630,6 +630,7 @@ public class Database extends SQLiteOpenHelper {
 
             returnObj.put("items", resultSet);
             returnObj.put("dateUpdate", System.currentTimeMillis());
+            returnObj.put("user_id", "1000");
             
             db.close();
         } catch (Exception e) {
@@ -638,7 +639,20 @@ public class Database extends SQLiteOpenHelper {
         return returnObj;
     }
 
-    private JSONObject apiSyncToServer(String query, String json) throws IOException, JSONException {
+    /**
+     * Adds the given number of steps to the last entry in the database
+     *
+     * @param steps the number of steps to add
+     */
+    public void updateLinesSynced() {
+        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 1, "+KEY_STEP_SYNCEDDATE+" = " + System.currentTimeMillis()
+                + " WHERE "+KEY_STEP_SYNCED+" = 0");
+    }
+    
+    /**
+     * Api send to server for syncing operations
+     */
+    public JSONObject sendToServer(String query, String json) throws IOException, JSONException {
         //String query = "https://example.com"; // + user_id
         //String json = "{\"key\":1}";
     
