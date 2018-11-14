@@ -34,6 +34,8 @@ import android.os.Handler;
 import android.os.Build;
 import android.os.IBinder;
 
+import java.io.IOException;
+
 /**
  * This class listens to the pedometer sensor
  */
@@ -206,8 +208,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             Log.i(TAG, "sync is called");
             Database db = Database.getInstance(activity);
             JSONObject dataToSync = db.getNoSyncResults();
-            JSONObject response = db.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
-            this.win(response);
+            try {
+                JSONObject response = db.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
+                this.win(response);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return true;
             //db.updateLinesSynced();
         } else if (action.equals("queryData")) {
