@@ -51,7 +51,7 @@ import android.util.JsonReader;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "steps.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String TABLE_SETTINGS = "settings";
     private static final String KEY_SETTINGS_ID = "id";
@@ -129,9 +129,13 @@ public class Database extends SQLiteOpenHelper {
     public void onUpgrade(final SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.w(Database.class.getName(), "Upgrading database from version " + oldVersion + " to " + newVersion
                 + ", which will destroy all old data");
+
+        db.execSQL(CREATE_TABLE_SETTINGS);
+        /*                
         db.execSQL("DROP TABLE IF EXISTS " + CREATE_TABLE_SETTINGS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_STEPS);
         onCreate(db);
+        */
 
         /*
          * if (oldVersion == 1) { // drop PRIMARY KEY constraint
@@ -486,8 +490,8 @@ public class Database extends SQLiteOpenHelper {
         int currentDateStepCounts = 0;
         Calendar mCalendar = Calendar.getInstance();
         String todayDate = String.valueOf(mCalendar.get(Calendar.YEAR)) + "-"
-                + String.valueOf(mCalendar.get(Calendar.MONTH)) + "-"
-                + String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH));
+                + String.format("%2s", String.valueOf(mCalendar.get(Calendar.MONTH) + 1)).replace(' ', '0') + "-"
+                + String.format("%2s", String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH))).replace(' ', '0');
         Long date = StepsUtil.getToday();
         Long datePeriodTime = StepsUtil.getTodayPeriodTime();
 
