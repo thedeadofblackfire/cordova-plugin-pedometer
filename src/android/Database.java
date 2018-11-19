@@ -704,7 +704,7 @@ public class Database extends SQLiteOpenHelper {
         //  conn.setRequestProperty ("Content-Type","application/x-www-form-urlencoded");
         conn.setDoOutput(true);
         conn.setDoInput(true);
-        conn.setRequestMethod("POST"); // GET
+        conn.setRequestMethod("POST");
     
         OutputStream os = conn.getOutputStream();
         os.write(json.getBytes("UTF-8"));
@@ -714,9 +714,13 @@ public class Database extends SQLiteOpenHelper {
         InputStream in = new BufferedInputStream(conn.getInputStream());
         //String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
         //JSONObject jsonObject = new JSONObject(result);
+        /*
         JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8")); 
         //JSONObject jsonObject = reader.readObject();
         JSONObject jsonObject = new JSONObject(reader.toString());
+        */
+        String contentString = convertStreamToString(in); // conn.getInputStream()
+        JSONObject jsonObject = new JSONObject(contentString);
         Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + jsonObject.toString());
         reader.close();
 
@@ -724,6 +728,17 @@ public class Database extends SQLiteOpenHelper {
         conn.disconnect();
     
         return jsonObject;
+    }
+
+    private static String convertStreamToString(InputStream is) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+          sb.append(line);
+        }
+        reader.close();
+        return sb.toString();
     }
 
     public JSONObject syncData() {    
