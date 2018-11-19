@@ -726,17 +726,20 @@ public class Database extends SQLiteOpenHelper {
         return jsonObject;
     }
 
-    public JSONObject syncData() {            
+    public JSONObject syncData() {    
+        JSONObject response = new JSONObject();        
         try {
             JSONObject dataToSync = this.getNoSyncResults(true);  
             this.queueLinesToSync();
-            JSONObject response = this.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
-            this.updateLinesSynced();
-            return response;
+            response = this.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
+            if (response.has("success")) {
+                this.updateLinesSynced();
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return response;
     }
 }
