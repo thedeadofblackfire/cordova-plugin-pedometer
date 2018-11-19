@@ -191,6 +191,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 Log.i(TAG, "setConfig is called");
                 Log.i(TAG, args.toString());
                 Log.i(TAG, args.getJSONObject(0).toString());
+                Database db = Database.getInstance(activity);
+                db.setConfig(args.getJSONObject(0).getString("userid"), args.getJSONObject(0).getString("api"));
                 //JSONObject jo = args.getJSONObject(0);
                 //JSONObject jo = args[0].getJSONObject(0);
                 //Log.i(TAG, "execute: jo=" + jo.toString());

@@ -53,6 +53,16 @@ public class Database extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "steps.db";
     private static final int DATABASE_VERSION = 2;
 
+    private static final String TABLE_SETTINGS = "settings";
+    private static final String KEY_SETTINGS_ID = "id";
+    private static final String KEY_SETTINGS_USERID = "userid";
+    private static final String KEY_SETTINGS_API = "api";
+    private static final String KEY_SETTINGS_LASTUPDATE = "lastupdate";
+
+    private static final String CREATE_TABLE_SETTINGS = "CREATE TABLE IF NOT EXISTS " + TABLE_SETTINGS + "(" + KEY_SETTINGS_ID
+            + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_SETTINGS_USERID + " TEXT," + KEY_SETTINGS_API + " TEXT,"
+            + KEY_SETTINGS_LASTUPDATE + " INTEGER)";
+
     private static final String TABLE_STEPS = "steps";
     private static final String KEY_STEP_ID = "id";
     private static final String KEY_STEP_STEPS = "steps"; // stepscount
@@ -111,13 +121,15 @@ public class Database extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(final SQLiteDatabase db) {
-        db.execSQL(CREATE_TABLE_STEPS);
+        db.execSQL(CREATE_TABLE_SETTINGS);
+        db.execSQL(CREATE_TABLE_STEPS);       
     }
 
     @Override
     public void onUpgrade(final SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.w(Database.class.getName(), "Upgrading database from version " + oldVersion + " to " + newVersion
                 + ", which will destroy all old data");
+        db.execSQL("DROP TABLE IF EXISTS " + CREATE_TABLE_SETTINGS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_STEPS);
         onCreate(db);
 
@@ -129,6 +141,35 @@ public class Database extends SQLiteOpenHelper {
          * db.execSQL("DROP TABLE " + TABLE_STEPS); db.execSQL("ALTER TABLE " +
          * TABLE_STEPS + "2 RENAME TO " + TABLE_STEPS + ""); }
          */
+    }
+    
+    /**
+     * Inserts a new config in the database, overwriting any existing entry for the
+     * given userid.
+     *
+     * @param userid  
+     * @param api 
+     * @return true if a new entry was created, false if there was already an entry (and it was overwritten)
+     */
+    public boolean setConfig(String userid, String api) {
+        getWritableDatabase().beginTransaction();
+        boolean newEntryCreated = false;
+        try {
+            ContentValues values = new ContentValues();
+            values.put(KEY_SETTINGS_API, api);
+            values.put(KEY_SETTINGS_LASTUPDATE, System.currentTimeMillis());
+            int updatedRows = getWritableDatabase().update(TABLE_SETTINGS, values, KEY_SETTINGS_USERID +" = ?",
+                    new String[] { userid });
+            if (updatedRows == 0) {
+                values.put(KEY_SETTINGS_USERID, userid);
+                getWritableDatabase().insert(TABLE_SETTINGS, null, values);
+                newEntryCreated = true;
+            }
+            getWritableDatabase().setTransactionSuccessful();
+        } finally {
+            getWritableDatabase().endTransaction();
+        }
+        return newEntryCreated;
     }
 
     /**
@@ -722,7 +763,7 @@ public class Database extends SQLiteOpenHelper {
         String contentString = convertStreamToString(in); // conn.getInputStream()
         JSONObject jsonObject = new JSONObject(contentString);
         Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + jsonObject.toString());
-        reader.close();
+        //reader.close();
 
         in.close();
         conn.disconnect();
