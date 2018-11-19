@@ -764,6 +764,7 @@ public class Database extends SQLiteOpenHelper {
         os.close();
     
         // read the response
+        JSONObject response = new JSONObject(); 
         InputStream in = new BufferedInputStream(conn.getInputStream());
         //String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
         //JSONObject jsonObject = new JSONObject(result);
@@ -774,17 +775,17 @@ public class Database extends SQLiteOpenHelper {
         */
         try {
             String contentString = convertStreamToString(in); // conn.getInputStream()
-            JSONObject jsonObject = new JSONObject(contentString);
+            JSONObject response = new JSONObject(contentString);
             Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + jsonObject.toString());
             //reader.close();
         } catch(Exception e){
             e.printStackTrace();
-        } finally {}
+        } 
 
         in.close();
         conn.disconnect();
     
-        return jsonObject;
+        return response;
     }
 
     private static String convertStreamToString(InputStream is) throws Exception {
