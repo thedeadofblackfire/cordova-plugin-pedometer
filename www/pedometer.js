@@ -45,6 +45,14 @@ Pedometer.prototype.sync = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "sync", []);
 };
 
+Pedometer.prototype.reset = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "reset", []);
+};
+
+Pedometer.prototype.clean = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "clean", []);
+};
+
 Pedometer.prototype.setConfig = function (onSuccess, onError, options) {
     exec(onSuccess, onError, "Pedometer", "setConfig", [options]);
 };

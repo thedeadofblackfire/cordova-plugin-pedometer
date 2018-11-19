@@ -714,8 +714,21 @@ public class Database extends SQLiteOpenHelper {
         }
         return returnObj;
     }
+     
+    /**
+     * Clean all synced data
+     */
+    public void cleanLinesToSync() {
+        getWritableDatabase().execSQL("DELETE FROM " + TABLE_STEPS + " WHERE "+KEY_STEP_SYNCED+" > 0");
+    }
 
-    
+    /**
+     * Reset all synced data
+     */
+    public void resetLinesToSync() {
+        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 0, "+KEY_STEP_SYNCEDDATE+" = 0  WHERE "+KEY_STEP_SYNCED+" > 0");
+    }
+
     /**
      * Mark as processing the lines to sync before calling server POST
      */
@@ -723,7 +736,6 @@ public class Database extends SQLiteOpenHelper {
         getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 1 WHERE "+KEY_STEP_SYNCED+" = 0");
     }
     
-
     /**
      * Mark as sent lines to server
      */
@@ -760,10 +772,14 @@ public class Database extends SQLiteOpenHelper {
         //JSONObject jsonObject = reader.readObject();
         JSONObject jsonObject = new JSONObject(reader.toString());
         */
-        String contentString = convertStreamToString(in); // conn.getInputStream()
-        JSONObject jsonObject = new JSONObject(contentString);
-        Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + jsonObject.toString());
-        //reader.close();
+        try {
+            String contentString = convertStreamToString(in); // conn.getInputStream()
+            JSONObject jsonObject = new JSONObject(contentString);
+            Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + jsonObject.toString());
+            //reader.close();
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {}
 
         in.close();
         conn.disconnect();
