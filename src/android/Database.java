@@ -593,6 +593,7 @@ public class Database extends SQLiteOpenHelper {
         // SQLiteDatabase.OPEN_READONLY);
         String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = 0";
         if (!strict) selectQuery += " and "+KEY_STEP_STEPS+" > 0";
+        selectQuery += " order by id asc";
 
         JSONArray resultSet = new JSONArray();
         JSONObject returnObj = new JSONObject();
@@ -660,10 +661,11 @@ public class Database extends SQLiteOpenHelper {
 
             // Log.d("TAG_NAME", resultSet.toString());
             Log.i(Database.class.getName(), "StepsService Database getNoSyncResults steps=" + resultSet.toString());
-
-            returnObj.put("items", resultSet);
-            returnObj.put("dateUpdate", System.currentTimeMillis());
-            returnObj.put("user_id", "1000");
+           
+            returnObj.put("data_type", "measure_activity");
+            returnObj.put("data_aggregated", resultSet);
+            returnObj.put("data_last_update", System.currentTimeMillis());
+            returnObj.put("user_id", "10470");
             
             db.close();
         } catch (Exception e) {
@@ -672,15 +674,21 @@ public class Database extends SQLiteOpenHelper {
         return returnObj;
     }
 
+    
     /**
-     * Adds the given number of steps to the last entry in the database
-     *
-     * @param oldStatus = 0
-     *  @param newStatus = 1
+     * Mark as processing the lines to sync before calling server POST
      */
-    public void updateLinesSynced(int oldStatus, int newStatus) {
-        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = "+newStatus+", "+KEY_STEP_SYNCEDDATE+" = " + System.currentTimeMillis()
-                + " WHERE "+KEY_STEP_SYNCED+" = "+oldStatus);
+    public void queueLinesToSync() {
+        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 1 WHERE "+KEY_STEP_SYNCED+" = 0");
+    }
+    
+
+    /**
+     * Mark as sent lines to server
+     */
+    public void updateLinesSynced() {
+        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 2, "+KEY_STEP_SYNCEDDATE+" = " + System.currentTimeMillis()
+                + " WHERE "+KEY_STEP_SYNCED+" = 1");
     }
     
     /**
@@ -688,8 +696,7 @@ public class Database extends SQLiteOpenHelper {
      */
     public JSONObject sendToServer(String query, String json) throws IOException, JSONException {
         //String query = "https://example.com"; // + user_id
-        //String json = "{\"key\":1}";
-    
+        //String json = "{\"key\":1}";    
         URL url = new URL(query);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(5000);
@@ -717,5 +724,19 @@ public class Database extends SQLiteOpenHelper {
         conn.disconnect();
     
         return jsonObject;
+    }
+
+    public JSONObject syncData() {            
+        try {
+            JSONObject dataToSync = this.getNoSyncResults(true);  
+            this.queueLinesToSync();
+            JSONObject response = this.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
+            this.updateLinesSynced();
+            return response;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

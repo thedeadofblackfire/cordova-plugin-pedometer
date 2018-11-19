@@ -45,4 +45,8 @@ Pedometer.prototype.sync = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "sync", []);
 };
 
+Pedometer.prototype.setConfig = function (onSuccess, onError, options) {
+    exec(onSuccess, onError, "Pedometer", "setConfig", [options]);
+};
+
 module.exports = new Pedometer();

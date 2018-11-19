@@ -186,6 +186,22 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             Log.i(TAG, "deviceCanCountSteps is called");
             Boolean canStepCount = deviceHasStepCounter(activity.getPackageManager());
             callbackContext.success(canStepCount ? 1 : 0);
+        } else if (action.equals("setConfig")) {
+            try {
+                Log.i(TAG, "setConfig is called");
+                Log.i(TAG, args.toString());
+                Log.i(TAG, args.getJSONObject(0).toString());
+                //JSONObject jo = args.getJSONObject(0);
+                //JSONObject jo = args[0].getJSONObject(0);
+                //Log.i(TAG, "execute: jo=" + jo.toString());
+
+                //Database db = Database.getInstance(activity);
+                //this.win(db.getNoSyncResults(false));
+                this.win(null);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return true;
         } else if (action.equals("startService")) {
             Log.i(TAG, "startService is called");
             if (Build.VERSION.SDK_INT >= 26) {
@@ -207,9 +223,10 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         } else if (action.equals("sync")) {
             Log.i(TAG, "sync is called");
             Database db = Database.getInstance(activity);
-            JSONObject dataToSync = db.getNoSyncResults(false);
+            //JSONObject dataToSync = db.getNoSyncResults(false);
             try {
-                JSONObject response = db.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
+                //JSONObject response = db.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
+                JSONObject response = db.syncData();
                 this.win(response);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -217,7 +234,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 e.printStackTrace();
             }
             return true;
-            //db.updateLinesSynced(0,1);
         } else if (action.equals("queryData")) {
             try {
                 Log.i(TAG, "queryData is called");
