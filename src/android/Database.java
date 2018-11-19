@@ -775,8 +775,8 @@ public class Database extends SQLiteOpenHelper {
         */
         try {
             String contentString = convertStreamToString(in); // conn.getInputStream()
-            JSONObject response = new JSONObject(contentString);
-            Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + jsonObject.toString());
+            response = new JSONObject(contentString);
+            Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + response.toString());
             //reader.close();
         } catch(Exception e){
             e.printStackTrace();
