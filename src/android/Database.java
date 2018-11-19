@@ -51,7 +51,7 @@ import android.util.JsonReader;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "steps.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     private static final String TABLE_SETTINGS = "settings";
     private static final String KEY_SETTINGS_KEY = "key";
@@ -142,7 +142,7 @@ public class Database extends SQLiteOpenHelper {
         Log.w(Database.class.getName(), "Upgrading database from version " + oldVersion + " to " + newVersion
                 + ", which will destroy all old data");
 
-        db.execSQL("DROP TABLE IF EXISTS " + CREATE_TABLE_SETTINGS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SETTINGS);
         db.execSQL(CREATE_TABLE_SETTINGS);
         /*
          * db.execSQL("DROP TABLE IF EXISTS " + CREATE_TABLE_SETTINGS);
