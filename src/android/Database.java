@@ -51,17 +51,29 @@ import android.util.JsonReader;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "steps.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     private static final String TABLE_SETTINGS = "settings";
-    private static final String KEY_SETTINGS_ID = "id";
-    private static final String KEY_SETTINGS_USERID = "userid";
-    private static final String KEY_SETTINGS_API = "api";
+    private static final String KEY_SETTINGS_KEY = "key";
+    private static final String KEY_SETTINGS_VALUE = "value";
     private static final String KEY_SETTINGS_LASTUPDATE = "lastupdate";
 
-    private static final String CREATE_TABLE_SETTINGS = "CREATE TABLE IF NOT EXISTS " + TABLE_SETTINGS + "(" + KEY_SETTINGS_ID
-            + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_SETTINGS_USERID + " TEXT," + KEY_SETTINGS_API + " TEXT,"
+    private static final String KEY_SETTINGS_ID = "id";
+    private static final String KEY_SETTINGS_USERID = "userid"; // user id to identify user
+    private static final String KEY_SETTINGS_API = "api"; // url to POST sync data
+    private static final String KEY_SETTINGS_STATUS = "status"; // status of service (start/pause)
+
+    private static final String CREATE_TABLE_SETTINGS = "CREATE TABLE IF NOT EXISTS " + TABLE_SETTINGS + " ("
+            + KEY_SETTINGS_KEY + " TEXT PRIMARY KEY, " + KEY_SETTINGS_VALUE + " TEXT NOT NULL,"
             + KEY_SETTINGS_LASTUPDATE + " INTEGER)";
+
+    /*
+     * private static final String CREATE_TABLE_SETTINGS =
+     * "CREATE TABLE IF NOT EXISTS " + TABLE_SETTINGS + "(" + KEY_SETTINGS_ID +
+     * " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_SETTINGS_USERID + " TEXT," +
+     * KEY_SETTINGS_API + " TEXT," + KEY_SETTINGS_STATUS+" TEXT," +
+     * KEY_SETTINGS_LASTUPDATE + " INTEGER)";
+     */
 
     private static final String TABLE_STEPS = "steps";
     private static final String KEY_STEP_ID = "id";
@@ -122,7 +134,7 @@ public class Database extends SQLiteOpenHelper {
     @Override
     public void onCreate(final SQLiteDatabase db) {
         db.execSQL(CREATE_TABLE_SETTINGS);
-        db.execSQL(CREATE_TABLE_STEPS);       
+        db.execSQL(CREATE_TABLE_STEPS);
     }
 
     @Override
@@ -130,12 +142,12 @@ public class Database extends SQLiteOpenHelper {
         Log.w(Database.class.getName(), "Upgrading database from version " + oldVersion + " to " + newVersion
                 + ", which will destroy all old data");
 
-        db.execSQL(CREATE_TABLE_SETTINGS);
-        /*                
         db.execSQL("DROP TABLE IF EXISTS " + CREATE_TABLE_SETTINGS);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_STEPS);
-        onCreate(db);
-        */
+        db.execSQL(CREATE_TABLE_SETTINGS);
+        /*
+         * db.execSQL("DROP TABLE IF EXISTS " + CREATE_TABLE_SETTINGS);
+         * db.execSQL("DROP TABLE IF EXISTS " + TABLE_STEPS); onCreate(db);
+         */
 
         /*
          * if (oldVersion == 1) { // drop PRIMARY KEY constraint
@@ -146,26 +158,27 @@ public class Database extends SQLiteOpenHelper {
          * TABLE_STEPS + "2 RENAME TO " + TABLE_STEPS + ""); }
          */
     }
-    
+
     /**
      * Inserts a new config in the database, overwriting any existing entry for the
      * given userid.
      *
-     * @param userid  
-     * @param api 
-     * @return true if a new entry was created, false if there was already an entry (and it was overwritten)
+     * @param key
+     * @param value
+     * @return true if a new entry was created, false if there was already an entry
+     *         (and it was overwritten)
      */
-    public boolean setConfig(String userid, String api) {
+    public boolean setConfig(String key, String value) {
         getWritableDatabase().beginTransaction();
         boolean newEntryCreated = false;
         try {
             ContentValues values = new ContentValues();
-            values.put(KEY_SETTINGS_API, api);
+            values.put(KEY_SETTINGS_VALUE, value);
             values.put(KEY_SETTINGS_LASTUPDATE, System.currentTimeMillis());
-            int updatedRows = getWritableDatabase().update(TABLE_SETTINGS, values, KEY_SETTINGS_USERID +" = ?",
-                    new String[] { userid });
+            int updatedRows = getWritableDatabase().update(TABLE_SETTINGS, values, KEY_SETTINGS_KEY + " = ?",
+                    new String[] { key });
             if (updatedRows == 0) {
-                values.put(KEY_SETTINGS_USERID, userid);
+                values.put(KEY_SETTINGS_KEY, key);
                 getWritableDatabase().insert(TABLE_SETTINGS, null, values);
                 newEntryCreated = true;
             }
@@ -174,6 +187,35 @@ public class Database extends SQLiteOpenHelper {
             getWritableDatabase().endTransaction();
         }
         return newEntryCreated;
+    }
+    /*
+     * public boolean setConfig(String userid, String api) {
+     * getWritableDatabase().beginTransaction(); boolean newEntryCreated = false;
+     * try { ContentValues values = new ContentValues();
+     * values.put(KEY_SETTINGS_API, api); values.put(KEY_SETTINGS_LASTUPDATE,
+     * System.currentTimeMillis()); int updatedRows =
+     * getWritableDatabase().update(TABLE_SETTINGS, values, KEY_SETTINGS_USERID
+     * +" = ?", new String[] { userid }); if (updatedRows == 0) {
+     * values.put(KEY_SETTINGS_USERID, userid);
+     * getWritableDatabase().insert(TABLE_SETTINGS, null, values); newEntryCreated =
+     * true; } getWritableDatabase().setTransactionSuccessful(); } finally {
+     * getWritableDatabase().endTransaction(); } return newEntryCreated; }
+     * 
+     */
+
+    /**
+     * Get config (last user inserted)
+     *
+     * @return the maximum number of steps walked in one day
+     */
+    public String getConfig(String key) {
+        Cursor c = getReadableDatabase().query(TABLE_SETTINGS, new String[] { key }, KEY_SETTINGS_KEY + " = ?",
+                new String[] { String.valueOf(key) }, null, null, null);
+        c.moveToFirst();
+        String re = c.getString(0);
+        c.close();
+        Log.i(Database.class.getName(), "StepsService Database getConfig " + key + "=" + re);
+        return re;
     }
 
     /**
@@ -556,7 +598,7 @@ public class Database extends SQLiteOpenHelper {
                     do {
                         isDateAlreadyPresent = true;
                         currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_STEPS)));
-                        //currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
+                        // currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
                     } while (c.moveToNext());
                 }
                 db.close();
@@ -580,10 +622,12 @@ public class Database extends SQLiteOpenHelper {
                     // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
                     // values.put(KEY_STEP_TOTAL, steps);
                     if (lastPeriodTimeKey == datePeriodTime) {
-                        Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue same lastPeriodTimeKey");
-                        // to fix bug on steps when insert & update inside the same period of time on the frontier border of 5min
+                        Log.i(Database.class.getName(),
+                                "StepsService Database createStepsEntryValue same lastPeriodTimeKey");
+                        // to fix bug on steps when insert & update inside the same period of time on
+                        // the frontier border of 5min
                         values.remove(KEY_STEP_STEPS);
-                        values.put(KEY_STEP_STEPS, steps_diff + currentDateStepCounts);                        
+                        values.put(KEY_STEP_STEPS, steps_diff + currentDateStepCounts);
                     }
                     int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
                     // int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" +
@@ -623,10 +667,9 @@ public class Database extends SQLiteOpenHelper {
             }
         } else if (!algoWithZeroSteps && steps_diff == 0) {
             /*
-            prefs.edit().putInt("lastSaveSteps", steps).commit();
-            lastSaveSteps = steps;
-            lastSaveTime = System.currentTimeMillis();
-            */
+             * prefs.edit().putInt("lastSaveSteps", steps).commit(); lastSaveSteps = steps;
+             * lastSaveTime = System.currentTimeMillis();
+             */
         }
         return createSuccessful;
     }
@@ -637,7 +680,8 @@ public class Database extends SQLiteOpenHelper {
         // SQLiteDatabase myDataBase = SQLiteDatabase.openDatabase(myPath, null,
         // SQLiteDatabase.OPEN_READONLY);
         String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = 0";
-        if (!strict) selectQuery += " and "+KEY_STEP_STEPS+" > 0";
+        if (!strict)
+            selectQuery += " and " + KEY_STEP_STEPS + " > 0";
         selectQuery += " order by id asc";
 
         JSONArray resultSet = new JSONArray();
@@ -662,16 +706,20 @@ public class Database extends SQLiteOpenHelper {
                             case Cursor.FIELD_TYPE_INTEGER:
                                 int intVal = cursor.getInt(i);
                                 long longVal = cursor.getLong(i);
-                                if(intVal == longVal) rowObject.put(cName, intVal);
-                                else rowObject.put(cName, longVal);
-                                //rowObject.put(cName, cursor.getInt(i));
+                                if (intVal == longVal)
+                                    rowObject.put(cName, intVal);
+                                else
+                                    rowObject.put(cName, longVal);
+                                // rowObject.put(cName, cursor.getInt(i));
                                 break;
                             case Cursor.FIELD_TYPE_FLOAT:
                                 float floatVal = cursor.getFloat(i);
                                 double doubleVal = cursor.getDouble(i);
-                                if(floatVal == doubleVal) rowObject.put(cName, floatVal);
-                                else rowObject.put(cName, doubleVal);
-                                //rowObject.put(cName, cursor.getFloat(i));
+                                if (floatVal == doubleVal)
+                                    rowObject.put(cName, floatVal);
+                                else
+                                    rowObject.put(cName, doubleVal);
+                                // rowObject.put(cName, cursor.getFloat(i));
                                 break;
                             case Cursor.FIELD_TYPE_STRING:
                                 rowObject.put(cName, cursor.getString(i));
@@ -684,14 +732,13 @@ public class Database extends SQLiteOpenHelper {
                                 break;
                             }
                             /*
-                             if (cursor.getString(i) != null) { 
-                                 Log.d("TAG_NAME", cursor.getString(i));
-                             rowObject.put(cName, cursor.getString(i)); 
-                            } else { rowObject.put(cName, "");
-                             }
+                             * if (cursor.getString(i) != null) { Log.d("TAG_NAME", cursor.getString(i));
+                             * rowObject.put(cName, cursor.getString(i)); } else { rowObject.put(cName, "");
+                             * }
                              */
                         } catch (Exception e) {
-                            Log.i(Database.class.getName(), "Exception converting cursor column to json field: " + cName);
+                            Log.i(Database.class.getName(),
+                                    "Exception converting cursor column to json field: " + cName);
                             Log.i(Database.class.getName(), e.getMessage());
                         }
                     }
@@ -706,89 +753,92 @@ public class Database extends SQLiteOpenHelper {
 
             // Log.d("TAG_NAME", resultSet.toString());
             Log.i(Database.class.getName(), "StepsService Database getNoSyncResults steps=" + resultSet.toString());
-           
+
             returnObj.put("data_type", "measure_activity");
             returnObj.put("data_aggregated", resultSet);
             returnObj.put("data_last_update", System.currentTimeMillis());
-            returnObj.put("user_id", "10470");
-            
+            String userid = this.getConfig("userid"); // 10470
+            returnObj.put("user_id", userid);
+
             db.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return returnObj;
     }
-     
+
     /**
      * Clean all synced data
      */
     public void cleanLinesToSync() {
-        getWritableDatabase().execSQL("DELETE FROM " + TABLE_STEPS + " WHERE "+KEY_STEP_SYNCED+" > 0");
+        getWritableDatabase().execSQL("DELETE FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " > 0");
     }
 
     /**
      * Reset all synced data
      */
     public void resetLinesToSync() {
-        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 0, "+KEY_STEP_SYNCEDDATE+" = 0  WHERE "+KEY_STEP_SYNCED+" > 0");
+        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET " + KEY_STEP_SYNCED + " = 0, "
+                + KEY_STEP_SYNCEDDATE + " = 0  WHERE " + KEY_STEP_SYNCED + " > 0");
     }
 
     /**
      * Mark as processing the lines to sync before calling server POST
      */
     public void queueLinesToSync() {
-        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 1 WHERE "+KEY_STEP_SYNCED+" = 0");
+        getWritableDatabase().execSQL(
+                "UPDATE " + TABLE_STEPS + " SET " + KEY_STEP_SYNCED + " = 1 WHERE " + KEY_STEP_SYNCED + " = 0");
     }
-    
+
     /**
      * Mark as sent lines to server
      */
     public void updateLinesSynced() {
-        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET "+KEY_STEP_SYNCED+" = 2, "+KEY_STEP_SYNCEDDATE+" = " + System.currentTimeMillis()
-                + " WHERE "+KEY_STEP_SYNCED+" = 1");
+        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET " + KEY_STEP_SYNCED + " = 2, "
+                + KEY_STEP_SYNCEDDATE + " = " + System.currentTimeMillis() + " WHERE " + KEY_STEP_SYNCED + " = 1");
     }
-    
+
     /**
      * Api send to server for syncing operations
      */
     public JSONObject sendToServer(String query, String json) throws IOException, JSONException {
-        //String query = "https://example.com"; // + user_id
-        //String json = "{\"key\":1}";    
+        // String query = "https://example.com"; // + user_id
+        // String json = "{\"key\":1}";
         URL url = new URL(query);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(5000);
         conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-        //  conn.setRequestProperty ("Content-Type","application/x-www-form-urlencoded");
+        // conn.setRequestProperty ("Content-Type","application/x-www-form-urlencoded");
         conn.setDoOutput(true);
         conn.setDoInput(true);
         conn.setRequestMethod("POST");
-    
+
         OutputStream os = conn.getOutputStream();
         os.write(json.getBytes("UTF-8"));
         os.close();
-    
+
         // read the response
-        JSONObject response = new JSONObject(); 
+        JSONObject response = new JSONObject();
         InputStream in = new BufferedInputStream(conn.getInputStream());
-        //String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
-        //JSONObject jsonObject = new JSONObject(result);
+        // String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
+        // JSONObject jsonObject = new JSONObject(result);
         /*
-        JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8")); 
-        //JSONObject jsonObject = reader.readObject();
-        JSONObject jsonObject = new JSONObject(reader.toString());
-        */
+         * JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
+         * //JSONObject jsonObject = reader.readObject(); JSONObject jsonObject = new
+         * JSONObject(reader.toString());
+         */
         try {
             String contentString = convertStreamToString(in); // conn.getInputStream()
             response = new JSONObject(contentString);
             Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + response.toString());
-            //reader.close();
-        } catch(Exception e){
+            // reader.close();
+        } catch (Exception e) {
             e.printStackTrace();
-        } 
+        }
 
         in.close();
         conn.disconnect();
-    
+
         return response;
     }
 
@@ -797,18 +847,19 @@ public class Database extends SQLiteOpenHelper {
         StringBuilder sb = new StringBuilder();
         String line = null;
         while ((line = reader.readLine()) != null) {
-          sb.append(line);
+            sb.append(line);
         }
         reader.close();
         return sb.toString();
     }
 
-    public JSONObject syncData() {    
-        JSONObject response = new JSONObject();        
+    public JSONObject syncData() {
+        JSONObject response = new JSONObject();
         try {
-            JSONObject dataToSync = this.getNoSyncResults(true);  
+            JSONObject dataToSync = this.getNoSyncResults(true);
             this.queueLinesToSync();
-            response = this.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
+            String api = this.getConfig("api"); // "https://api.dynamoove.com/v1/partners/dynafit"
+            response = this.sendToServer(api, dataToSync.toString());
             if (response.has("success")) {
                 this.updateLinesSynced();
             }
