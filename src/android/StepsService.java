@@ -210,7 +210,11 @@ public class StepsService extends Service implements SensorEventListener {
             db.close();
             */
 
-            JSONObject response = db.syncData();
+            try {
+                JSONObject response = db.syncData();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             lastSaveSteps = steps;
             lastSaveTime = System.currentTimeMillis();

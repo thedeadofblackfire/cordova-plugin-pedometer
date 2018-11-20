@@ -859,9 +859,11 @@ public class Database extends SQLiteOpenHelper {
             JSONObject dataToSync = this.getNoSyncResults(true);
             this.queueLinesToSync();
             String api = this.getConfig("api"); // "https://api.dynamoove.com/v1/partners/dynafit"
-            response = this.sendToServer(api, dataToSync.toString());
-            if (response.has("success")) {
-                this.updateLinesSynced();
+            if (api != null && !"".equals(api)) {
+                response = this.sendToServer(api, dataToSync.toString());
+                if (response.has("success")) {
+                    this.updateLinesSynced();
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
