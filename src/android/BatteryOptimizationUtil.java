@@ -56,10 +56,12 @@ import java.util.List;
  */
 public class BatteryOptimizationUtil {
 
-    private static final String dialog_battery_title = "Activer AutoStart"; //Enable AutoStart
-    private static final String dialog_battery_message = "Please allow AppName to always run in the background,else our services can't be accessed."; // "Please allow AppName to always run in the background,else our services can't be accessed.";
-    private static final String dialog_battery_button_negative = "Aller aux paramètres"; // ALLOW or Go to settings
-    private static final String dialog_battery_button_positive = "Ignorer"; // CANCEL
+    private static final String dialog_battery_title = "Autoriser dynafit"; //Enable AutoStart
+    private static final String dialog_battery_message = "Pour utiliser notre capteur interne de pas, merci d'autoriser {0} dans les applications protégées ou de  cocher la case Démarrage automatique."; // "Please allow AppName to always run in the background,else our services can't be accessed.";
+    private static final String dialog_battery_button_positive = "Aller aux paramètres"; // ALLOW or Go to settings
+    private static final String dialog_battery_button_negative = "Ignorer"; // CANCEL
+
+    private static String application_name;
 
     /**
      * Get the battery optimization dialog.
@@ -90,6 +92,8 @@ public class BatteryOptimizationUtil {
             final Context context,
             @Nullable final OnBatteryOptimizationAccepted positiveCallback,
             @Nullable final OnBatteryOptimizationCanceled negativeCallback) {
+
+            application_name = context.getApplicationInfo().loadLabel(getPackageManager()).toString();
         /*
          * If there is no resolvable component return right away. We do not use
          * isBatteryOptimizationAvailable() for this check in order to avoid checking for
@@ -102,7 +106,8 @@ public class BatteryOptimizationUtil {
         return new AlertDialog.Builder(context)
                 //.setIcon(Android.Resource.Drawable.IcDialogAlert)
                 .setTitle(dialog_battery_title)
-                .setMessage(dialog_battery_message)
+                //.setMessage(dialog_battery_message)
+                .setMessage(string.Format(dialog_battery_message, application_name))
                 .setNegativeButton(dialog_battery_button_negative, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
