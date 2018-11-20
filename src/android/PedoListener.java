@@ -36,6 +36,8 @@ import android.os.IBinder;
 
 import java.io.IOException;
 
+import android.app.AlertDialog;
+
 /**
  * This class listens to the pedometer sensor
  */
@@ -186,6 +188,11 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             Log.i(TAG, "deviceCanCountSteps is called");
             Boolean canStepCount = deviceHasStepCounter(activity.getPackageManager());
             callbackContext.success(canStepCount ? 1 : 0);
+
+            // test BatteryOptimizationUtil
+            final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(getContext());
+            if (dialog != null) dialog.show();
+            
         } else if (action.equals("setConfig")) {
             try {
                 Log.i(TAG, "setConfig is called");
