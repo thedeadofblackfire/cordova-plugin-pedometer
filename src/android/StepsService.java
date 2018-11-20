@@ -58,8 +58,11 @@ public class StepsService extends Service implements SensorEventListener {
         super.onCreate();
 
         Log.i(TAG, "StepsService onCreate");
+        //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        //StrictMode.setThreadPolicy(policy);
         //mStepsDBHelper = new StepsDBHelper(this);
         //Log.i(TAG, "StepsService onCreate end");
+        
         /*
          * mSensorManager = (SensorManager)
          * this.getSystemService(Context.SENSOR_SERVICE); if
@@ -211,7 +214,21 @@ public class StepsService extends Service implements SensorEventListener {
             */
 
             try {
-                JSONObject response = db.syncData();
+                Thread thread = new Thread(new Runnable(){
+                    @Override
+                    public void run() {
+                        try {
+                            //Your code goes here
+                            JSONObject response = db.syncData();
+                        } catch (Exception e) {
+                           //e.printStackTrace();
+                           Log.e(TAG, e.getMessage());
+                        }
+                    }
+                });
+
+                thread.start();
+                //JSONObject response = db.syncData();
             } catch (Exception e) {
                 e.printStackTrace();
             }
