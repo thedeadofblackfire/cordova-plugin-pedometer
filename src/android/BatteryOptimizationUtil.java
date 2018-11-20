@@ -93,7 +93,7 @@ public class BatteryOptimizationUtil {
             @Nullable final OnBatteryOptimizationAccepted positiveCallback,
             @Nullable final OnBatteryOptimizationCanceled negativeCallback) {
 
-            application_name = context.getApplicationInfo().loadLabel(getPackageManager()).toString();
+            application_name = context.getApplicationInfo().loadLabel(context.getPackageManager()).toString();
         /*
          * If there is no resolvable component return right away. We do not use
          * isBatteryOptimizationAvailable() for this check in order to avoid checking for
@@ -107,7 +107,7 @@ public class BatteryOptimizationUtil {
                 //.setIcon(Android.Resource.Drawable.IcDialogAlert)
                 .setTitle(dialog_battery_title)
                 //.setMessage(dialog_battery_message)
-                .setMessage(string.Format(dialog_battery_message, application_name))
+                .setMessage(String.Format(dialog_battery_message, application_name))
                 .setNegativeButton(dialog_battery_button_negative, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
