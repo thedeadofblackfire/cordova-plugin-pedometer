@@ -41,6 +41,10 @@ Pedometer.prototype.deviceCanCountSteps = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "deviceCanCountSteps", []);
 };
 
+Pedometer.prototype.deviceCheckPermissions = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "deviceCheckPermissions", []);
+};
+
 Pedometer.prototype.sync = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "sync", []);
 };

@@ -189,9 +189,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             Boolean canStepCount = deviceHasStepCounter(activity.getPackageManager());
             callbackContext.success(canStepCount ? 1 : 0);
 
-            // test BatteryOptimizationUtil
+        } else if (action.equals("deviceCheckPermissions")) {
+            Log.i(TAG, "deviceCheckPermissions is called");
             final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(activity);
             if (dialog != null) dialog.show();
+            this.win(true);
+            return true;
 
         } else if (action.equals("setConfig")) {
             try {
