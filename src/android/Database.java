@@ -24,6 +24,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Pair;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -104,7 +107,7 @@ public class Database extends SQLiteOpenHelper {
     private static long lastSaveTime;
     private static long lastPeriodTimeKey;
     private SharedPreferences prefs;
-    //private Context mContext;
+    private Context mContext;
 
     private Database(final Context context) {
         // for private directory
@@ -116,7 +119,7 @@ public class Database extends SQLiteOpenHelper {
 
         prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
 
-        //mContext = context;
+        mContext = context;
     }
 
     public static synchronized Database getInstance(final Context c) {
@@ -893,7 +896,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     protected boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         if (netInfo != null && netInfo.isConnectedOrConnecting()) {
             return true;
