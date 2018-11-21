@@ -225,6 +225,8 @@ public class Database extends SQLiteOpenHelper {
             re = c.getString(0);
             c.close();
             Log.i(Database.class.getName(), "StepsService Database getConfig " + key + "=" + re);
+        } else {
+            Log.i(Database.class.getName(), "StepsService Database getConfig " + key + " not found");
         }
         // db.close();
         return re;

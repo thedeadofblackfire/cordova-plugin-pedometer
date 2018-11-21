@@ -91,23 +91,29 @@ public class StepsService extends Service implements SensorEventListener {
          * if (!updateIfNecessary()) { showNotification(); }
          */
 
-        // restart service every hour to save the current step count
-        long nextUpdate = Math.min(StepsUtil.getTomorrow(), System.currentTimeMillis() + RESTART_SERVICE_OFFSET_TIME); // INTERVAL_HOUR
-                                                                                                  // INTERVAL_HALF_HOUR=1800000
-                                                                                                  // AlarmManager.INTERVAL_FIFTEEN_MINUTES=900000
-        Log.i(TAG, "StepsService [onStartCommand] - next update: " + new Date(nextUpdate).toLocaleString());
-        // if (BuildConfig.DEBUG) Logger.log("next update: " + new
-        // Date(nextUpdate).toLocaleString());
-        AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pi = PendingIntent.getService(getApplicationContext(), 2, new Intent(this, StepsService.class),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+        // get service status and launch alarm if no STOP
+        Database db = Database.getInstance(context); 
+        String statusService = this.getConfig("statusService"); 
+        //db.close();
+        if (statusService != null && !"stop".equals(statusService)) {
+            // restart service every hour to save the current step count
+            long nextUpdate = Math.min(StepsUtil.getTomorrow(), System.currentTimeMillis() + RESTART_SERVICE_OFFSET_TIME); // INTERVAL_HOUR
+                                                                                                    // INTERVAL_HALF_HOUR=1800000
+                                                                                                    // AlarmManager.INTERVAL_FIFTEEN_MINUTES=900000
+            Log.i(TAG, "StepsService [onStartCommand] - next update: " + new Date(nextUpdate).toLocaleString());
+            // if (BuildConfig.DEBUG) Logger.log("next update: " + new
+            // Date(nextUpdate).toLocaleString());
+            AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+            PendingIntent pi = PendingIntent.getService(getApplicationContext(), 2, new Intent(this, StepsService.class),
+                    PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Log.i(TAG, "StepsService [onStartCommand] - Build.VERSION.SDK_INT=" + Build.VERSION.SDK_INT);
-        if (Build.VERSION.SDK_INT >= 23) {
-            Log.i(TAG, "StepsService [onStartCommand] - API23Wrapper.setAlarmWhileIdle");
-            API23Wrapper.setAlarmWhileIdle(am, AlarmManager.RTC, nextUpdate, pi);
-        } else {
-            am.set(AlarmManager.RTC, nextUpdate, pi);
+            Log.i(TAG, "StepsService [onStartCommand] - Build.VERSION.SDK_INT=" + Build.VERSION.SDK_INT);
+            if (Build.VERSION.SDK_INT >= 23) {
+                Log.i(TAG, "StepsService [onStartCommand] - API23Wrapper.setAlarmWhileIdle");
+                API23Wrapper.setAlarmWhileIdle(am, AlarmManager.RTC, nextUpdate, pi);
+            } else {
+                am.set(AlarmManager.RTC, nextUpdate, pi);
+            }
         }
 
         /*
@@ -153,9 +159,15 @@ public class StepsService extends Service implements SensorEventListener {
         //Log.i(TAG, "StepsService [onTaskRemoved] - sensor service task removed");
         Logger.log("StepsService [onTaskRemoved] - sensor service task removed");
 
-        // Restart service in 500 ms
-        ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 500,
-                PendingIntent.getService(this, 3, new Intent(this, StepsService.class), 0));
+        // get service status and launch alarm if no STOP
+        Database db = Database.getInstance(context); 
+        String statusService = this.getConfig("statusService"); 
+        //db.close();
+        if (statusService != null && !"stop".equals(statusService)) {
+            // Restart service in 500 ms
+            ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 500,
+                    PendingIntent.getService(this, 3, new Intent(this, StepsService.class), 0));
+        }
     }
 
     @Override

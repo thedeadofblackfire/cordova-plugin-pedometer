@@ -219,11 +219,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             }
             activity.bindService(stepCounterIntent, mConnection, Context.BIND_AUTO_CREATE);
 
+            // should display each time ?
             final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(activity);
             if (dialog != null) dialog.show();
             
             Database db = Database.getInstance(activity);
-            db.setConfig("status", "start");
+            db.setConfig("statusService", "start");
             db.close();
 
             callbackContext.success(1);         
@@ -233,10 +234,17 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             activity.unbindService(mConnection);
 
             Database db = Database.getInstance(activity);
-            db.setConfig("status", "stop");
+            db.setConfig("statusService", "stop");
             db.close();
 
             callbackContext.success(1);
+        } else if (action.equals("statusService")) {
+            Log.i(TAG, "statusService is called");     
+            Database db = Database.getInstance(activity);
+            String statusService = db.getConfig("statusService");
+            db.close();
+
+            callbackContext.success(statusService);
         } else if (action.equals("clean")) {
             Log.i(TAG, "clean is called");
             Database db = Database.getInstance(activity);

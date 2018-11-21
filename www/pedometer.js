@@ -37,6 +37,10 @@ Pedometer.prototype.stopService = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "stopService", []);
 };
 
+Pedometer.prototype.statusService = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "statusService", []);
+};
+
 Pedometer.prototype.deviceCanCountSteps = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "deviceCanCountSteps", []);
 };
