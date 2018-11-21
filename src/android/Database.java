@@ -54,7 +54,9 @@ import java.io.*;
 public class Database extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "steps.db";
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 1;
+
+    private static final Boolean DATABASE_EXTERNAL_DEBUGGING = true;
 
     private static final String TABLE_SETTINGS = "settings";
     private static final String KEY_SETTINGS_KEY = "key";
@@ -110,12 +112,12 @@ public class Database extends SQLiteOpenHelper {
     private Context mContext;
 
     private Database(final Context context) {
-        // for private directory
+        // for private directory /data/data/{package}/databases/steps.db
         // super(context, DATABASE_NAME, null, DATABASE_VERSION);
 
-        // to put on /sdcard/Android/data/{package}/files/StepsDatabase.db
-        super(context, context.getExternalFilesDir(null).getAbsolutePath() + "/" + DATABASE_NAME, null,
-                DATABASE_VERSION);
+        // to put on /sdcard/Android/data/{package}/files/steps.db
+        super(context, (DATABASE_EXTERNAL_DEBUGGING) ? context.getExternalFilesDir(null).getAbsolutePath() + "/" + DATABASE_NAME : DATABASE_NAME, null,
+        DATABASE_VERSION);
 
         prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
 

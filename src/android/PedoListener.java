@@ -199,16 +199,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         } else if (action.equals("setConfig")) {
             try {
                 Log.i(TAG, "setConfig is called");
-                Log.i(TAG, args.toString());
+                //Log.i(TAG, args.toString());
                 Log.i(TAG, args.getJSONObject(0).toString());
                 Database db = Database.getInstance(activity);
-                //db.setConfig(args.getJSONObject(0).getString("userid"), args.getJSONObject(0).getString("api"));
                 if (args.getJSONObject(0).has("userid")) db.setConfig("userid", args.getJSONObject(0).getString("userid"));
                 if (args.getJSONObject(0).has("api")) db.setConfig("api", args.getJSONObject(0).getString("api"));
                 db.close();
-                //JSONObject jo = args.getJSONObject(0);
-                //JSONObject jo = args[0].getJSONObject(0);
-                //Log.i(TAG, "execute: jo=" + jo.toString());
                 this.win(null);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -313,7 +309,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		Log.i(TAG, "PedoListener onDestroy");
         //this.stop();
     }
-
 
     /**
      * Start listening for pedometers sensor.

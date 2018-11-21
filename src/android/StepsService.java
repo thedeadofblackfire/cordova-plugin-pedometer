@@ -81,7 +81,7 @@ public class StepsService extends Service implements SensorEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "StepsService [onStartCommand]");
+        Log.i(TAG, "StepsService [onStartCommand] id="+startId);
         // Toast.makeText(this, "StepsService Service started...",
         // Toast.LENGTH_LONG).show();
 
