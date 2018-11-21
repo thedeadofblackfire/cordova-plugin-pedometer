@@ -194,7 +194,7 @@ public class StepsService extends Service implements SensorEventListener {
         //mStepsDBHelper.createStepsEntryValue(steps);
         Database db = Database.getInstance(context); // this
         db.createStepsEntryValue(steps);
-        db.close();
+        //db.close();
 
         if (steps > lastSaveSteps + SAVE_OFFSET_STEPS
                 || (steps > 0 && System.currentTimeMillis() > lastSaveTime + SAVE_OFFSET_TIME)) {
@@ -222,9 +222,9 @@ public class StepsService extends Service implements SensorEventListener {
                     @Override
                     public void run() {
                         try {
-                            Database db = Database.getInstance(context);
+                            //Database db = Database.getInstance(context);
                             JSONObject response = db.syncData();
-                            db.close();
+                            //db.close();
                         } catch (Exception e) {
                            //e.printStackTrace();
                            Log.e(TAG, e.getMessage());
@@ -233,7 +233,7 @@ public class StepsService extends Service implements SensorEventListener {
                 });
 
                 thread.start();
-                
+
                 //JSONObject response = db.syncData();
             } catch (Exception e) {
                 e.printStackTrace();

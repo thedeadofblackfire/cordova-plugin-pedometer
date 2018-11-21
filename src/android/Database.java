@@ -765,7 +765,7 @@ public class Database extends SQLiteOpenHelper {
             String userid = this.getConfig("userid"); // 10470
             returnObj.put("user_id", userid);
 
-            db.close();
+            //db.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
