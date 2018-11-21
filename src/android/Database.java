@@ -46,7 +46,7 @@ import java.io.IOException;
 import java.io.*;
 //import org.apache.commons.io.IOUtils;
 //import javax.json.JsonReader;
-import android.util.JsonReader;
+//import android.util.JsonReader;
 
 public class Database extends SQLiteOpenHelper {
 
@@ -104,6 +104,7 @@ public class Database extends SQLiteOpenHelper {
     private static long lastSaveTime;
     private static long lastPeriodTimeKey;
     private SharedPreferences prefs;
+    //private Context mContext;
 
     private Database(final Context context) {
         // for private directory
@@ -114,6 +115,8 @@ public class Database extends SQLiteOpenHelper {
                 DATABASE_VERSION);
 
         prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+
+        //mContext = context;
     }
 
     public static synchronized Database getInstance(final Context c) {
@@ -864,16 +867,20 @@ public class Database extends SQLiteOpenHelper {
     public JSONObject syncData() {
         JSONObject response = new JSONObject();
         try {
-            JSONObject dataToSync = this.getNoSyncResults(true);
-            this.queueLinesToSync();
-            String api = this.getConfig("api"); // "https://api.dynamoove.com/v1/partners/dynafit"
-            if (api != null && !"".equals(api)) {
-                response = this.sendToServer(api, dataToSync.toString());
-                if (response.has("success")) {
-                    this.updateLinesSynced();
-                } else {
-                    this.rollbackLinesToSync();
+            if (this.isOnline()) {
+                JSONObject dataToSync = this.getNoSyncResults(true);
+                this.queueLinesToSync();
+                String api = this.getConfig("api"); // "https://api.dynamoove.com/v1/partners/dynafit"
+                if (api != null && !"".equals(api)) {
+                    response = this.sendToServer(api, dataToSync.toString());
+                    if (response.has("success")) {
+                        this.updateLinesSynced();
+                    } else {
+                        this.rollbackLinesToSync();
+                    }
                 }
+            } else {
+                Log.i(Database.class.getName(), "StepsService Database syncData isOnline=false - not connected to Internet");
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -884,4 +891,15 @@ public class Database extends SQLiteOpenHelper {
         }
         return response;
     }
+
+    protected boolean isOnline() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }
