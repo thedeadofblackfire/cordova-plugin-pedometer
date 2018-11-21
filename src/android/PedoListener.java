@@ -257,6 +257,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
             this.win(true);
             return true;
+        } else if (action.equals("rollback")) {
+            Log.i(TAG, "rollback is called");
+            Database db = Database.getInstance(activity);
+            db.rollbackLinesToSync();
+            db.close();
+
+            this.win(true);
+            return true;
         } else if (action.equals("sync")) {
             Log.i(TAG, "sync is called");
             Database db = Database.getInstance(activity);

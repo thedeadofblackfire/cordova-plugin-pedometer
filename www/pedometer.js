@@ -49,6 +49,10 @@ Pedometer.prototype.sync = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "sync", []);
 };
 
+Pedometer.prototype.rollback = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "rollback", []);
+};
+
 Pedometer.prototype.reset = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "reset", []);
 };

@@ -783,7 +783,7 @@ public class Database extends SQLiteOpenHelper {
      * Clean all synced data
      */
     public void cleanLinesToSync() {
-        getWritableDatabase().execSQL("DELETE FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " > 0");
+        getWritableDatabase().execSQL("DELETE FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " > 1");
     }
 
     /**
