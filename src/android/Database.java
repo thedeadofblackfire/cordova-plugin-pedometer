@@ -600,12 +600,15 @@ public class Database extends SQLiteOpenHelper {
 
                 SQLiteDatabase db = this.getReadableDatabase();
                 Cursor c = db.rawQuery(selectQuery, null);
-                if (c.moveToFirst()) {
+                if (c != null && c.moveToFirst()) {
                     do {
                         isDateAlreadyPresent = true;
                         currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_STEPS)));
                         // currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
                     } while (c.moveToNext());
+                }
+                if (c != null && !c.isClosed()) {
+                    c.close();
                 }
                 db.close();
             } catch (Exception e) {
