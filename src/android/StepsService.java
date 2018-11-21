@@ -93,7 +93,7 @@ public class StepsService extends Service implements SensorEventListener {
 
         // get service status and launch alarm if no STOP
         Database db = Database.getInstance(context); 
-        String statusService = this.getConfig("statusService"); 
+        String statusService = db.getConfig("statusService"); 
         //db.close();
         if (statusService != null && !"stop".equals(statusService)) {
             // restart service every hour to save the current step count
@@ -161,7 +161,7 @@ public class StepsService extends Service implements SensorEventListener {
 
         // get service status and launch alarm if no STOP
         Database db = Database.getInstance(context); 
-        String statusService = this.getConfig("statusService"); 
+        String statusService = db.getConfig("statusService"); 
         //db.close();
         if (statusService != null && !"stop".equals(statusService)) {
             // Restart service in 500 ms
