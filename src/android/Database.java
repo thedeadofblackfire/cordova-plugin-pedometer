@@ -215,12 +215,16 @@ public class Database extends SQLiteOpenHelper {
      * @return the maximum number of steps walked in one day
      */
     public String getConfig(String key) {
+        String re = "";
         Cursor c = getReadableDatabase().query(TABLE_SETTINGS, new String[] { KEY_SETTINGS_VALUE }, KEY_SETTINGS_KEY + " = ?",
                 new String[] { String.valueOf(key) }, null, null, null);
-        c.moveToFirst();
-        String re = c.getString(0);
-        c.close();
-        Log.i(Database.class.getName(), "StepsService Database getConfig " + key + "=" + re);
+        if (c != null) {
+            c.moveToFirst();
+            re = c.getString(0);
+            c.close();
+            Log.i(Database.class.getName(), "StepsService Database getConfig " + key + "=" + re);
+        }
+        // db.close();
         return re;
     }
 
