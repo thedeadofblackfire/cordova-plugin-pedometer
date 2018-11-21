@@ -180,6 +180,7 @@ public class Database extends SQLiteOpenHelper {
         getWritableDatabase().beginTransaction();
         boolean newEntryCreated = false;
         try {
+            Log.i(Database.class.getName(), "StepsService Database setConfig " + key + "=" + value);
             ContentValues values = new ContentValues();
             values.put(KEY_SETTINGS_VALUE, value);
             values.put(KEY_SETTINGS_LASTUPDATE, System.currentTimeMillis());

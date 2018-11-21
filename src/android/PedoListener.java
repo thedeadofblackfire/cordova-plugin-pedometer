@@ -212,36 +212,42 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             return true;
         } else if (action.equals("startService")) {
             Log.i(TAG, "startService is called");
+
+            Database db = Database.getInstance(activity);
+            db.setConfig("status_service", "start");
+            db.close();
+
             if (Build.VERSION.SDK_INT >= 26) {
                 API26Wrapper.startForegroundService(activity, stepCounterIntent);
             } else {
                 activity.startService(stepCounterIntent);
             }
             activity.bindService(stepCounterIntent, mConnection, Context.BIND_AUTO_CREATE);
+        
+            callbackContext.success(1); 
 
             // should display each time ?
             final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(activity);
-            if (dialog != null) dialog.show();
+            if (dialog != null) dialog.show();  
             
-            Database db = Database.getInstance(activity);
-            db.setConfig("statusService", "start");
-            db.close();
-
-            callbackContext.success(1);         
+            return true;                    
         } else if (action.equals("stopService")) {
             Log.i(TAG, "stopService is called");
-            activity.stopService(stepCounterIntent);
-            activity.unbindService(mConnection);
 
             Database db = Database.getInstance(activity);
-            db.setConfig("statusService", "stop");
+            db.setConfig("status_service", "stop");
             db.close();
 
+            activity.stopService(stepCounterIntent);
+            activity.unbindService(mConnection);
+            
             callbackContext.success(1);
+            
+            return true;
         } else if (action.equals("statusService")) {
             Log.i(TAG, "statusService is called");     
             Database db = Database.getInstance(activity);
-            String statusService = db.getConfig("statusService");
+            String statusService = db.getConfig("status_service");
             db.close();
 
             callbackContext.success(statusService);
