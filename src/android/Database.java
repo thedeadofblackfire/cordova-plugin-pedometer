@@ -221,13 +221,17 @@ public class Database extends SQLiteOpenHelper {
         String re = "";
         Cursor c = getReadableDatabase().query(TABLE_SETTINGS, new String[] { KEY_SETTINGS_VALUE }, KEY_SETTINGS_KEY + " = ?",
                 new String[] { String.valueOf(key) }, null, null, null);
-        if (c != null) {
-            c.moveToFirst();
-            re = c.getString(0);
-            c.close();
+        if (c != null && c.getCount()>0) {
+            if (c.moveToFirst()) {
+                re = c.getString(0);
+            }
+            //c.close();
             Log.i(Database.class.getName(), "StepsService Database getConfig " + key + "=" + re);
         } else {
             Log.i(Database.class.getName(), "StepsService Database getConfig " + key + " not found");
+        }
+        if (c != null && !c.isClosed()) {
+            c.close();
         }
         // db.close();
         return re;
