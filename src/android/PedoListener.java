@@ -205,12 +205,10 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 //db.setConfig(args.getJSONObject(0).getString("userid"), args.getJSONObject(0).getString("api"));
                 if (args.getJSONObject(0).has("userid")) db.setConfig("userid", args.getJSONObject(0).getString("userid"));
                 if (args.getJSONObject(0).has("api")) db.setConfig("api", args.getJSONObject(0).getString("api"));
+                db.close();
                 //JSONObject jo = args.getJSONObject(0);
                 //JSONObject jo = args[0].getJSONObject(0);
                 //Log.i(TAG, "execute: jo=" + jo.toString());
-
-                //Database db = Database.getInstance(activity);
-                //this.win(db.getNoSyncResults(false));
                 this.win(null);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -230,6 +228,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             
             Database db = Database.getInstance(activity);
             db.setConfig("status", "start");
+            db.close();
 
             callbackContext.success(1);         
         } else if (action.equals("stopService")) {
@@ -239,31 +238,35 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
             Database db = Database.getInstance(activity);
             db.setConfig("status", "stop");
+            db.close();
 
             callbackContext.success(1);
         } else if (action.equals("clean")) {
             Log.i(TAG, "clean is called");
             Database db = Database.getInstance(activity);
             db.cleanLinesToSync();
+            db.close();
+
             this.win(true);
             return true;
         } else if (action.equals("reset")) {
             Log.i(TAG, "reset is called");
             Database db = Database.getInstance(activity);
             db.resetLinesToSync();
+            db.close();
+
             this.win(true);
             return true;
         } else if (action.equals("sync")) {
             Log.i(TAG, "sync is called");
             Database db = Database.getInstance(activity);
-            //JSONObject dataToSync = db.getNoSyncResults(false);
             try {
-                //JSONObject response = db.sendToServer("https://api.dynamoove.com/v1/partners/dynafit", dataToSync.toString());
                 JSONObject response = db.syncData();
                 this.win(response);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            db.close();
             return true;
         } else if (action.equals("queryData")) {
             try {
@@ -275,7 +278,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 //Log.i(TAG, "execute: jo=" + jo.toString());
 
                 Database db = Database.getInstance(activity);
-                this.win(db.getNoSyncResults(false));
+                JSONObject dataToSync = db.getNoSyncResults(false);
+                db.close();
+                this.win(dataToSync);
                 //this.win(this.getStepsJSON(steps));
             } catch (JSONException e) {
                 e.printStackTrace();

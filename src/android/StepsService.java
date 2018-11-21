@@ -51,6 +51,8 @@ public class StepsService extends Service implements SensorEventListener {
     private static int lastSaveSteps;
     private static long lastSaveTime;
 
+    private Context context;
+
     private final BroadcastReceiver shutdownReceiver = new ShutdownReceiver();
 
     @Override
@@ -58,6 +60,7 @@ public class StepsService extends Service implements SensorEventListener {
         super.onCreate();
 
         Log.i(TAG, "StepsService onCreate");
+        context = this;
         //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         //StrictMode.setThreadPolicy(policy);
         //mStepsDBHelper = new StepsDBHelper(this);
@@ -189,8 +192,9 @@ public class StepsService extends Service implements SensorEventListener {
      */
     private boolean updateIfNecessary() {
         //mStepsDBHelper.createStepsEntryValue(steps);
-        Database db = Database.getInstance(this);
+        Database db = Database.getInstance(context); // this
         db.createStepsEntryValue(steps);
+        db.close();
 
         if (steps > lastSaveSteps + SAVE_OFFSET_STEPS
                 || (steps > 0 && System.currentTimeMillis() > lastSaveTime + SAVE_OFFSET_TIME)) {
@@ -218,8 +222,9 @@ public class StepsService extends Service implements SensorEventListener {
                     @Override
                     public void run() {
                         try {
-                            //Your code goes here
+                            Database db = Database.getInstance(context);
                             JSONObject response = db.syncData();
+                            db.close();
                         } catch (Exception e) {
                            //e.printStackTrace();
                            Log.e(TAG, e.getMessage());
@@ -228,6 +233,7 @@ public class StepsService extends Service implements SensorEventListener {
                 });
 
                 thread.start();
+                
                 //JSONObject response = db.syncData();
             } catch (Exception e) {
                 e.printStackTrace();

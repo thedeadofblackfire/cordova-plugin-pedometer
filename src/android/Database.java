@@ -680,7 +680,7 @@ public class Database extends SQLiteOpenHelper {
         return createSuccessful;
     }
 
-    // public JSONArray getNoSyncResults() {
+    // public JSONArray 
     public JSONObject getNoSyncResults(boolean strict) {
         // String myPath = DB_PATH + DB_NAME;// Set path to your database
         // SQLiteDatabase myDataBase = SQLiteDatabase.openDatabase(myPath, null,
@@ -757,7 +757,6 @@ public class Database extends SQLiteOpenHelper {
 
             cursor.close();
 
-            // Log.d("TAG_NAME", resultSet.toString());
             Log.i(Database.class.getName(), "StepsService Database getNoSyncResults steps=" + resultSet.toString());
 
             returnObj.put("data_type", "measure_activity");
