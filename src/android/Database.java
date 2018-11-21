@@ -791,6 +791,14 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
+     * Rollback  the lines to sync for error
+     */
+    public void rollbackLinesToSync() {
+        getWritableDatabase().execSQL(
+                "UPDATE " + TABLE_STEPS + " SET " + KEY_STEP_SYNCED + " = 0 WHERE " + KEY_STEP_SYNCED + " = 1");
+    }
+
+    /**
      * Mark as sent lines to server
      */
     public void updateLinesSynced() {
@@ -863,12 +871,16 @@ public class Database extends SQLiteOpenHelper {
                 response = this.sendToServer(api, dataToSync.toString());
                 if (response.has("success")) {
                     this.updateLinesSynced();
+                } else {
+                    this.rollbackLinesToSync();
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
+            this.rollbackLinesToSync();
         } catch (IOException e) {
             e.printStackTrace();
+            this.rollbackLinesToSync();
         }
         return response;
     }
