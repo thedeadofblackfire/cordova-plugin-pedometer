@@ -699,70 +699,77 @@ public class Database extends SQLiteOpenHelper {
 
         JSONArray resultSet = new JSONArray();
         JSONObject returnObj = new JSONObject();
+        Cursor cursor = null;
 
         try {
             SQLiteDatabase db = this.getReadableDatabase();
-            Cursor cursor = db.rawQuery(selectQuery, null);
+            cursor = db.rawQuery(selectQuery, null);
 
-            cursor.moveToFirst();
-            while (cursor.isAfterLast() == false) {
+            if (cursor != null) {
+                cursor.moveToFirst();
+                while (cursor.isAfterLast() == false) {
 
-                int totalColumn = cursor.getColumnCount();
-                JSONObject rowObject = new JSONObject();
+                    int totalColumn = cursor.getColumnCount();
+                    JSONObject rowObject = new JSONObject();
 
-                for (int i = 0; i < totalColumn; i++) {
-                    String cName = cursor.getColumnName(i);
-                    if (cName != null) {
+                    for (int i = 0; i < totalColumn; i++) {
+                        String cName = cursor.getColumnName(i);
+                        if (cName != null) {
 
-                        try {
-                            switch (cursor.getType(i)) {
-                            case Cursor.FIELD_TYPE_INTEGER:
-                                int intVal = cursor.getInt(i);
-                                long longVal = cursor.getLong(i);
-                                if (intVal == longVal)
-                                    rowObject.put(cName, intVal);
-                                else
-                                    rowObject.put(cName, longVal);
-                                // rowObject.put(cName, cursor.getInt(i));
-                                break;
-                            case Cursor.FIELD_TYPE_FLOAT:
-                                float floatVal = cursor.getFloat(i);
-                                double doubleVal = cursor.getDouble(i);
-                                if (floatVal == doubleVal)
-                                    rowObject.put(cName, floatVal);
-                                else
-                                    rowObject.put(cName, doubleVal);
-                                // rowObject.put(cName, cursor.getFloat(i));
-                                break;
-                            case Cursor.FIELD_TYPE_STRING:
-                                rowObject.put(cName, cursor.getString(i));
-                                break;
-                            // case Cursor.FIELD_TYPE_BLOB:
-                            // rowObject.put(cName, DataUtils.bytesToHexString(cursor.getBlob(i)));
-                            // break;
-                            default:
-                                rowObject.put(cName, "");
-                                break;
+                            try {
+                                switch (cursor.getType(i)) {
+                                case Cursor.FIELD_TYPE_INTEGER:
+                                    int intVal = cursor.getInt(i);
+                                    long longVal = cursor.getLong(i);
+                                    if (intVal == longVal)
+                                        rowObject.put(cName, intVal);
+                                    else
+                                        rowObject.put(cName, longVal);
+                                    // rowObject.put(cName, cursor.getInt(i));
+                                    break;
+                                case Cursor.FIELD_TYPE_FLOAT:
+                                    float floatVal = cursor.getFloat(i);
+                                    double doubleVal = cursor.getDouble(i);
+                                    if (floatVal == doubleVal)
+                                        rowObject.put(cName, floatVal);
+                                    else
+                                        rowObject.put(cName, doubleVal);
+                                    // rowObject.put(cName, cursor.getFloat(i));
+                                    break;
+                                case Cursor.FIELD_TYPE_STRING:
+                                    rowObject.put(cName, cursor.getString(i));
+                                    break;
+                                // case Cursor.FIELD_TYPE_BLOB:
+                                // rowObject.put(cName, DataUtils.bytesToHexString(cursor.getBlob(i)));
+                                // break;
+                                default:
+                                    rowObject.put(cName, "");
+                                    break;
+                                }
+                                /*
+                                * if (cursor.getString(i) != null) { Log.d("TAG_NAME", cursor.getString(i));
+                                * rowObject.put(cName, cursor.getString(i)); } else { rowObject.put(cName, "");
+                                * }
+                                */
+                            } catch (Exception e) {
+                                Log.i(Database.class.getName(),
+                                        "Exception converting cursor column to json field: " + cName);
+                                Log.i(Database.class.getName(), e.getMessage());
                             }
-                            /*
-                             * if (cursor.getString(i) != null) { Log.d("TAG_NAME", cursor.getString(i));
-                             * rowObject.put(cName, cursor.getString(i)); } else { rowObject.put(cName, "");
-                             * }
-                             */
-                        } catch (Exception e) {
-                            Log.i(Database.class.getName(),
-                                    "Exception converting cursor column to json field: " + cName);
-                            Log.i(Database.class.getName(), e.getMessage());
                         }
+
                     }
 
+                    resultSet.put(rowObject);
+                    cursor.moveToNext();
                 }
-
-                resultSet.put(rowObject);
-                cursor.moveToNext();
             }
 
-            cursor.close();
+            /*
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+            */
 
             Log.i(Database.class.getName(), "StepsService Database getNoSyncResults steps=" + resultSet.toString());
 
@@ -775,7 +782,10 @@ public class Database extends SQLiteOpenHelper {
             //db.close();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (cursor != null && !cursor.isClosed()) cursor.close();
         }
+
         return returnObj;
     }
 
@@ -895,6 +905,9 @@ public class Database extends SQLiteOpenHelper {
             e.printStackTrace();
             this.rollbackLinesToSync();
         } catch (IOException e) {
+            e.printStackTrace();
+            this.rollbackLinesToSync();
+        } catch (Exception e) {
             e.printStackTrace();
             this.rollbackLinesToSync();
         }
