@@ -193,7 +193,6 @@ public class StepsService extends Service implements SensorEventListener {
             // float steps = event.values[0];
             steps = (int) event.values[0];
             updateIfNecessary();
-            // mStepsDBHelper.createStepsEntryValue(steps);
             // Log.i(TAG, "StepsService [onSensorChanged] - end - steps=" + steps);
             Logger.log("StepsService [onSensorChanged] - end - steps=" + steps);
         }
@@ -206,7 +205,7 @@ public class StepsService extends Service implements SensorEventListener {
         //mStepsDBHelper.createStepsEntryValue(steps);
         Database db = Database.getInstance(context); // this
         db.createStepsEntryValue(steps);
-        //db.close();
+        db.close();
 
         if (steps > lastSaveSteps + SAVE_OFFSET_STEPS
                 || (steps > 0 && System.currentTimeMillis() > lastSaveTime + SAVE_OFFSET_TIME)) {
@@ -234,9 +233,9 @@ public class StepsService extends Service implements SensorEventListener {
                     @Override
                     public void run() {
                         try {
-                            //Database db = Database.getInstance(context);
+                            Database db = Database.getInstance(context);
                             JSONObject response = db.syncData();
-                            //db.close();
+                            db.close();
                         } catch (Exception e) {
                            //e.printStackTrace();
                            Log.e(TAG, e.getMessage());

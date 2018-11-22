@@ -643,6 +643,8 @@ public class Database extends SQLiteOpenHelper {
                 values.put(KEY_STEP_TOTAL, steps);
                 values.put(KEY_STEP_LASTUPDATE, System.currentTimeMillis());
 
+                Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue KEY_STEP_STEPS="+steps_diff+" isDateAlreadyPresent="+isDateAlreadyPresent);
+
                 if (isDateAlreadyPresent) {
                     // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
                     // values.put(KEY_STEP_TOTAL, steps);
@@ -712,6 +714,8 @@ public class Database extends SQLiteOpenHelper {
         JSONArray resultSet = new JSONArray();
         JSONObject returnObj = new JSONObject();
         Cursor cursor = null;
+
+        String userid = this.getConfig("userid"); // 10470
 
         try {
             SQLiteDatabase db = this.getReadableDatabase();
@@ -787,8 +791,7 @@ public class Database extends SQLiteOpenHelper {
 
             returnObj.put("data_type", "measure_activity");
             returnObj.put("data_aggregated", resultSet);
-            returnObj.put("data_last_update", System.currentTimeMillis());
-            String userid = this.getConfig("userid"); // 10470
+            returnObj.put("data_last_update", System.currentTimeMillis());            
             returnObj.put("user_id", userid);
 
             //db.close();
