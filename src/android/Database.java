@@ -37,8 +37,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Calendar;
 import android.util.Log;
-//import de.j4velin.pedometer.util.Logger;
-//import de.j4velin.pedometer.util.Util;
+
 import org.apache.cordova.pedometer.Logger;
 import org.apache.cordova.pedometer.StepsUtil;
 
@@ -47,9 +46,6 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.IOException;
 import java.io.*;
-//import org.apache.commons.io.IOUtils;
-//import javax.json.JsonReader;
-//import android.util.JsonReader;
 
 public class Database extends SQLiteOpenHelper {
 
@@ -865,18 +861,11 @@ public class Database extends SQLiteOpenHelper {
         // read the response
         JSONObject response = new JSONObject();
         InputStream in = new BufferedInputStream(conn.getInputStream());
-        // String result = org.apache.commons.io.IOUtils.toString(in, "UTF-8");
-        // JSONObject jsonObject = new JSONObject(result);
-        /*
-         * JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
-         * //JSONObject jsonObject = reader.readObject(); JSONObject jsonObject = new
-         * JSONObject(reader.toString());
-         */
+  
         try {
             String contentString = convertStreamToString(in); // conn.getInputStream()
             response = new JSONObject(contentString);
             Log.i(Database.class.getName(), "StepsService Database sendToServer response=" + response.toString());
-            // reader.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -904,7 +893,7 @@ public class Database extends SQLiteOpenHelper {
             if (this.isOnline()) {
                 JSONObject dataToSync = this.getNoSyncResults(true);
                 this.queueLinesToSync();
-                String api = this.getConfig("api"); // "https://api.dynamoove.com/v1/partners/dynafit"
+                String api = this.getConfig("api"); 
                 if (api != null && !"".equals(api)) {
                     response = this.sendToServer(api, dataToSync.toString());
                     if (response.has("success")) {
