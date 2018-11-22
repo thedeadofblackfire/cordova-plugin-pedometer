@@ -639,11 +639,12 @@ public class Database extends SQLiteOpenHelper {
                 values.put(KEY_STEP_TOTAL, steps);
                 values.put(KEY_STEP_LASTUPDATE, System.currentTimeMillis());
 
-                Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue KEY_STEP_STEPS="+steps_diff+" isDateAlreadyPresent="+isDateAlreadyPresent);
+                Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue KEY_STEP_STEPS="+steps_diff+" isDateAlreadyPresent="+isDateAlreadyPresent+" currentDateStepCounts="+currentDateStepCounts);
 
                 if (isDateAlreadyPresent) {
                     // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
                     // values.put(KEY_STEP_TOTAL, steps);
+                    // if (lastPeriodTimeKey == 0 || lastPeriodTimeKey == datePeriodTime) {
                     if (lastPeriodTimeKey == datePeriodTime) {
                         Log.i(Database.class.getName(),
                                 "StepsService Database createStepsEntryValue same lastPeriodTimeKey="+datePeriodTime);
@@ -658,10 +659,11 @@ public class Database extends SQLiteOpenHelper {
                     if (row == 1) {
                         createSuccessful = true;
                         // for to update the reference parameter
-                        if (lastPeriodTimeKey == datePeriodTime) {
+                        if (lastPeriodTimeKey == 0 || lastPeriodTimeKey == datePeriodTime) {
                             prefs.edit().putInt("lastSaveSteps", steps).commit();
                             lastSaveSteps = steps;
                             lastSaveTime = System.currentTimeMillis();
+                            if (lastPeriodTimeKey == 0) lastPeriodTimeKey = datePeriodTime;
                         }
                     }
                     db.close();

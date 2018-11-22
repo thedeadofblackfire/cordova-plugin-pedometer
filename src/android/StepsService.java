@@ -53,7 +53,7 @@ public class StepsService extends Service implements SensorEventListener {
 
     private static int protectSensorLastSteps = 0;
     private static long protectSensorLastTime = 0;
-    private final static long PROTECT_SENSOR_OFFSET_TIME = 150; // allow to protect fast sensor to do the job x 3 times in a really short period of microseconds
+    private final static long PROTECT_SENSOR_OFFSET_TIME = 250; // allow to protect fast sensor to do the job x 3 times in a really short period of microseconds
 
     private static int currentStartId = 0;
 
