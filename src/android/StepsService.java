@@ -51,6 +51,10 @@ public class StepsService extends Service implements SensorEventListener {
     private static int lastSaveSteps;
     private static long lastSaveTime;
 
+    private static int protectSensorLastSteps = 0;
+    private static long protectSensorLastTime = 0;
+    private final static long PROTECT_SENSOR_OFFSET_TIME = 150; // allow to protect fast sensor to do the job x 3 times in a really short period of microseconds
+
     private static int currentStartId = 0;
 
     private Context context;
@@ -160,7 +164,6 @@ public class StepsService extends Service implements SensorEventListener {
     public void onTaskRemoved(final Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         // if (BuildConfig.DEBUG) Logger.log("sensor service task removed");
-        //Log.i(TAG, "StepsService [onTaskRemoved] - sensor service task removed");
         Logger.log("StepsService [onTaskRemoved] - sensor service task removed");
 
         // get service status and launch alarm if no STOP
@@ -181,24 +184,27 @@ public class StepsService extends Service implements SensorEventListener {
             return;
         }
 
-        // Log.i(TAG, "StepsService [onSensorChanged] - start - type=" +
-        // event.sensor.getType());
-        Logger.log("StepsService [onSensorChanged] - start ["+this.currentStartId+"] - type=" + event.sensor.getType());
+        //Logger.log("StepsService [onSensorChanged] - start ["+this.currentStartId+"] - type=" + event.sensor.getType());
 
         if (event.values[0] > Integer.MAX_VALUE) {
             if (StepsUtil.isDebug())
-                Logger.log("StepsService [onSensorChanged] - probably not a real value: " + event.values[0]);
-            // if (BuildConfig.DEBUG) Logger.log("probably not a real value: " +
-            // event.values[0]);
-            // Log.i(TAG, "StepsService [onSensorChanged] - probably not a real value: " +
-            // event.values[0]);
+                Logger.log("StepsService [onSensorChanged] - start ["+this.currentStartId+"] - probably not a real value: " + event.values[0]);
+       
             return;
         } else {
             // float steps = event.values[0];
             steps = (int) event.values[0];
-            updateIfNecessary();
-            // Log.i(TAG, "StepsService [onSensorChanged] - end - steps=" + steps);
-            Logger.log("StepsService [onSensorChanged] - end - steps=" + steps);
+
+            if (steps != protectSensorLastSteps || (System.currentTimeMillis() > (protectSensorLastTime + PROTECT_SENSOR_OFFSET_TIME) )) {
+                protectSensorLastSteps = steps;
+                protectSensorLastTime = System.currentTimeMillis();
+
+                Logger.log("StepsService [onSensorChanged] - start ["+this.currentStartId+"] - steps=" + steps);
+                updateIfNecessary();
+                Logger.log("StepsService [onSensorChanged] - end ["+this.currentStartId+"] - steps=" + steps);
+            } else {
+                Logger.log("StepsService [onSensorChanged] - protect ["+this.currentStartId+"] - steps=" + steps);
+            }
         }
     }
 
