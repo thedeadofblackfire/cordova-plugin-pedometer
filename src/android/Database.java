@@ -929,13 +929,14 @@ public class Database extends SQLiteOpenHelper {
         File booger = copyFileToFilesDir("exportsteps.db");
         Log.i(Database.class.getName(), "we found a booger, Here it is: " + booger.toString());
 
-        Uri contentUri = FileProvider.getUriForFile(mContext.getApplicationContext(), mContext.getPackageName()+".provider", booger);
-        Log.i(Database.class.getName(), "contentUri got: here is contentUri: " + contentUri.toString());
+        //Uri contentUri = FileProvider.getUriForFile(mContext.getApplicationContext(), mContext.getPackageName()+".provider", booger);
+        //Log.i(Database.class.getName(), "contentUri got: here is contentUri: " + contentUri.toString());
     }
 
     private File copyFileToFilesDir(String fileName) {
         File file = null;
-        String newPath = mContext.getFileStreamPath("").toString();
+        //String newPath = mContext.getFileStreamPath("").toString(); // /data/user/0/{package_id}}/files
+        String newPath = mContext.getExternalFilesDir(null).getAbsolutePath();
         Log.i(Database.class.getName(), "newPath found, Here is string: " + newPath);
         String oldPath = (DATABASE_EXTERNAL_DEBUGGING) ? mContext.getExternalFilesDir(null).getAbsolutePath() + "/" + DATABASE_NAME : mContext.getDatabasePath(DATABASE_NAME).toString();
         Log.i(Database.class.getName(), "oldPath found, Her is string: " + oldPath);
