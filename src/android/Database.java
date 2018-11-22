@@ -26,6 +26,7 @@ import android.util.Pair;
 
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -46,6 +47,9 @@ import java.net.URL;
 import java.net.MalformedURLException;
 import java.io.IOException;
 import java.io.*;
+
+//import android.content.ContentProvider;
+import android.support.v4.content.FileProvider;
 
 public class Database extends SQLiteOpenHelper {
 
