@@ -286,6 +286,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             }
             db.close();
             return true;
+        } else if (action.equals("debug")) {
+            Log.i(TAG, "debug is called");
+            Database db = Database.getInstance(activity);
+            db.exportDatabase();
+            db.close();
+
+            this.win(true);
+            return true;
         } else if (action.equals("queryData")) {
             try {
                 Log.i(TAG, "queryData is called");

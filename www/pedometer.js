@@ -69,4 +69,8 @@ Pedometer.prototype.setConfig = function (onSuccess, onError, options) {
     exec(onSuccess, onError, "Pedometer", "setConfig", [options]);
 };
 
+Pedometer.prototype.debug = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "debug", []);
+};
+
 module.exports = new Pedometer();

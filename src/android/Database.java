@@ -68,14 +68,6 @@ public class Database extends SQLiteOpenHelper {
             + KEY_SETTINGS_KEY + " TEXT PRIMARY KEY, " + KEY_SETTINGS_VALUE + " TEXT NOT NULL,"
             + KEY_SETTINGS_LASTUPDATE + " INTEGER)";
 
-    /*
-     * private static final String CREATE_TABLE_SETTINGS =
-     * "CREATE TABLE IF NOT EXISTS " + TABLE_SETTINGS + "(" + KEY_SETTINGS_ID +
-     * " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_SETTINGS_USERID + " TEXT," +
-     * KEY_SETTINGS_API + " TEXT," + KEY_SETTINGS_STATUS+" TEXT," +
-     * KEY_SETTINGS_LASTUPDATE + " INTEGER)";
-     */
-
     private static final String TABLE_STEPS = "steps";
     private static final String KEY_STEP_ID = "id";
     private static final String KEY_STEP_STEPS = "steps"; // stepscount
@@ -89,8 +81,6 @@ public class Database extends SQLiteOpenHelper {
     private static final String KEY_STEP_SYNCED = "synced";
     private static final String KEY_STEP_SYNCEDDATE = "synceddate";
 
-    // //db.execSQL("CREATE TABLE " + TABLE_STEPS + " (date INTEGER, steps
-    // INTEGER)");
     private static final String CREATE_TABLE_STEPS = "CREATE TABLE IF NOT EXISTS " + TABLE_STEPS + "(" + KEY_STEP_ID
             + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_STEP_DATE + " INTEGER," + KEY_STEP_CREATION_DATE + " TEXT,"
             + KEY_STEP_PERIODTIME + " INTEGER," + KEY_STEP_STARTDATE + " TEXT," + KEY_STEP_ENDDATE + " TEXT,"
@@ -928,6 +918,42 @@ public class Database extends SQLiteOpenHelper {
         } else {
             return false;
         }
+    }
+
+    public void exportDatabase() {
+        //this copies the .db file from dabases dir where FileProvider cannot access it and moves it to files dir
+        File booger = copyFileToFilesDir("exportsteps.db");
+        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "we found a booger, Here it is: " + booger.toString());
+
+        Uri contentUri = FileProvider.getUriForFile(this, "com.columbiawestengineering.columbiawest", booger);
+        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "contentUri got: here is contentUri: " + contentUri.toString());
+    }
+
+    private File copyFileToFilesDir(String fileName) {
+        File file = null;
+        String newPath = getFileStreamPath("").toString();
+        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "newPath found, Here is string: " + newPath);
+        String oldPath = getDatabasePath(DATABASE_NAME).toString();
+        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "oldPath found, Her is string: " + oldPath);
+        try {
+            File f = new File(newPath);
+            f.mkdirs();
+            FileInputStream fin = new FileInputStream(oldPath);
+            FileOutputStream fos = new FileOutputStream(newPath + "/" + fileName);
+            byte[] buffer = new byte[1024];
+            int len1 = 0;
+            while ((len1 = fin.read(buffer)) != -1) {
+                fos.write(buffer, 0, len1);
+            }
+            fin.close();
+            fos.close();
+            file = new File(newPath + "/" + fileName);
+            if (file.exists())
+                return file;
+        } catch (Exception e) {
+    
+        }
+        return null;
     }
 
 }
