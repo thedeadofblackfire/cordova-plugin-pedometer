@@ -51,6 +51,8 @@ public class StepsService extends Service implements SensorEventListener {
     private static int lastSaveSteps;
     private static long lastSaveTime;
 
+    private static int currentStartId = 0;
+
     private Context context;
 
     private final BroadcastReceiver shutdownReceiver = new ShutdownReceiver();
@@ -84,6 +86,8 @@ public class StepsService extends Service implements SensorEventListener {
         Log.i(TAG, "StepsService [onStartCommand] id="+startId);
         // Toast.makeText(this, "StepsService Service started...",
         // Toast.LENGTH_LONG).show();
+
+        this.currentStartId = startId;
 
         reRegisterSensor();
         registerBroadcastReceiver();
@@ -179,7 +183,7 @@ public class StepsService extends Service implements SensorEventListener {
 
         // Log.i(TAG, "StepsService [onSensorChanged] - start - type=" +
         // event.sensor.getType());
-        Logger.log("StepsService [onSensorChanged] - start - type=" + event.sensor.getType());
+        Logger.log("StepsService [onSensorChanged] - start ["+this.currentStartId+"] - type=" + event.sensor.getType());
 
         if (event.values[0] > Integer.MAX_VALUE) {
             if (StepsUtil.isDebug())
@@ -244,8 +248,6 @@ public class StepsService extends Service implements SensorEventListener {
                 });
 
                 thread.start();
-
-                //JSONObject response = db.syncData();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -260,7 +262,6 @@ public class StepsService extends Service implements SensorEventListener {
         } else {
             return false;
         }
-
         //return true;
     }
 
