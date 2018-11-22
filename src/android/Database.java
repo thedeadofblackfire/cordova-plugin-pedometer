@@ -107,7 +107,7 @@ public class Database extends SQLiteOpenHelper {
     private static int lastSaveSteps = 0;
     private static int lastPeriodSteps = 0;
     private static long lastSaveTime;
-    private static long lastPeriodTimeKey;
+    private static long lastPeriodTimeKey = 0; // add zero
     private SharedPreferences prefs;
     private Context mContext;
 
@@ -602,6 +602,9 @@ public class Database extends SQLiteOpenHelper {
             steps_diff = 0;
 
         if (algoWithZeroSteps || (!algoWithZeroSteps && steps_diff > 0)) {
+
+            Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue datePeriodTime="+datePeriodTime+" lastPeriodTimeKey="+lastPeriodTimeKey);
+
             String selectQuery = "SELECT " + KEY_STEP_STEPS + " FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_PERIODTIME
                     + " = " + datePeriodTime;
 
@@ -645,7 +648,7 @@ public class Database extends SQLiteOpenHelper {
                     // values.put(KEY_STEP_TOTAL, steps);
                     if (lastPeriodTimeKey == datePeriodTime) {
                         Log.i(Database.class.getName(),
-                                "StepsService Database createStepsEntryValue same lastPeriodTimeKey");
+                                "StepsService Database createStepsEntryValue same lastPeriodTimeKey="+datePeriodTime);
                         // to fix bug on steps when insert & update inside the same period of time on
                         // the frontier border of 5min
                         values.remove(KEY_STEP_STEPS);
