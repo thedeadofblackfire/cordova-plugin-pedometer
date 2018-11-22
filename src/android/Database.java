@@ -927,7 +927,7 @@ public class Database extends SQLiteOpenHelper {
     public void exportDatabase() {
         //this copies the .db file from dabases dir where FileProvider cannot access it and moves it to files dir
         File booger = copyFileToFilesDir("exportsteps.db");
-        Log.i(Database.class.getName(), "we found a booger, Here it is: " + booger.toString());
+        Log.i(Database.class.getName(), "export db: " + booger.toString());
 
         //Uri contentUri = FileProvider.getUriForFile(mContext.getApplicationContext(), mContext.getPackageName()+".provider", booger);
         //Log.i(Database.class.getName(), "contentUri got: here is contentUri: " + contentUri.toString());
