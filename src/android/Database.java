@@ -923,18 +923,18 @@ public class Database extends SQLiteOpenHelper {
     public void exportDatabase() {
         //this copies the .db file from dabases dir where FileProvider cannot access it and moves it to files dir
         File booger = copyFileToFilesDir("exportsteps.db");
-        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "we found a booger, Here it is: " + booger.toString());
+        Log.i(Database.class.getName(), "we found a booger, Here it is: " + booger.toString());
 
         Uri contentUri = FileProvider.getUriForFile(this, "com.columbiawestengineering.columbiawest", booger);
-        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "contentUri got: here is contentUri: " + contentUri.toString());
+        Log.i(Database.class.getName(), "contentUri got: here is contentUri: " + contentUri.toString());
     }
 
     private File copyFileToFilesDir(String fileName) {
         File file = null;
-        String newPath = getFileStreamPath("").toString();
-        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "newPath found, Here is string: " + newPath);
-        String oldPath = getDatabasePath(DATABASE_NAME).toString();
-        Log.i(Database.class.getName(), "LOG PRINT SHARE DB", "oldPath found, Her is string: " + oldPath);
+        String newPath = mContext.getFileStreamPath("").toString();
+        Log.i(Database.class.getName(), "newPath found, Here is string: " + newPath);
+        String oldPath = mContext.getDatabasePath(DATABASE_NAME).toString();
+        Log.i(Database.class.getName(), "oldPath found, Her is string: " + oldPath);
         try {
             File f = new File(newPath);
             f.mkdirs();
