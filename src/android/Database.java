@@ -929,7 +929,7 @@ public class Database extends SQLiteOpenHelper {
         File booger = copyFileToFilesDir("exportsteps.db");
         Log.i(Database.class.getName(), "we found a booger, Here it is: " + booger.toString());
 
-        Uri contentUri = FileProvider.getUriForFile(mContext, "fr.dynacare.activucr", booger);
+        Uri contentUri = FileProvider.getUriForFile(mContext.getApplicationContext(), mContext.getPackageName()+".provider", booger);
         Log.i(Database.class.getName(), "contentUri got: here is contentUri: " + contentUri.toString());
     }
 
