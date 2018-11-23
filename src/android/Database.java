@@ -781,10 +781,10 @@ public class Database extends SQLiteOpenHelper {
 
             Log.i(Database.class.getName(), "StepsService Database getNoSyncResults steps=" + resultSet.toString());
 
+            returnObj.put("user_id", userid);
             returnObj.put("data_type", "measure_activity");
             returnObj.put("data_aggregated", resultSet);
-            returnObj.put("data_last_update", System.currentTimeMillis());            
-            returnObj.put("user_id", userid);
+            returnObj.put("data_last_update", System.currentTimeMillis());                        
 
             //db.close();
         } catch (Exception e) {
