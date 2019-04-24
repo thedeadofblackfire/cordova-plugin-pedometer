@@ -33,6 +33,10 @@ Pedometer.prototype.startService = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "startService", []);
 };
 
+Pedometer.prototype.startServiceSilent = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "startServiceSilent", []);
+};
+
 Pedometer.prototype.stopService = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "stopService", []);
 };

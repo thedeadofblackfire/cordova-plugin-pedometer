@@ -230,7 +230,24 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(activity);
             if (dialog != null) dialog.show();  
             
-            return true;                    
+            return true;              
+        } else if (action.equals("startServiceSilent")) {
+            Log.i(TAG, "startServiceSilent is called");
+
+            Database db = Database.getInstance(activity);
+            db.setConfig("status_service", "start");
+            db.close();
+
+            if (Build.VERSION.SDK_INT >= 26) {
+                API26Wrapper.startForegroundService(activity, stepCounterIntent);
+            } else {
+                activity.startService(stepCounterIntent);
+            }
+            activity.bindService(stepCounterIntent, mConnection, Context.BIND_AUTO_CREATE);
+        
+            callbackContext.success(1); 
+            
+            return true; 
         } else if (action.equals("stopService")) {
             Log.i(TAG, "stopService is called");
 
