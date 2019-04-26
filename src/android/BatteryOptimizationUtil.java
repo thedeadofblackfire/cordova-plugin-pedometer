@@ -56,7 +56,7 @@ import java.util.List;
  */
 public class BatteryOptimizationUtil {
 
-    private static final String dialog_battery_title = "Autoriser dynafit"; //Enable AutoStart
+    private static final String dialog_battery_title = "Autoriser Booj"; //Enable AutoStart
     private static final String dialog_battery_message = "Pour utiliser notre capteur interne de pas, merci d'autoriser %s dans les applications protégées ou de cocher la case Démarrage automatique."; // "Please allow AppName to always run in the background,else our services can't be accessed.";
     private static final String dialog_battery_button_positive = "Aller aux paramètres"; // ALLOW or Go to settings
     private static final String dialog_battery_button_negative = "Ignorer"; // CANCEL
