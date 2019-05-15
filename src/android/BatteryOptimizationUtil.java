@@ -153,6 +153,7 @@ public class BatteryOptimizationUtil {
      * Get a list of all known ComponentNames that provide battery optimization on different
      * devices.
      * Based on Shivam Oberoi's answer on StackOverflow: https://stackoverflow.com/a/48166241/2143225
+     * https://stackoverflow.com/questions/31638986/protected-apps-setting-on-huawei-phones-and-how-to-handle-it
      *
      * @return list of ComponentName
      */
@@ -174,6 +175,7 @@ public class BatteryOptimizationUtil {
         names.add(new ComponentName("com.samsung.android.lool", "com.samsung.android.sm.ui.battery.BatteryActivity"));
         names.add(new ComponentName("com.htc.pitroad", "com.htc.pitroad.landingpage.activity.LandingPageActivity"));
         names.add(new ComponentName("com.asus.mobilemanager", "com.asus.mobilemanager.MainActivity"));
+        names.add(new ComponentName("com.dewav.dwappmanager", "com.dewav.dwappmanager.memory.SmartClearupWhiteList"));
         
         return names;
     }
