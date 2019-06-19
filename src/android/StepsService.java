@@ -91,6 +91,17 @@ public class StepsService extends Service implements SensorEventListener {
         // Toast.makeText(this, "StepsService Service started...",
         // Toast.LENGTH_LONG).show();
 
+        //https://stackoverflow.com/questions/43251528/android-o-old-start-foreground-service-still-working
+        if (Build.VERSION.SDK_INT >= 26) {
+            Notification.Builder builder = new Notification.Builder(this, ANDROID_CHANNEL_ID)
+            .setContentTitle("Jebooj") //etString(R.string.app_name)
+            .setContentText("Booj service ON")
+            .setAutoCancel(true);
+
+            Notification notification = builder.build();
+            startForeground(1, notification);
+        }
+
         this.currentStartId = startId;
 
         reRegisterSensor();
