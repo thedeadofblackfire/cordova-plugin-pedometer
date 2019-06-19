@@ -29,11 +29,24 @@ import android.widget.Toast;
 @TargetApi(Build.VERSION_CODES.O)
 public class API26Wrapper {
 
+    /**
+     * The identifier for the notification displayed for the foreground service.
+     */
+    private static final int NOTIFICATION_ID = 12345678;
+
+
     public final static String NOTIFICATION_CHANNEL_ID = "Notification";
 
     public static void startForegroundService(final Context context, final Intent intent) {
         context.startForegroundService(intent);
+        //We only need to call this for SDK 26+, since startForeground always has to be called after startForegroundService.
+        context.startForeground(NOTIFICATION_ID, getNotificationBuilder()); //getNotification, try to fix bug on samsung
     }
+
+    // error on samsung note 9 > api 28
+    //06-19 16:22:13.142: E/ActivityManager(4940): Reason: Context.startForegroundService() did not then call Service.startForeground(): ServiceRecord{caa6dcf u0 fr.jebooj.app/org.apache.cordova.pedometer.StepsService}
+    // https://stackoverflow.com/questions/55136846/android-how-to-use-startforegroundservice-and-startforeground-for-api-28
+    //https://github.com/googlesamples/android-play-location/blob/master/LocationUpdatesForegroundService/app/src/main/java/com/google/android/gms/location/sample/locationupdatesforegroundservice/LocationUpdatesService.java
 
     public static Notification.Builder getNotificationBuilder(final Context context) {
         NotificationManager manager =
