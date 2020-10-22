@@ -23,8 +23,9 @@
         <source-file src="src/ios/Pedometer.m" />
         <framework src="CoreMotion.framework" />
 		<!-- Usage description of Motion, mandatory since iOS 10 -->
-        <config-file target="*-Info.plist" parent="NSMotionUsageDescription">
-            <string/>
+		<preference name="HEALTH_MOTION_PERMISSION" default=" " />
+        <config-file target="*-Info.plist" parent="NSMotionUsageDescription">        
+			<string>$HEALTH_MOTION_PERMISSION</string>
         </config-file>
     </platform>
     <platform name="android">
