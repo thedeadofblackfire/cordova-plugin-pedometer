@@ -1,5 +1,5 @@
 {
-  "name": "cordova-plugin-pedometer",
+  "name": "@felixchong98/cordova-plugin-pedometer",
   "version": "0.4.2",
   "author": "Lee Crossley <leee@hotmail.co.uk> (http://ilee.co.uk/)",
   "description": "Cordova / PhoneGap Plugin for the Core Motion Pedometer to fetch pedestrian-related data, such as step counts and other information about the distance travelled.",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leecrossley/cordova-plugin-pedometer.git"
+    "url": "git+https://github.com/felixchong98/cordova-plugin-pedometer.git"
   },
   "keywords": [
     "cordova",
