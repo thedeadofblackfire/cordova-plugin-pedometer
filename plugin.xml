@@ -64,6 +64,8 @@
             <receiver android:name="org.apache.cordova.pedometer.BootReceiver">
                 <intent-filter>
                     <action android:name="android.intent.action.BOOT_COMPLETED" />
+					<action android:name="android.intent.action.QUICKBOOT_POWERON" />
+					<category android:name="android.intent.category.DEFAULT" />
                 </intent-filter>
             </receiver>
             <receiver android:name="org.apache.cordova.pedometer.AppUpdatedReceiver">
@@ -84,5 +86,6 @@
         <source-file src="src/android/Logger.java" target-dir="src/org/apache/cordova/pedometer" />  
         <source-file src="src/android/Database.java" target-dir="src/org/apache/cordova/pedometer" />  
         <source-file src="src/android/BatteryOptimizationUtil.java" target-dir="src/org/apache/cordova/pedometer" />        
+		<source-file src="src/android/res/drawable/ic_footsteps_silhouette_variant.xml" target-dir="res/drawable" />
     </platform>
 </plugin>

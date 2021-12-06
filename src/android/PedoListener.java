@@ -1,11 +1,8 @@
-/**
- * Pedometer bridge with Cordova, programmed by Dario Salvi </dariosalvi78@gmail.com>
- * Based on the accelerometer plugin: https://github.com/apache/cordova-plugin-device-motion
- * License: MIT
- */
 package org.apache.cordova.pedometer;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.CallbackContext;
@@ -51,6 +48,16 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public static int RUNNING = 2;
     public static int ERROR_FAILED_TO_START = 3;
     public static int ERROR_NO_SENSOR_FOUND = 4;
+	public static int PAUSED = 5;
+
+    public static int DEFAULT_GOAL = 1000;
+  
+    public static String GOAL_PREF_INT = "GoalPrefInt";
+
+    public static String PEDOMETER_IS_COUNTING_TEXT = "pedometerIsCountingText";
+    public static String PEDOMETER_STEPS_TO_GO_FORMAT_TEXT = "pedometerStepsToGoFormatText";
+    public static String PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT = "pedometerYourProgressFormatText";
+    public static String PEDOMETER_GOAL_REACHED_FORMAT_TEXT = "pedometerGoalReachedFormatText";
 
     private int status;     // status of listener
     private float startsteps; //first value, to be substracted
@@ -127,7 +134,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      * @param callbackContext the callback context used when calling back into JavaScript.
      * @return whether the action was valid.
      */
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         this.callbackContext = callbackContext;
 		
         Log.i(TAG, "PedoListener execute action=" + action);
@@ -329,6 +336,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 e.printStackTrace();
             }
             return true;
+		} else if (action.equals("setNotificationLocalizedStrings")) {
+			setNotificationLocalizedStrings(args);
+			callbackContext.success();
+		} else if (action.equals("setGoal")) {
+			setGoal(args);
+			callbackContext.success();    
         } else {
             // Unsupported action
             Log.e(TAG, "Invalid action called on class " + TAG + ", " + action);
@@ -530,4 +543,55 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 && pm.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_DETECTOR);
         */                
     }
+		
+	private void setNotificationLocalizedStrings(JSONArray args) {
+		String pedometerIsCounting;
+		String stepsToGo;
+		String yourProgress;
+		String goalReached;
+
+		try {
+		  JSONObject joStrings = args.getJSONObject(0);
+		  pedometerIsCounting = joStrings.getString("pedometerIsCounting");
+		  stepsToGo = joStrings.getString("stepsToGo");
+		  yourProgress = joStrings.getString("yourProgress");
+		  goalReached = joStrings.getString("goalReached");
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
+
+		SharedPreferences prefs = cordova.getContext().getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+
+		if (pedometerIsCounting != null) {
+		  prefs.edit().putString(PedoListener.PEDOMETER_IS_COUNTING_TEXT, pedometerIsCounting).apply();
+		}
+		if (stepsToGo != null) {
+		  prefs.edit().putString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, stepsToGo).apply();
+		}
+		if (yourProgress != null) {
+		  prefs.edit().putString(PedoListener.PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT, yourProgress).apply();
+		}
+		if (goalReached != null) {
+		  prefs.edit().putString(PedoListener.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, goalReached).apply();
+		}
+	}
+  
+    private void setGoal(JSONArray args) {
+		try {
+		  goal = args.getInt(0);
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
+
+		SharedPreferences prefs = cordova.getContext().getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+		if (goal > 0) {
+		  prefs.edit().putInt(PedoListener.GOAL_PREF_INT, goal).apply();
+		}
+	}
+
+
 }

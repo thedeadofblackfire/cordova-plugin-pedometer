@@ -1,4 +1,3 @@
-
 var exec = require("cordova/exec");
 
 var Pedometer = function () {
@@ -75,6 +74,14 @@ Pedometer.prototype.setConfig = function (onSuccess, onError, options) {
 
 Pedometer.prototype.debug = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "debug", []);
+};
+
+Pedometer.prototype.setNotificationLocalizedStrings = function (keyValueObj, onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "setNotificationLocalizedStrings", [keyValueObj]);
+};
+
+Pedometer.prototype.setGoal = function (num, onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "setGoal", [num]);
 };
 
 module.exports = new Pedometer();

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -50,6 +51,8 @@ public class StepsService extends Service implements SensorEventListener {
     private static int steps;
     private static int lastSaveSteps;
     private static long lastSaveTime;
+	
+	private static int notificationIconId = 0;
 
     private static int protectSensorLastSteps = 0;
     private static long protectSensorLastTime = 0;
@@ -189,7 +192,7 @@ public class StepsService extends Service implements SensorEventListener {
     }
 
     @Override
-    public void onSensorChanged(SensorEvent event) {
+    public void onSensorChanged(final SensorEvent event) {
         // Only look at step counter events
         if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) {
             return;
@@ -275,12 +278,24 @@ public class StepsService extends Service implements SensorEventListener {
             showNotification(); // update notification
             startService(new Intent(this, WidgetUpdateService.class));
             */
+			showNotification(); // update notification
             return true;
         } else {
+			showNotification(); // update notification
             return false;
         }
         //return true;
     }
+	
+	private void showNotification() {
+		if (Build.VERSION.SDK_INT >= 26) {
+		  startForeground(NOTIFICATION_ID, getNotification(this));
+		} else if (getSharedPreferences("pedometer", Context.MODE_PRIVATE)
+		  .getBoolean("notification", true)) {
+		  ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
+			.notify(NOTIFICATION_ID, getNotification(this));
+		}
+	}
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -291,6 +306,59 @@ public class StepsService extends Service implements SensorEventListener {
         // accuracy);
     }
 
+	private static int getNotificationIconId(Context context) {
+		int drawableId = context.getResources().getIdentifier("ic_footsteps_silhouette_variant", "drawable",
+		  context.getApplicationInfo().packageName);
+		if (drawableId == 0) {
+		  drawableId = context.getApplicationInfo().icon;
+		}
+		return drawableId;
+	}
+  
+	public static Notification getNotification(final Context context) {
+		SharedPreferences prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+		Database db = Database.getInstance(context);
+		int today_offset = db.getSteps(StepsUtil.getToday());
+		if (steps == 0)
+		  steps = db.getCurrentSteps(); // use saved value if we haven't anything better
+		db.close();
+		
+		int goal = prefs.getInt(PedoListener.GOAL_PREF_INT, PedoListener.DEFAULT_GOAL);
+		
+		Notification.Builder notificationBuilder =
+		  Build.VERSION.SDK_INT >= 26 ? API26Wrapper.getNotificationBuilder(context) :
+			new Notification.Builder(context);
+		if (steps > 0) {
+		  if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
+		  notificationBuilder.setProgress(goal, today_offset + steps, false).setContentText(
+			today_offset + steps >= goal ?
+			  String.format(prefs.getString(PedoListener.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, "Goal reached! %s steps and counting"),
+				NumberFormat.getInstance(Locale.getDefault())
+				  .format((today_offset + steps))) :
+			  String.format(prefs.getString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps to go"),
+				NumberFormat.getInstance(Locale.getDefault())
+				  .format((goal - today_offset - steps))));
+		} else { // still no step value?
+		  notificationBuilder.setContentText(prefs.getString(PedoListener.PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT, "Your progress will be shown here soon"));
+		}
+
+		PackageManager packageManager = context.getPackageManager();
+		Intent launchIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
+
+		PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
+		  launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		if (notificationIconId == 0) {
+		  notificationIconId = getNotificationIconId(context);
+		}
+
+		notificationBuilder.setPriority(Notification.PRIORITY_DEFAULT).setShowWhen(false)
+		  .setContentTitle(prefs.getString(PedoListener.PEDOMETER_IS_COUNTING_TEXT, "Pedometer is counting"))
+		  .setContentIntent(contentIntent).setSmallIcon(notificationIconId)
+		  .setOngoing(true);
+		return notificationBuilder.build();
+	}
+  
     private void registerBroadcastReceiver() {
         // if (BuildConfig.DEBUG) Logger.log("register broadcastreceiver");
         Log.i(TAG, "StepsService [registerBroadcastReceiver] - register broadcastreceiver");
@@ -330,6 +398,7 @@ public class StepsService extends Service implements SensorEventListener {
 
         // SensorManager.SENSOR_DELAY_FASTEST
         // SensorManager.SENSOR_DELAY_NORMAL
+		// SensorManager.SENSOR_DELAY_UI 
 
         // enable batching with delay of max 5 min
         sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_FASTEST,
