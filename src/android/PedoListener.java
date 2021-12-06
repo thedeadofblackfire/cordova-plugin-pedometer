@@ -605,7 +605,7 @@ private void uninitSensor() {
      */
     @Override
     public void onReset() {
-		Log.i("TAG", "onReset");
+		Log.i(TAG, "onReset");
 		/*
         if (this.status == PedoListener.RUNNING) {
             this.stop();
