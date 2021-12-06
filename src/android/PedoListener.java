@@ -268,7 +268,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             db.setConfig("status_service", "stop");
             db.close();
 
-            getActivity().stopService(stepCounterIntent);
+            getActivity().stopService(new Intent(getActivity(), StepsService.class));
             getActivity().unbindService(mConnection);
             
             callbackContext.success(1);
