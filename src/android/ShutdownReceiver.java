@@ -34,7 +34,14 @@ public class ShutdownReceiver extends BroadcastReceiver {
         //Intent stepCounterServiceIntent = new Intent(context, StepCounterService.class);
         //context.startService(stepCounterServiceIntent);
 
-        context.startService(new Intent(context, StepsService.class)); // SensorListener.class
+		// old line
+        //context.startService(new Intent(context, StepsService.class)); // SensorListener.class
+		
+		if (Build.VERSION.SDK_INT >= 26) {
+            API26Wrapper.startForegroundService(context, new Intent(context, StepsService.class));
+        } else {
+            context.startService(new Intent(context, StepsService.class)); // SensorListener.class
+        }
 
         // if the user used a root script for shutdown, the DEVICE_SHUTDOWN
         // broadcast might not be send. Therefore, the app will check this
