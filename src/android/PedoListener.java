@@ -198,12 +198,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
         } else if (action.equals("deviceCanCountSteps")) {
             Log.i(TAG, "deviceCanCountSteps is called");
-            Boolean canStepCount = deviceHasStepCounter(activity.getPackageManager());
+            Boolean canStepCount = deviceHasStepCounter(getActivity().getPackageManager());
             callbackContext.success(canStepCount ? 1 : 0);
 
         } else if (action.equals("deviceCheckPermissions")) {
             Log.i(TAG, "deviceCheckPermissions is called");
-            final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(activity);
+            final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(getActivity());
             if (dialog != null) dialog.show();
             this.win(true);
             return true;
@@ -213,7 +213,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 Log.i(TAG, "setConfig is called");
                 //Log.i(TAG, args.toString());
                 Log.i(TAG, args.getJSONObject(0).toString());
-                Database db = Database.getInstance(activity);
+                Database db = Database.getInstance(getActivity());
                 if (args.getJSONObject(0).has("userid")) db.setConfig("userid", args.getJSONObject(0).getString("userid"));
                 if (args.getJSONObject(0).has("api")) db.setConfig("api", args.getJSONObject(0).getString("api"));
                 db.close();
@@ -239,14 +239,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             callbackContext.success(1); 
 
             // should display each time ?
-            final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(activity);
+            final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(getActivity());
             if (dialog != null) dialog.show();  
             
             return true;              
         } else if (action.equals("startServiceSilent")) {
             Log.i(TAG, "startServiceSilent is called");
 
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             db.setConfig("status_service", "start");
             db.close();
 
@@ -263,26 +263,26 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         } else if (action.equals("stopService")) {
             Log.i(TAG, "stopService is called");
 
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             db.setConfig("status_service", "stop");
             db.close();
 
-            activity.stopService(stepCounterIntent);
-            activity.unbindService(mConnection);
+            getActivity().stopService(stepCounterIntent);
+            getActivity().unbindService(mConnection);
             
             callbackContext.success(1);
             
             return true;
         } else if (action.equals("statusService")) {
             Log.i(TAG, "statusService is called");     
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             String statusService = db.getConfig("status_service");
             db.close();
 
             callbackContext.success(statusService);
         } else if (action.equals("clean")) {
             Log.i(TAG, "clean is called");
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             db.cleanLinesToSync();
             db.close();
 
@@ -290,7 +290,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             return true;
         } else if (action.equals("reset")) {
             Log.i(TAG, "reset is called");
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             db.resetLinesToSync();
             db.close();
 
@@ -298,7 +298,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             return true;
         } else if (action.equals("rollback")) {
             Log.i(TAG, "rollback is called");
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             db.rollbackLinesToSync();
             db.close();
 
@@ -306,7 +306,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             return true;
         } else if (action.equals("sync")) {
             Log.i(TAG, "sync is called");
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             try {
                 JSONObject response = db.syncData();
                 this.win(response);
@@ -317,7 +317,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             return true;
         } else if (action.equals("debug")) {
             Log.i(TAG, "debug is called");
-            Database db = Database.getInstance(activity);
+            Database db = Database.getInstance(getActivity());
             db.exportDatabase();
             db.close();
 
@@ -332,7 +332,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 //JSONObject jo = args[0].getJSONObject(0);
                 //Log.i(TAG, "execute: jo=" + jo.toString());
 
-                Database db = Database.getInstance(activity);
+                Database db = Database.getInstance(getActivity());
                 JSONObject dataToSync = db.getNoSyncResults(false);
                 db.close();
                 this.win(dataToSync);
