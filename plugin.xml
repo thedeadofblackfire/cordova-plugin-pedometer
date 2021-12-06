@@ -28,36 +28,9 @@
 			<string>$HEALTH_MOTION_PERMISSION</string>
         </config-file>
     </platform>
-    <platform name="android">
-        <config-file parent="/*" target="AndroidManifest.xml">
-            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-        </config-file>
-	    <config-file target="AndroidManifest.xml" parent="/manifest">
-			<uses-permission android:name="android.permission.INTERNET"/>
-			<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-			<uses-permission android:name="android.permission.WAKE_LOCK" />
-			<uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-            
-            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
-            <!--
-            <uses-feature android:name="android.hardware.sensor.stepcounter"/>
-            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="true"/>
-            <uses-feature android:name="android.hardware.sensor.stepdetector" />
-            -->
-            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-            <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-            <!--
-            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-            -->
-		</config-file>		
-        <config-file target="res/xml/config.xml" parent="/*">
-            <feature name="Pedometer">
-                <param name="android-package" value="org.apache.cordova.pedometer.PedoListener" />
-            </feature>
-        </config-file>
+    <platform name="android">   
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
-            <service android:name="org.apache.cordova.pedometer.StepsService" android:enabled="true" />
-             <!--
+            <!--
              * This class is triggered upon reboot of the device. It needs to re-register
              * the STEP_COUNTER with the StepsService
              -->
@@ -73,7 +46,29 @@
                     <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
                 </intent-filter>
             </receiver>
+			<service android:name="org.apache.cordova.pedometer.StepsService" />            
+			<!--<service android:name="org.apache.cordova.pedometer.StepsService" android:enabled="true" /> -->
         </config-file>
+	    <config-file target="AndroidManifest.xml" parent="/manifest">
+			<uses-permission android:name="android.permission.INTERNET"/>
+			<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+			<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+			<uses-permission android:name="android.permission.WAKE_LOCK" />
+			<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+			<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />			
+			<uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />            
+            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
+            <!--
+            <uses-feature android:name="android.hardware.sensor.stepcounter"/>
+            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="true"/>
+            <uses-feature android:name="android.hardware.sensor.stepdetector" />
+            -->        
+		</config-file>		
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="Pedometer">
+                <param name="android-package" value="org.apache.cordova.pedometer.PedoListener" />
+            </feature>
+        </config-file>	
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsService.java" target-dir="src/org/apache/cordova/pedometer" />

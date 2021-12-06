@@ -24,6 +24,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 
+import org.apache.cordova.BuildConfig;
+
 import java.text.NumberFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -33,6 +35,13 @@ import org.json.JSONObject;
 import android.util.Log;
 import org.apache.cordova.pedometer.Logger;
 
+/**
+ * Background service which keeps the step-sensor listener alive to always get
+ * the number of steps since boot.
+ * <p/>
+ * This service won't be needed any more if there is a way to read the
+ * step-value without waiting for a sensor event
+ */
 public class StepsService extends Service implements SensorEventListener {
 
     private static final String TAG = "cordova-plugin-pedometer";
