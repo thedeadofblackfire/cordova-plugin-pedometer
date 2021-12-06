@@ -15,7 +15,9 @@ import org.json.JSONObject;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -62,6 +64,10 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     private int status;     // status of listener
     private float startsteps; //first value, to be substracted
     private long starttimestamp; //time stamp of when the measurement starts
+	
+	private int startOffset = 0, todayOffset, total_start, goal, since_boot, total_days;
+	public final static NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
+
 
     private SensorManager sensorManager; // Sensor manager
     private Sensor mSensor;             // Pedometer sensor returned by sensor manager

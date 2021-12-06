@@ -76,6 +76,7 @@ Pedometer.prototype.debug = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "debug", []);
 };
 
+// inspired from cordova-plugin-stepper
 Pedometer.prototype.setNotificationLocalizedStrings = function (keyValueObj, onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "setNotificationLocalizedStrings", [keyValueObj]);
 };
