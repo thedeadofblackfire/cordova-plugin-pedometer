@@ -28,6 +28,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
 import android.util.Log;
+import android.util.Pair;
 
 import android.os.Handler;
 import android.os.Build;
