@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-pedometer" version="0.5.0">
     <name>Core Motion Pedometer</name>
-    <author>Lee Crossley (http://ilee.co.uk/)</author>
+    <author>Nick</author>
     <description>Cordova / PhoneGap Plugin for the Core Motion Pedometer to fetch pedestrian-related data,
         such as step counts and other information about the distance travelled.</description>
     <keywords>cordova, core motion, pedometer, steps, distance, pedestrian</keywords>
@@ -57,12 +57,7 @@
 			<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 			<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />			
 			<uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />            
-            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
-            <!--
-            <uses-feature android:name="android.hardware.sensor.stepcounter"/>
-            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="true"/>
-            <uses-feature android:name="android.hardware.sensor.stepdetector" />
-            -->        
+            <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />               
 		</config-file>		
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="Pedometer">
@@ -70,11 +65,7 @@
             </feature>
         </config-file>	
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
-		<source-file src="src/android/StepsService.java" target-dir="src/org/apache/cordova/pedometer" />
-		<!--
-		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />		
-        <source-file src="src/android/API26Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
-		-->
+		<source-file src="src/android/StepsService.java" target-dir="src/org/apache/cordova/pedometer" />	
         <source-file src="src/android/ShutdownReceiver.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/BootReceiver.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/AppUpdatedReceiver.java" target-dir="src/org/apache/cordova/pedometer" />        

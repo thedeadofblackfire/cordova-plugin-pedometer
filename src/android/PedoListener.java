@@ -114,8 +114,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.callbackContext = callbackContext;
 		
         Log.i(TAG, "PedoListener execute action=" + action);
-        
-		
+        		
         if (action.equals("isStepCountingAvailable")) {
 			
             List<Sensor> list = this.sensorManager.getSensorList(this.SENSOR_TYPE);
@@ -397,8 +396,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		Log.i(TAG, "start is called");
 
 		// Set options
-		SharedPreferences prefs =
-		  getActivity().getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+		SharedPreferences prefs = getActivity().getSharedPreferences("pedometer", Context.MODE_PRIVATE);
 
 		if (options.has(PEDOMETER_GOAL_REACHED_FORMAT_TEXT)) {
 		  prefs.edit().putString(PEDOMETER_GOAL_REACHED_FORMAT_TEXT, options.getString(PEDOMETER_GOAL_REACHED_FORMAT_TEXT)).commit();
@@ -424,8 +422,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         //this.setStatus(PedoListener.STARTING);
 
 		if (Build.VERSION.SDK_INT >= 26) {
-		  API26Wrapper.startForegroundService(getActivity(),
-			new Intent(getActivity(), StepsService.class));
+		  API26Wrapper.startForegroundService(getActivity(), new Intent(getActivity(), StepsService.class));
 		} else {
 		  getActivity().startService(new Intent(getActivity(), StepsService.class));
 		}
@@ -454,7 +451,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		  uninitSensor();
 		}
 
-
 		Database db = Database.getInstance(getActivity());
 		db.setConfig("status_service", "stop");
 		//db.clear(); // delete all datas on table
@@ -477,8 +473,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     todayOffset = db.getSteps(Util.getToday());
 
-    SharedPreferences prefs =
-      getActivity().getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+    SharedPreferences prefs = getActivity().getSharedPreferences("pedometer", Context.MODE_PRIVATE);
 
     goal = prefs.getInt(PedoListener.GOAL_PREF_INT, PedoListener.DEFAULT_GOAL);
     since_boot = db.getCurrentSteps();
@@ -599,8 +594,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
       //nothing to do here
       //return;
     }
-
-
 
     private void setStatus(int status) {
         this.status = status;

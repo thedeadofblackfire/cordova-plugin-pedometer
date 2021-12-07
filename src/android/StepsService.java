@@ -56,10 +56,6 @@ public class StepsService extends Service implements SensorEventListener {
     private final static int SAVE_OFFSET_STEPS = 10; // trigger the send to server if at least 10 steps of difference (500)
     private final static long RESTART_SERVICE_OFFSET_TIME = 120000; // 2 min
 
-    //private SensorManager mSensorManager;
-    //private Sensor mStepDetectorSensor;
-    //private StepsDBHelper mStepsDBHelper;
-
     private static int steps;
     private static int lastSaveSteps;
     private static long lastSaveTime;
@@ -81,23 +77,7 @@ public class StepsService extends Service implements SensorEventListener {
         super.onCreate();
 
         Log.i(TAG, "StepsService onCreate");
-        context = this;
-        //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        //StrictMode.setThreadPolicy(policy);
-        //mStepsDBHelper = new StepsDBHelper(this);
-        //Log.i(TAG, "StepsService onCreate end");
-        
-        /*
-         * mSensorManager = (SensorManager)
-         * this.getSystemService(Context.SENSOR_SERVICE); if
-         * (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
-         * mStepDetectorSensor =
-         * mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-         * mSensorManager.registerListener(this, mStepDetectorSensor,
-         * SensorManager.SENSOR_DELAY_NORMAL); mStepsDBHelper = new StepsDBHelper(this);
-         * Log.i(TAG, "StepsService onCreate end"); // mStepsDBHelper =
-         * StepsDBHelper.getInstance(this); }
-         */
+        context = this;   
     }
 
     @Override
@@ -252,7 +232,7 @@ public class StepsService extends Service implements SensorEventListener {
             if (Util.isDebug())
                 Logger.log("StepsService [updateIfNecessary] - saving steps: steps=" + steps + " lastSave=" + lastSaveSteps + " lastSaveTime="
                         + new Date(lastSaveTime));
-                        /*
+            /*
             //Database db = Database.getInstance(this);
             if (db.getSteps(Util.getToday()) == Integer.MIN_VALUE) {
                 int pauseDifference = steps
@@ -289,18 +269,13 @@ public class StepsService extends Service implements SensorEventListener {
             }
 
             lastSaveSteps = steps;
-            lastSaveTime = System.currentTimeMillis();
-            /*
-            showNotification(); // update notification
-            startService(new Intent(this, WidgetUpdateService.class));
-            */
+            lastSaveTime = System.currentTimeMillis();     
 			showNotification(); // update notification
             return true;
         } else {
 			showNotification(); // update notification
             return false;
         }
-        //return true;
     }
 	
 	private void showNotification() {
@@ -385,7 +360,6 @@ public class StepsService extends Service implements SensorEventListener {
 
     private void reRegisterSensor() {
         // if (BuildConfig.DEBUG) Logger.log("re-register sensor listener");
-        // SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         Log.i(TAG, "StepsService [reRegisterSensor] - re-register sensor listener");
         //SensorManager sm = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
 		SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -398,12 +372,11 @@ public class StepsService extends Service implements SensorEventListener {
             e.printStackTrace();
         }
 
-        Log.i(TAG,
-                "StepsService [reRegisterSensor] - step sensors: " + sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size());
-        if (sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size() < 1)
-            return; // emulator
-        Log.i(TAG, "StepsService [reRegisterSensor] - default: "
-                + sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER).getName());
+        Log.i(TAG, "StepsService [reRegisterSensor] - step sensors: " + sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size());
+        
+		if (sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size() < 1) return; // emulator
+		
+        Log.i(TAG, "StepsService [reRegisterSensor] - default: " + sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER).getName());
 
         /*
          * if (BuildConfig.DEBUG) { Logger.log("step sensors: " +
