@@ -75,28 +75,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     private CallbackContext callbackContext; // Keeps track of the JS callback context.
 
-    //private Handler mainHandler=null;
-
     private final int SENSOR_TYPE = Sensor.TYPE_STEP_COUNTER; // TYPE_STEP_DETECTOR or TYPE_STEP_COUNTER
-	
-    //private Intent stepCounterIntent;
-
-	//private StepsDBHelper mStepsDBHelper;
-    
-	/*
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            Log.i(TAG, "onServiceConnected is called'");
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            Log.i(TAG, "onServiceDisconnected is called'");
-        }
-    };
-	*/
 
     /**
      * Constructor
@@ -107,7 +86,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.setStatus(PedoListener.STOPPED);
 				
 		Log.i(TAG, "PedoListener Init service for steps");
-		//pendingIntent = getTransitionPendingIntent();
     }
 
     /**
@@ -122,18 +100,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         super.initialize(cordova, webView);
 		
 		Log.i(TAG, "PedoListener initialize debug="+Util.isDebug());
-		
-        // disable test
-		//this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
-		
-		/*
-		Intent mStepsIntent = new Intent(cordova.getActivity(), StepsService.class); // context
-        //logger.log(Log.DEBUG, "StepsService Intent created!");
-		Log.i(TAG, "PedoListener StepsService Intent created!");
-        cordova.getActivity().startService(mStepsIntent);
-        */
-				
-		//mStepsDBHelper = new StepsDBHelper(cordova.getActivity());
     }
 
     /**
@@ -149,10 +115,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		
         Log.i(TAG, "PedoListener execute action=" + action);
         
-        //Activity activity = this.cordova.getActivity();
-        //stepCounterIntent = new Intent(activity, StepsService.class);
-
-		/*
+		
         if (action.equals("isStepCountingAvailable")) {
 			
             List<Sensor> list = this.sensorManager.getSensorList(this.SENSOR_TYPE);
@@ -336,9 +299,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 e.printStackTrace();
             }
             return true;
-		} else 
-			*/
-		if (action.equals("startStepperUpdates")) {
+		} else if (action.equals("startStepperUpdates")) {
 			start(args);
 		} else if (action.equals("stopStepperUpdates")) {
 			stop();    
@@ -364,15 +325,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         return true;
     }
 
+	public void onStart() {
+		initSensor();
+	}
 
-  public void onStart() {
-    initSensor();
-  }
-
-  public void onPause(boolean multitasking) {
-    status = PedoListener.PAUSED;
-    uninitSensor();
-  }
+	public void onPause(boolean multitasking) {
+		status = PedoListener.PAUSED;
+		uninitSensor();
+	}
 
 
     /**
@@ -541,16 +501,16 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     updateUI();
   }
   
-private void uninitSensor() {
-	try {
-	  sensorManager.unregisterListener(this);
-	} catch (Exception e) {
-	  e.printStackTrace();
+	private void uninitSensor() {
+		try {
+		  sensorManager.unregisterListener(this);
+		} catch (Exception e) {
+		  e.printStackTrace();
+		}
+		Database db = Database.getInstance(getActivity());
+		db.saveCurrentSteps(since_boot);
+		db.close();
 	}
-	Database db = Database.getInstance(getActivity());
-	db.saveCurrentSteps(since_boot);
-	db.close();
-}
 
     /**
      * Sensor listener event.
@@ -647,21 +607,7 @@ private void uninitSensor() {
         }
         return r;
     }
-	
-	/*
-     * Create a PendingIntent that triggers an IntentService in your app when a
-     * geofence transition occurs.
-     */
-	 /*
-    private PendingIntent getTransitionPendingIntent() {
-        Intent mStepsIntent = new Intent(context, StepsService.class);
-        //logger.log(Log.DEBUG, "StepsService Intent created!");
-		Log.d(TAG, "StepsService Intent created!");
-		this.cordova.getActivity().startService(mStepsIntent);
-        //return PendingIntent.getService(context, 0, mStepsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
-    */
-    
+	    
     public static boolean deviceHasStepCounter(PackageManager pm) {
         // Require at least Android KitKat
         int currentApiVersion = Build.VERSION.SDK_INT;
@@ -725,89 +671,89 @@ private void uninitSensor() {
 		}
 	}
 
- private void getSteps(JSONArray args) {
-    long date = 0;
-    try {
-      date = args.getLong(0);
-    }
-    catch (JSONException e) {
-      e.printStackTrace();
-      return;
-    }
+	private void getSteps(JSONArray args) {
+		long date = 0;
+		try {
+		  date = args.getLong(0);
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
 
-    Database db = Database.getInstance(getActivity());
-    int steps = db.getSteps(date);
-    db.close();
+		Database db = Database.getInstance(getActivity());
+		int steps = db.getSteps(date);
+		db.close();
 
-    JSONObject joresult = new JSONObject();
-    try {
-      joresult.put("steps", steps);
-    }
-    catch (JSONException e) {
-      e.printStackTrace();
-      return;
-    }
-    callbackContext.success(joresult);
-  }
+		JSONObject joresult = new JSONObject();
+		try {
+		  joresult.put("steps", steps);
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
+		callbackContext.success(joresult);
+	  }
 
-  private void getStepsByPeriod(JSONArray args) {
-    long startdate = 0;
-    long endate = 0;
-    try {
-      startdate = args.getLong(0);
-      endate = args.getLong(1);
-    }
-    catch (JSONException e) {
-      e.printStackTrace();
-      return;
-    }
+	  private void getStepsByPeriod(JSONArray args) {
+		long startdate = 0;
+		long endate = 0;
+		try {
+		  startdate = args.getLong(0);
+		  endate = args.getLong(1);
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
 
-    Database db = Database.getInstance(getActivity());
-    int steps = db.getSteps(startdate, endate);
-    db.close();
+		Database db = Database.getInstance(getActivity());
+		int steps = db.getSteps(startdate, endate);
+		db.close();
 
-    JSONObject joresult = new JSONObject();
-    try {
-      joresult.put("steps", steps);
-    }
-    catch (JSONException e) {
-      e.printStackTrace();
-      return;
-    }
-    callbackContext.success(joresult);
-  }
-  
-    private void getLastEntries(JSONArray args) {
-    int num = 0;
-    try {
-      num = args.getInt(0);
-    }
-    catch (JSONException e) {
-      e.printStackTrace();
-      return;
-    }
+		JSONObject joresult = new JSONObject();
+		try {
+		  joresult.put("steps", steps);
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
+		callbackContext.success(joresult);
+	  }
+	  
+		private void getLastEntries(JSONArray args) {
+		int num = 0;
+		try {
+		  num = args.getInt(0);
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
 
-    Database db = Database.getInstance(getActivity());
-    List<Pair<Long, Integer>> entries = db.getLastEntries(num);
-    db.close();
+		Database db = Database.getInstance(getActivity());
+		List<Pair<Long, Integer>> entries = db.getLastEntries(num);
+		db.close();
 
-    JSONObject joresult = new JSONObject();
-    try {
-      JSONArray jaEntries = new JSONArray();
-      for (int i = 0; i < entries.size(); i++) {
-        JSONObject joEntry = new JSONObject();
-        joEntry.put("data", entries.get(i).first);
-        joEntry.put("steps", entries.get(i).second);
-        jaEntries.put(joEntry);
-      }
-      joresult.put("entries", jaEntries);
-    }
-    catch (JSONException e) {
-      e.printStackTrace();
-      return;
-    }
-    callbackContext.success(joresult);
-  }
+		JSONObject joresult = new JSONObject();
+		try {
+		  JSONArray jaEntries = new JSONArray();
+		  for (int i = 0; i < entries.size(); i++) {
+			JSONObject joEntry = new JSONObject();
+			joEntry.put("data", entries.get(i).first);
+			joEntry.put("steps", entries.get(i).second);
+			jaEntries.put(joEntry);
+		  }
+		  joresult.put("entries", jaEntries);
+		}
+		catch (JSONException e) {
+		  e.printStackTrace();
+		  return;
+		}
+		callbackContext.success(joresult);
+	  }
   
 	private void updateUI() {
 		// Today offset might still be Integer.MIN_VALUE on first start
