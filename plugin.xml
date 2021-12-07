@@ -72,15 +72,22 @@
         <source-file src="src/android/PedoListener.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsDBHelper.java" target-dir="src/org/apache/cordova/pedometer" />
 		<source-file src="src/android/StepsService.java" target-dir="src/org/apache/cordova/pedometer" />
+		<!--
         <source-file src="src/android/StepsUtil.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/API23Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/API26Wrapper.java" target-dir="src/org/apache/cordova/pedometer" />
+		-->
         <source-file src="src/android/ShutdownReceiver.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/BootReceiver.java" target-dir="src/org/apache/cordova/pedometer" />
         <source-file src="src/android/AppUpdatedReceiver.java" target-dir="src/org/apache/cordova/pedometer" />        
-        <source-file src="src/android/Logger.java" target-dir="src/org/apache/cordova/pedometer" />  
+        <!--<source-file src="src/android/Logger.java" target-dir="src/org/apache/cordova/pedometer" />  -->
         <source-file src="src/android/Database.java" target-dir="src/org/apache/cordova/pedometer" />  
         <source-file src="src/android/BatteryOptimizationUtil.java" target-dir="src/org/apache/cordova/pedometer" />        
+		
+		<source-file src="src/android/util/API23Wrapper.java" target-dir="src/org/apache/cordova/pedometer/util" />
+        <source-file src="src/android/util/API26Wrapper.java" target-dir="src/org/apache/cordova/pedometer/util" />
+        <source-file src="src/android/util/Logger.java" target-dir="src/org/apache/cordova/pedometer/util" />
+        <source-file src="src/android/util/Util.java" target-dir="src/org/apache/cordova/pedometer/util" />
 		<source-file src="src/android/res/drawable/ic_footsteps_silhouette_variant.xml" target-dir="res/drawable" />
     </platform>
 </plugin>

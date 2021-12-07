@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Calendar;
 import android.util.Log;
 
-import org.apache.cordova.pedometer.util.Logger;
-import org.apache.cordova.pedometer.util.Util;
+import org.apache.cordova.pedometer.Logger;
+import org.apache.cordova.pedometer.StepsUtil;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -277,7 +277,7 @@ public class Database extends SQLiteOpenHelper {
                 getWritableDatabase().insert(TABLE_STEPS, null, values);
             }
             c.close();
-            if (Util.isDebug()) {
+            if (StepsUtil.isDebug()) {
                 Logger.log("insertDay " + date + " / " + steps);
                 logState();
             }
@@ -330,7 +330,7 @@ public class Database extends SQLiteOpenHelper {
      * Writes the current steps database to the log
      */
     public void logState() {
-        if (Util.isDebug()) {
+        if (StepsUtil.isDebug()) {
             Cursor c = getReadableDatabase().query(TABLE_STEPS, null, null, null, null, null, "date DESC", "5");
             Logger.log(c);
             c.close();
@@ -345,7 +345,7 @@ public class Database extends SQLiteOpenHelper {
     public int getTotalWithoutToday() {
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_STEPS + " > 0 AND date > 0 AND date < ?",
-                new String[] { String.valueOf(Util.getToday()) }, null, null, null);
+                new String[] { String.valueOf(StepsUtil.getToday()) }, null, null, null);
         c.moveToFirst();
         int re = c.getInt(0);
         c.close();
@@ -384,7 +384,7 @@ public class Database extends SQLiteOpenHelper {
     /**
      * Get the number of steps taken for a specific date.
      * <p/>
-     * If date is Util.getToday(), this method returns the offset which needs
+     * If date is StepsUtil.getToday(), this method returns the offset which needs
      * to be added to the value returned by getCurrentSteps() to get todays steps.
      *
      * @param date the date in millis since 1970
@@ -428,7 +428,7 @@ public class Database extends SQLiteOpenHelper {
      * Get the number of steps taken between 'start' and 'end' date
      * <p/>
      * Note that todays entry might have a negative value, so take care of that if
-     * 'end' >= Util.getToday()!
+     * 'end' >= StepsUtil.getToday()!
      *
      * @param start start date in ms since 1970 (steps for this date included)
      * @param end   end date in ms since 1970 (steps for this date included)
@@ -479,7 +479,7 @@ public class Database extends SQLiteOpenHelper {
     public int getDaysWithoutToday() {
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "COUNT(*)" },
                 "steps > ? AND date < ? AND date > 0",
-                new String[] { String.valueOf(0), String.valueOf(Util.getToday()) }, null, null, null);
+                new String[] { String.valueOf(0), String.valueOf(StepsUtil.getToday()) }, null, null, null);
         c.moveToFirst();
         int re = c.getInt(0);
         c.close();
@@ -516,7 +516,7 @@ public class Database extends SQLiteOpenHelper {
             values.put(KEY_STEP_DATE, -1);
             getWritableDatabase().insert(TABLE_STEPS, null, values);
         }
-        if (Util.isDebug()) {
+        if (StepsUtil.isDebug()) {
             Logger.log("saving steps in db: " + steps);
         }
     }
@@ -543,8 +543,8 @@ public class Database extends SQLiteOpenHelper {
         String todayDate = String.valueOf(mCalendar.get(Calendar.YEAR)) + "-"
                 + String.format("%2s", String.valueOf(mCalendar.get(Calendar.MONTH) + 1)).replace(' ', '0') + "-"
                 + String.format("%2s", String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH))).replace(' ', '0');
-        Long date = Util.getToday();
-        Long datePeriodTime = Util.getTodayPeriodTime();
+        Long date = StepsUtil.getToday();
+        Long datePeriodTime = StepsUtil.getTodayPeriodTime();
 
         // period start >= & < end in 5 min interval
         Calendar mCalendarPeriodStart = Calendar.getInstance();

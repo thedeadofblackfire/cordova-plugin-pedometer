@@ -9,6 +9,7 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
+import org.apache.cordova.pedometer.util.Util;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,6 +27,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import org.apache.cordova.pedometer.util.API26Wrapper;
 
 import android.util.Log;
 import android.util.Pair;
@@ -119,7 +121,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
 		
-		Log.i(TAG, "PedoListener initialize debug="+StepsUtil.isDebug());
+		Log.i(TAG, "PedoListener initialize debug="+Util.isDebug());
 		
         // disable test
 		//this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
@@ -497,7 +499,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     Database db = Database.getInstance(getActivity());
 
-    todayOffset = db.getSteps(StepsUtil.getToday());
+    todayOffset = db.getSteps(Util.getToday());
 
     SharedPreferences prefs =
       getActivity().getSharedPreferences("pedometer", Context.MODE_PRIVATE);
@@ -590,7 +592,7 @@ private void uninitSensor() {
 		  // initializing them with -STEPS_SINCE_BOOT
 		  todayOffset = -(int) event.values[0];
 		  Database db = Database.getInstance(getActivity());
-		  db.insertNewDay(StepsUtil.getToday(), (int) event.values[0]);
+		  db.insertNewDay(Util.getToday(), (int) event.values[0]);
 		  db.close();
 		}
 		since_boot = (int) event.values[0];
