@@ -68,13 +68,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 	private int startOffset = 0, todayOffset, total_start, goal, since_boot, total_days;
 	public final static NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
 
-
     private SensorManager sensorManager; // Sensor manager
     private Sensor sensor;             // Pedometer sensor returned by sensor manager
 
     private CallbackContext callbackContext; // Keeps track of the JS callback context.
 
-    private Handler mainHandler=null;
+    //private Handler mainHandler=null;
 
     private final int SENSOR_TYPE = Sensor.TYPE_STEP_COUNTER; // TYPE_STEP_DETECTOR or TYPE_STEP_COUNTER
 	
@@ -82,6 +81,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
 	//private StepsDBHelper mStepsDBHelper;
     
+	/*
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className,
@@ -94,6 +94,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             Log.i(TAG, "onServiceDisconnected is called'");
         }
     };
+	*/
 
     /**
      * Constructor
@@ -149,18 +150,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         //Activity activity = this.cordova.getActivity();
         //stepCounterIntent = new Intent(activity, StepsService.class);
 
+		/*
         if (action.equals("isStepCountingAvailable")) {
-			/*
-			this.sensor = this.sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-			if (this.sensor != null) {
-				this.win(true);
-                return true;
-			} else {
-				this.setStatus(PedoListener.ERROR_NO_SENSOR_FOUND);
-                this.win(false);
-                return true;
-			}
-			*/			
+			
             List<Sensor> list = this.sensorManager.getSensorList(this.SENSOR_TYPE);
             if ((list != null) && (list.size() > 0)) {
                 this.win(true);
@@ -269,7 +261,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             db.close();
 
             getActivity().stopService(new Intent(getActivity(), StepsService.class));
-            getActivity().unbindService(mConnection);
+            //getActivity().unbindService(mConnection);
             
             callbackContext.success(1);
             
@@ -342,7 +334,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 e.printStackTrace();
             }
             return true;
-		} else if (action.equals("startStepperUpdates")) {
+		} else 
+			*/
+		if (action.equals("startStepperUpdates")) {
 			start(args);
 		} else if (action.equals("stopStepperUpdates")) {
 			stop();    
@@ -392,6 +386,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     /**
      * Start listening for pedometers sensor. (mine)
      */
+	 /*
     private void start() {
         // If already starting or running, then return
         if ((this.status == PedoListener.RUNNING) || (this.status == PedoListener.STARTING)) {
@@ -422,6 +417,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             return;
         }
     }
+	*/
 	
 	private void start(JSONArray args) throws JSONException {
 		startOffset = args.getInt(0);
@@ -479,10 +475,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		  uninitSensor();
 		}
 
+/*
 		Database db = Database.getInstance(getActivity());
 		db.setConfig("status_service", "stop");
 		//db.clear(); // delete all datas on table
 		db.close();
+		*/
 
 		getActivity().stopService(new Intent(getActivity(), StepsService.class));
 		status = PedoListener.STOPPED;
