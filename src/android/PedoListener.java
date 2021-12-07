@@ -137,6 +137,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             //floor counting is never available in Android
             this.win(false);
             return true;
+			/*
         } else if (action.equals("startPedometerUpdates")) {
             if (this.status != PedoListener.RUNNING) {
                 // If not running, then this is an async call, so don't worry about waiting
@@ -147,13 +148,14 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             result.setKeepCallback(true);
             callbackContext.sendPluginResult(result);
             return true;
+			
         } else if (action.equals("stopPedometerUpdates")) {
             if (this.status == PedoListener.RUNNING) {
                 this.stop();
             }
             this.win(null);
             return true;
-
+		*/
         } else if (action.equals("deviceCanCountSteps")) {
             Log.i(TAG, "deviceCanCountSteps is called");
             Boolean canStepCount = deviceHasStepCounter(getActivity().getPackageManager());
@@ -180,6 +182,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
                 e.printStackTrace();
             }
             return true;
+			/*
         } else if (action.equals("startService")) {
             Log.i(TAG, "startService is called");
 
@@ -231,6 +234,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             callbackContext.success(1);
             
             return true;
+			*/
         } else if (action.equals("statusService")) {
             Log.i(TAG, "statusService is called");     
             Database db = Database.getInstance(getActivity());
@@ -389,6 +393,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		if ((status == PedoListener.RUNNING) || (status == PedoListener.STARTING)) {
 		  return;
 		}
+		
+		Log.i(TAG, "start is called");
 
 		// Set options
 		SharedPreferences prefs =
@@ -411,6 +417,11 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		}
 
 		prefs.edit().putInt("startOffset", startOffset).commit();
+		
+		// mine
+		starttimestamp = System.currentTimeMillis();
+        this.startsteps = 0;
+        //this.setStatus(PedoListener.STARTING);
 
 		if (Build.VERSION.SDK_INT >= 26) {
 		  API26Wrapper.startForegroundService(getActivity(),
@@ -418,6 +429,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		} else {
 		  getActivity().startService(new Intent(getActivity(), StepsService.class));
 		}
+		
+		/*
+		// should display each time ?
+        final AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(getActivity());
+        if (dialog != null) dialog.show();              
+		*/
 
 		initSensor();
 	  }
@@ -437,12 +454,11 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		  uninitSensor();
 		}
 
-/*
+
 		Database db = Database.getInstance(getActivity());
 		db.setConfig("status_service", "stop");
 		//db.clear(); // delete all datas on table
-		db.close();
-		*/
+		db.close();		
 
 		getActivity().stopService(new Intent(getActivity(), StepsService.class));
 		status = PedoListener.STOPPED;
@@ -493,10 +509,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     total_start = db.getTotalWithoutToday();
     total_days = db.getDays();
-
+	
+	status = PedoListener.STARTING;
+	
+	db.setConfig("status_service", "start");
+       
     db.close();
-
-    status = PedoListener.STARTING;
 
     updateUI();
   }
