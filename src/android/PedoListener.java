@@ -505,9 +505,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     total_start = db.getTotalWithoutToday();
     total_days = db.getDays();
 	
-	status = PedoListener.STARTING;
+  	status = PedoListener.STARTING;
 	
-	db.setConfig("status_service", "start");
+	  db.setConfig("status_service", "start");
        
     db.close();
 
@@ -531,7 +531,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      */
     @Override
     public void onSensorChanged(final SensorEvent event) {
-		Log.i(TAG, "PedoListener onSensorChanged");
+		    Log.i(TAG, "PedoListener onSensorChanged");
 		
         // Only look at step counter events
         if (event.sensor.getType() != this.SENSOR_TYPE) {
@@ -544,33 +544,33 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         }
         this.setStatus(PedoListener.RUNNING);
 
-		if (event.values[0] > Integer.MAX_VALUE || event.values[0] == 0) {
-			return;
-		}
+        if (event.values[0] > Integer.MAX_VALUE || event.values[0] == 0) {
+          return;
+        }
 	
-		// old code below
-        float steps = event.values[0];
+        // old code below
+            float steps = event.values[0];
 
-        if(this.startsteps == 0)
-          this.startsteps = steps;
+            if(this.startsteps == 0)
+              this.startsteps = steps;
 
-        steps = steps - this.startsteps;
+            steps = steps - this.startsteps;
 
-        //this.win(this.getStepsJSON(steps));
-		// ------
-		
-		if (todayOffset == Integer.MIN_VALUE) {
-		  // no values for today
-		  // we don`t know when the reboot was, so set today`s steps to 0 by
-		  // initializing them with -STEPS_SINCE_BOOT
-		  todayOffset = -(int) event.values[0];
-		  Database db = Database.getInstance(getActivity());
-		  db.insertNewDay(Util.getToday(), (int) event.values[0]);
-		  db.close();
-		}
-		since_boot = (int) event.values[0];
+            //this.win(this.getStepsJSON(steps));
+        // ------
+        
+        if (todayOffset == Integer.MIN_VALUE) {
+          // no values for today
+          // we don`t know when the reboot was, so set today`s steps to 0 by
+          // initializing them with -STEPS_SINCE_BOOT
+          todayOffset = -(int) event.values[0];
+          Database db = Database.getInstance(getActivity());
+          db.insertNewDay(Util.getToday(), (int) event.values[0]);
+          db.close();
+        }
+        since_boot = (int) event.values[0];
 
-		updateUI();
+        updateUI();
     }
 
     /**
@@ -578,12 +578,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      */
     @Override
     public void onReset() {
-		Log.i(TAG, "onReset");
-		/*
-        if (this.status == PedoListener.RUNNING) {
-            this.stop();
-        }
-		*/
+      Log.i(TAG, "onReset");
+      /*
+          if (this.status == PedoListener.RUNNING) {
+              this.stop();
+          }
+      */
     }
 	
     /**
@@ -739,8 +739,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		int num = 0;
 		try {
 		  num = args.getInt(0);
-		}
-		catch (JSONException e) {
+		} catch (JSONException e) {
 		  e.printStackTrace();
 		  return;
 		}
@@ -753,14 +752,13 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		try {
 		  JSONArray jaEntries = new JSONArray();
 		  for (int i = 0; i < entries.size(); i++) {
-			JSONObject joEntry = new JSONObject();
-			joEntry.put("data", entries.get(i).first);
-			joEntry.put("steps", entries.get(i).second);
-			jaEntries.put(joEntry);
+        JSONObject joEntry = new JSONObject();
+        joEntry.put("data", entries.get(i).first);
+        joEntry.put("steps", entries.get(i).second);
+        jaEntries.put(joEntry);
 		  }
 		  joresult.put("entries", jaEntries);
-		}
-		catch (JSONException e) {
+		} catch (JSONException e) {
 		  e.printStackTrace();
 		  return;
 		}
@@ -803,7 +801,6 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         return r;
 		*/
 		
-
 		win(result);
 	}
   

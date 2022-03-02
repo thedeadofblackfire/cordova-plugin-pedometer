@@ -54,7 +54,7 @@ public class StepsService extends Service implements SensorEventListener {
     private final static long MICROSECONDS_IN_ONE_MINUTE = 60000000;
     private final static long SAVE_OFFSET_TIME = 720000; // 12 min to send to server if slowly activity on step (AlarmManager.INTERVAL_HOUR)
     private final static int SAVE_OFFSET_STEPS = 10; // trigger the send to server if at least 10 steps of difference (500)
-    private final static long RESTART_SERVICE_OFFSET_TIME = 120000; // 2 min
+    private final static long RESTART_SERVICE_OFFSET_TIME = 3600000; // 2 min = 120000, 1H=3600000
 
     private static int steps;
     private static int lastSaveSteps;
