@@ -376,7 +376,8 @@ public class Database extends SQLiteOpenHelper {
      *         exist in the database
      */
     public int getSteps(final long date) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "" + KEY_STEP_STEPS },
+        //Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
         c.moveToFirst();
         int re;

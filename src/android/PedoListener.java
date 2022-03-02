@@ -667,7 +667,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		}
 	}
   
-    private void setGoal(JSONArray args) {
+  private void setGoal(JSONArray args) {
 		try {
 		  goal = args.getInt(0);
 		}
@@ -694,6 +694,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
 		Database db = Database.getInstance(getActivity());
 		int steps = db.getSteps(date);
+    steps = (steps == Integer.MIN_VALUE) ? 0 : steps;
 		db.close();
 
 		JSONObject joresult = new JSONObject();
