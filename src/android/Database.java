@@ -380,15 +380,13 @@ public class Database extends SQLiteOpenHelper {
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
         //c.moveToFirst();
-        int re;
-        if (c.getCount() == 0) {
-            re = Integer.MIN_VALUE;
-        } else {
+        int re = Integer.MIN_VALUE;
+        if (c != null && c.getCount() > 0) {
             if (c.moveToFirst()) {
                 re = c.getInt(0);
             }
         }
-        c.close();
+        if (c != null && !c.isClosed()) c.close();
         return re;
         /*
         c.moveToFirst();
