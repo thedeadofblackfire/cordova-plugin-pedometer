@@ -310,8 +310,7 @@ public class StepsService extends Service implements SensorEventListener {
 		SharedPreferences prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
 		Database db = Database.getInstance(context);
 		int today_offset = db.getSteps(Util.getToday());
-		if (steps == 0)
-		  steps = db.getCurrentSteps(); // use saved value if we haven't anything better
+		if (steps == 0) steps = db.getCurrentSteps(); // use saved value if we haven't anything better
 		db.close();
 		
 		int goal = prefs.getInt(PedoListener.GOAL_PREF_INT, PedoListener.DEFAULT_GOAL);
@@ -319,9 +318,14 @@ public class StepsService extends Service implements SensorEventListener {
 		Notification.Builder notificationBuilder =
 		  Build.VERSION.SDK_INT >= 26 ? API26Wrapper.getNotificationBuilder(context) :
 			new Notification.Builder(context);
+
 		if (steps > 0) {
-		  if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
-		  notificationBuilder.setProgress(goal, today_offset + steps, false).setContentText(
+            // if goal = 1, we don't show progress and replace "653 steps to go" by "347 steps today"
+            if (goal <= 1) {
+                notificationBuilder.setContentText(String.format(prefs.getString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps today"), NumberFormat.getInstance(Locale.getDefault()).format((today_offset + steps))));
+            } else {
+		        if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
+		        notificationBuilder.setProgress(goal, today_offset + steps, false).setContentText(
 			today_offset + steps >= goal ?
 			  String.format(prefs.getString(PedoListener.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, "Goal reached! %s steps and counting"),
 				NumberFormat.getInstance(Locale.getDefault())
@@ -329,8 +333,10 @@ public class StepsService extends Service implements SensorEventListener {
 			  String.format(prefs.getString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps to go"),
 				NumberFormat.getInstance(Locale.getDefault())
 				  .format((goal - today_offset - steps))));
-		} else { // still no step value?
-		  notificationBuilder.setContentText(prefs.getString(PedoListener.PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT, "Your progress will be shown here soon"));
+            }
+		} else { 
+            // still no step value?
+		    notificationBuilder.setContentText(prefs.getString(PedoListener.PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT, "Your progress will be shown here soon"));
 		}
 
 		PackageManager packageManager = context.getPackageManager();
