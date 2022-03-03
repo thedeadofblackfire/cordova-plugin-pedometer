@@ -113,6 +113,15 @@ public class Database extends SQLiteOpenHelper {
         }
     }
 
+    // Called when the database connection is being configured.
+    // Configure database settings for things like foreign key support, write-ahead logging, etc.
+    @Override
+    public void onConfigure(final SQLiteDatabase db) {
+        super.onConfigure(db);
+        // This method enables parallel execution of queries from multiple threads on the same database.
+        db.enableWriteAheadLogging();
+    }
+
     @Override
     public void onCreate(final SQLiteDatabase db) {
         db.execSQL(CREATE_TABLE_SETTINGS);
@@ -151,6 +160,33 @@ public class Database extends SQLiteOpenHelper {
      *         (and it was overwritten)
      */
     public boolean setConfig(String key, String value) {
+        // Create and/or open the database for writing
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        boolean newEntryCreated = false;
+        try {
+            Log.i(Database.class.getName(), "StepsService Database setConfig " + key + "=" + value);
+            ContentValues values = new ContentValues();
+            values.put(KEY_SETTINGS_VALUE, value);
+            values.put(KEY_SETTINGS_LASTUPDATE, System.currentTimeMillis());
+            int updatedRows = db.update(TABLE_SETTINGS, values, KEY_SETTINGS_KEY + " = ?",
+                    new String[] { key });
+            if (updatedRows == 0) {
+                values.put(KEY_SETTINGS_KEY, key);
+                db.insert(TABLE_SETTINGS, null, values);
+                newEntryCreated = true;
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            Log.i(Database.class.getName(), "Error while trying to add post to database");
+            Log.i(Database.class.getName(), e.getMessage());
+        } finally {
+            db.endTransaction();
+        }
+        return newEntryCreated;
+
+        /*
         getWritableDatabase().beginTransaction();
         boolean newEntryCreated = false;
         try {
@@ -170,6 +206,7 @@ public class Database extends SQLiteOpenHelper {
             getWritableDatabase().endTransaction();
         }
         return newEntryCreated;
+        */
     }
     /*
      * public boolean setConfig(String userid, String api) {
@@ -598,10 +635,12 @@ public class Database extends SQLiteOpenHelper {
              * String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS +
              * " WHERE " + KEY_STEP_CREATION_DATE + " = '" + todayDate + "'";
              */
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor c = null;
             try {
-
-                SQLiteDatabase db = this.getReadableDatabase();
-                Cursor c = db.rawQuery(selectQuery, null);
+                //SQLiteDatabase db = this.getReadableDatabase();
+                //Cursor c = db.rawQuery(selectQuery, null);
+                c = db.rawQuery(selectQuery, null);
                 if (c != null && c.moveToFirst()) {
                     do {
                         isDateAlreadyPresent = true;
@@ -609,16 +648,22 @@ public class Database extends SQLiteOpenHelper {
                         // currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
                     } while (c.moveToNext());
                 }
+                /*
                 if (c != null && !c.isClosed()) {
                     c.close();
                 }
                 db.close();
+                */
             } catch (Exception e) {
                 e.printStackTrace();
-            }
+            } finally {
+                if (c != null && !c.isClosed()) c.close();
+                db.close();
+            }            
 
+            SQLiteDatabase db = this.getWritableDatabase();
             try {
-                SQLiteDatabase db = this.getWritableDatabase();
+                //SQLiteDatabase db = this.getWritableDatabase();
                 ContentValues values = new ContentValues();
 
                 values.put(KEY_STEP_SYNCED, 0);
@@ -656,7 +701,7 @@ public class Database extends SQLiteOpenHelper {
                             if (lastPeriodTimeKey == 0) lastPeriodTimeKey = datePeriodTime;
                         }
                     }
-                    db.close();
+                    //db.close();
                 } else {
                     values.put(KEY_STEP_DATE, date);
                     values.put(KEY_STEP_CREATION_DATE, todayDate);
@@ -669,7 +714,7 @@ public class Database extends SQLiteOpenHelper {
                     if (row != -1) {
                         createSuccessful = true;
                     }
-                    db.close();
+                    //db.close();
 
                     prefs.edit().putInt("lastSaveSteps", steps).commit();
                     lastSaveSteps = steps;
@@ -679,6 +724,8 @@ public class Database extends SQLiteOpenHelper {
 
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                db.close();
             }
         } else if (!algoWithZeroSteps && steps_diff == 0) {
             /*
