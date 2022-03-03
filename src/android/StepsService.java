@@ -320,11 +320,12 @@ public class StepsService extends Service implements SensorEventListener {
 			new Notification.Builder(context);
 
 		if (steps > 0) {
+            if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
             // if goal = 1, we don't show progress and replace "653 steps to go" by "347 steps today"
             if (goal <= 1) {
                 notificationBuilder.setContentText(String.format(prefs.getString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps today"), NumberFormat.getInstance(Locale.getDefault()).format((today_offset + steps))));
             } else {
-		        if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
+		        //if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
 		        notificationBuilder.setProgress(goal, today_offset + steps, false).setContentText(
 			today_offset + steps >= goal ?
 			  String.format(prefs.getString(PedoListener.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, "Goal reached! %s steps and counting"),
