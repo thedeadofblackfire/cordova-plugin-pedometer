@@ -661,7 +661,7 @@ public class Database extends SQLiteOpenHelper {
                 db.close();
             }            
 
-            SQLiteDatabase db = this.getWritableDatabase();
+            SQLiteDatabase dbW = this.getWritableDatabase();
             try {
                 //SQLiteDatabase db = this.getWritableDatabase();
                 ContentValues values = new ContentValues();
@@ -688,7 +688,7 @@ public class Database extends SQLiteOpenHelper {
                         values.remove(KEY_STEP_STEPS);
                         values.put(KEY_STEP_STEPS, steps_diff + currentDateStepCounts);
                     }
-                    int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
+                    int row = dbW.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
                     // int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" +
                     // todayDate + "'", null);
                     if (row == 1) {
@@ -710,7 +710,7 @@ public class Database extends SQLiteOpenHelper {
                     values.put(KEY_STEP_ENDDATE, endDate);
                     // values.put(KEY_STEP_TOTAL, 1);
                     // values.put(KEY_STEP_TOTAL, steps);
-                    long row = db.insert(TABLE_STEPS, null, values);
+                    long row = dbW.insert(TABLE_STEPS, null, values);
                     if (row != -1) {
                         createSuccessful = true;
                     }
@@ -725,7 +725,7 @@ public class Database extends SQLiteOpenHelper {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                db.close();
+                dbW.close();
             }
         } else if (!algoWithZeroSteps && steps_diff == 0) {
             /*
