@@ -50,11 +50,13 @@ public class StepsService extends Service implements SensorEventListener {
     private static final String TAG = "cordova-plugin-pedometer";
 
     public final static int NOTIFICATION_ID = 1;
-    private final static long MAX_REPORT_LATENCY_MINUTE = 1; // 5
+    private final static long MAX_REPORT_LATENCY_MINUTE = 2; // 5
     private final static long MICROSECONDS_IN_ONE_MINUTE = 60000000;
     private final static long SAVE_OFFSET_TIME = 720000; // 12 min to send to server if slowly activity on step (AlarmManager.INTERVAL_HOUR)
     private final static int SAVE_OFFSET_STEPS = 10; // trigger the send to server if at least 10 steps of difference (500)
-    private final static long RESTART_SERVICE_OFFSET_TIME = 3600000; // 2 min = 120000, 1H=3600000
+    private final static long RESTART_SERVICE_OFFSET_TIME = 150000; // 2 min = 120000, 1H=3600000
+    //MAX_REPORT_LATENCY_MINUTE : 1 
+    //RESTART_SERVICE_OFFSET_TIME : 3600000
 
     private static int steps;
     private static int lastSaveSteps;
