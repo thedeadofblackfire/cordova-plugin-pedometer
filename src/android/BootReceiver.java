@@ -21,8 +21,7 @@ public class BootReceiver extends BroadcastReceiver {
 			Log.i("cordova-plugin-pedometer", "device booted");
 
 			SharedPreferences prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
-
-			/*
+			
 			Database db = Database.getInstance(context);
 
 			if (!prefs.getBoolean("correctShutdown", false)) {
@@ -39,11 +38,10 @@ public class BootReceiver extends BroadcastReceiver {
 			db.removeNegativeEntries();
 			db.saveCurrentSteps(0);
 			db.close();
-			prefs.edit().remove("correctShutdown").apply();
-			*/
+			prefs.edit().remove("correctShutdown").apply();			
 			
 			if (Build.VERSION.SDK_INT >= 26) {
-				API26Wrapper.startForegroundService(context, new Intent(context, StepsService.class)); //SensorListener.class
+				API26Wrapper.startForegroundService(context, new Intent(context, StepsService.class));
 			} else {
 				context.startService(new Intent(context, StepsService.class));
 			}

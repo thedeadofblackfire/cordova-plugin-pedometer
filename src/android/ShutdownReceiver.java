@@ -26,19 +26,16 @@ public class ShutdownReceiver extends BroadcastReceiver {
 		if (Build.VERSION.SDK_INT >= 26) {
             API26Wrapper.startForegroundService(context, new Intent(context, StepsService.class));
         } else {
-            context.startService(new Intent(context, StepsService.class)); // SensorListener.class
+            context.startService(new Intent(context, StepsService.class));
         }
 
         // if the user used a root script for shutdown, the DEVICE_SHUTDOWN
         // broadcast might not be send. Therefore, the app will check this
         // setting on the next boot and displays an error message if it's not
-        // set to true
-        /*
+        // set to true        
         context.getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit()
-                .putBoolean("correctShutdown", true).commit();
-                */
-
-        /*        
+                .putBoolean("correctShutdown", true).commit();                
+                
         Database db = Database.getInstance(context);
         // if it's already a new day, add the temp. steps to the last one
         if (db.getSteps(Util.getToday()) == Integer.MIN_VALUE) {
@@ -48,8 +45,7 @@ public class ShutdownReceiver extends BroadcastReceiver {
             db.addToLastEntry(db.getCurrentSteps());
         }
         // current steps will be reset on boot @see BootReceiver
-        db.close();
-        */
+        db.close();        
     }
 
 }
