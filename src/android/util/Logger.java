@@ -8,13 +8,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 
-import org.apache.cordova.BuildConfig;
+//import org.apache.cordova.BuildConfig;
+import org.apache.cordova.pedometer.util.Util;
 
 public abstract class Logger {
 
     private static FileWriter fw;
     private static final Date date = new Date();
     private final static String APP = "Pedometer";
+    private static final String TAG = "cordova-plugin-pedometer";
 
     public static void log(Throwable ex) {
         log(ex.getMessage());
@@ -24,7 +26,8 @@ public abstract class Logger {
     }
 
     public static void log(final Cursor c) {
-        if (!BuildConfig.DEBUG) return;
+        if (!Util.isDebug()) return;
+        //if (!BuildConfig.DEBUG) return;
         c.moveToFirst();
         String title = "";
         for (int i = 0; i < c.getColumnCount(); i++)
@@ -41,8 +44,11 @@ public abstract class Logger {
 
     @SuppressWarnings("deprecation")
     public static void log(String msg) {
-        if (!BuildConfig.DEBUG) return;
+         if (!Util.isDebug()) return;
+        //if (!BuildConfig.DEBUG) return;
+        Log.i(TAG, msg);
         android.util.Log.d(APP, msg);
+        /*
         try {
             if (fw == null) {
                 fw = new FileWriter(new File(
@@ -55,7 +61,7 @@ public abstract class Logger {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // }
+        */
     }
 
     protected void finalize() throws Throwable {
