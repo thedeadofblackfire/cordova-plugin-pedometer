@@ -109,7 +109,7 @@ public class Database extends SQLiteOpenHelper {
     @Override
     public void close() {
         if (openCounter.decrementAndGet() == 0) {
-            super.close();
+           // super.close(); // test nick https://javaallin.com/code/android-database-cannot-perform-this-operation-because-the-connection-pool-has.html
         }
     }
 
@@ -413,6 +413,21 @@ public class Database extends SQLiteOpenHelper {
      *         exist in the database
      */
     public int getSteps(final long date) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
+                KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
+        int re = Integer.MIN_VALUE;
+        if (c != null && db.isOpen()) {
+            if (c.getCount() > 0) {
+                if (c.moveToFirst()) {
+                    re = c.getInt(0);
+                }
+            }
+        }
+        if (c != null && !c.isClosed()) c.close();
+        return re;
+
+        /*
         //Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
@@ -425,6 +440,8 @@ public class Database extends SQLiteOpenHelper {
         }
         if (c != null && !c.isClosed()) c.close();
         return re;
+        */
+
         /*
         c.moveToFirst();
         int re;
@@ -468,7 +485,7 @@ public class Database extends SQLiteOpenHelper {
      * @return the number of steps from 'start' to 'end'. Can be < 0 as todays entry
      *         might have negative value
      */
-    public int getSteps(final long start, final long end) {
+    public int getSteps(final long start, final long end) {        
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_DATE + " >= ? AND " + KEY_STEP_DATE + " <= ?",
                 new String[] { String.valueOf(start), String.valueOf(end) }, null, null, null);
@@ -658,7 +675,7 @@ public class Database extends SQLiteOpenHelper {
                 e.printStackTrace();
             } finally {
                 if (c != null && !c.isClosed()) c.close();
-                db.close();
+                //db.close(); // disable nick
             }            
 
             SQLiteDatabase dbW = this.getWritableDatabase();
@@ -725,7 +742,7 @@ public class Database extends SQLiteOpenHelper {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                dbW.close();
+                //dbW.close(); // disable nick
             }
         } else if (!algoWithZeroSteps && steps_diff == 0) {
             /*
