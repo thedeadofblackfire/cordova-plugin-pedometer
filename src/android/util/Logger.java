@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 
+//import android.util.Log;
+
 //import org.apache.cordova.BuildConfig;
 import org.apache.cordova.pedometer.util.Util;
 
@@ -46,7 +48,8 @@ public abstract class Logger {
     public static void log(String msg) {
          if (!Util.isDebug()) return;
         //if (!BuildConfig.DEBUG) return;
-        Log.i(TAG, msg);
+        //Log.i(TAG, msg);
+        android.util.Log.i(TAG, msg);
         android.util.Log.d(APP, msg);
         /*
         try {
