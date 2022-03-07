@@ -52,7 +52,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public static int RUNNING = 2;
     public static int ERROR_FAILED_TO_START = 3;
     public static int ERROR_NO_SENSOR_FOUND = 4;
-	public static int PAUSED = 5;
+	  public static int PAUSED = 5;
 
     public static int DEFAULT_GOAL = 1000;
   
@@ -67,8 +67,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     private float startsteps; //first value, to be substracted
     private long starttimestamp; //time stamp of when the measurement starts
 	
-	private int startOffset = 0, todayOffset, total_start, goal, since_boot, total_days;
-	public final static NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
+	  private int startOffset = 0, todayOffset, total_start, goal, since_boot, total_days;
+	  public final static NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
 
     private SensorManager sensorManager; // Sensor manager
     private Sensor sensor;             // Pedometer sensor returned by sensor manager
@@ -85,7 +85,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         this.startsteps = 0;
         this.setStatus(PedoListener.STOPPED);
 				
-		Log.i(TAG, "PedoListener Init service for steps");
+		    Log.i(TAG, "PedoListener Init service for steps");
     }
 
     /**
@@ -418,8 +418,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		
 		// mine
 		starttimestamp = System.currentTimeMillis();
-        this.startsteps = 0;
-        //this.setStatus(PedoListener.STARTING);
+    this.startsteps = 0;
+    //this.setStatus(PedoListener.STARTING);
 
 		if (Build.VERSION.SDK_INT >= 26) {
 		  API26Wrapper.startForegroundService(getActivity(), new Intent(getActivity(), StepsService.class));
@@ -500,7 +500,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
       sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI, 0);
     }
 
-    since_boot -= pauseDifference;
+    since_boot -= pauseDifference;    
 
     total_start = db.getTotalWithoutToday();
     total_days = db.getDays();
@@ -611,8 +611,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             r.put("startDate", this.starttimestamp);
             r.put("endDate", System.currentTimeMillis());
             r.put("numberOfSteps", steps);
-			r.put("status", this.status);
-			r.put("startsteps", this.startsteps);
+			      r.put("status", this.status);
+			      r.put("startsteps", this.startsteps);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -793,8 +793,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
             r.put("startDate", this.starttimestamp);
             r.put("endDate", System.currentTimeMillis());
             r.put("numberOfSteps", steps);
-			r.put("status", this.status);
-			r.put("startsteps", this.startsteps);
+			      r.put("status", this.status);
+			      r.put("startsteps", this.startsteps);
         } catch (JSONException e) {
             e.printStackTrace();
         }

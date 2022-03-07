@@ -629,7 +629,7 @@ public class Database extends SQLiteOpenHelper {
             endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
 
         // last save period time
-        lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // pauseCount
+        lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // same as pauseCount ?
         if (lastSaveSteps == 0) {
             lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
             if (lastSaveSteps < 0)
@@ -1010,7 +1010,7 @@ public class Database extends SQLiteOpenHelper {
         String newPath = mContext.getExternalFilesDir(null).getAbsolutePath();
         Log.i(Database.class.getName(), "newPath found, Here is string: " + newPath);
         String oldPath = (DATABASE_EXTERNAL_DEBUGGING) ? mContext.getExternalFilesDir(null).getAbsolutePath() + "/" + DATABASE_NAME : mContext.getDatabasePath(DATABASE_NAME).toString();
-        Log.i(Database.class.getName(), "oldPath found, Her is string: " + oldPath);
+        Log.i(Database.class.getName(), "oldPath found, Here is string: " + oldPath);
         try {
             File f = new File(newPath);
             f.mkdirs();
