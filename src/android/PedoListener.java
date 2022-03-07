@@ -479,6 +479,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     since_boot = db.getCurrentSteps();
     int pauseDifference = since_boot - prefs.getInt("pauseCount", since_boot);
 
+    Log.i(TAG, "PedoListener initSensor todayOffset="+todayOffset+ " since_boot="+since_boot+" pauseDifference="+pauseDifference);
+
     // register a sensor listener to live update the UI if a step is taken
     sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
     sensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
@@ -504,6 +506,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 
     total_start = db.getTotalWithoutToday();
     total_days = db.getDays();
+
+    Log.i(TAG, "PedoListener initSensor since_boot="+since_boot+ " total_start="+total_start+" total_days="+total_days);
 	
   	status = PedoListener.STARTING;
 	
@@ -569,6 +573,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
           db.close();
         }
         since_boot = (int) event.values[0];
+
+        Log.i(TAG, "PedoListener onSensorChanged since_boot="+since_boot+" steps="+steps);
 
         updateUI();
     }
