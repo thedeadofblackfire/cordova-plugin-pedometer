@@ -78,7 +78,7 @@ public class Database extends SQLiteOpenHelper {
 
     private static Database sInstance;
     private static final AtomicInteger openCounter = new AtomicInteger();
-    private static SQLiteDatabase db; // add nick
+    //private static SQLiteDatabase db; // add nick
 
     private static int lastSaveSteps = 0;
     private static int lastPeriodSteps = 0;
@@ -103,20 +103,18 @@ public class Database extends SQLiteOpenHelper {
     public static synchronized Database getInstance(final Context c) {
         if (sInstance == null) {
             sInstance = new Database(c.getApplicationContext());
-            db = sInstance.getWritableDatabase();
+            //db = sInstance.getWritableDatabase();
         }
-        //openCounter.incrementAndGet();
+        openCounter.incrementAndGet();
         return sInstance;
     }
 
     @Override
-    public synchronized void close() {
-        /*
-        if (openCounter.decrementAndGet() == 0) {
+    public synchronized void close() {        
+        if (sInstance != null && openCounter.decrementAndGet() == 0) {
            super.close(); // test nick https://javaallin.com/code/android-database-cannot-perform-this-operation-because-the-connection-pool-has.html           
-        }
-        */
-        if (sInstance != null) db.close();
+        }        
+        //if (sInstance != null) db.close();
     }
 
     // Called when the database connection is being configured.
@@ -125,7 +123,7 @@ public class Database extends SQLiteOpenHelper {
     public void onConfigure(final SQLiteDatabase db) {
         super.onConfigure(db);
         // This method enables parallel execution of queries from multiple threads on the same database.
-        db.enableWriteAheadLogging();
+        //db.enableWriteAheadLogging();
     }
 
     @Override
@@ -167,7 +165,7 @@ public class Database extends SQLiteOpenHelper {
      */
     public boolean setConfig(String key, String value) {
         // Create and/or open the database for writing
-        //SQLiteDatabase db = getWritableDatabase(); // disable to use static db
+        SQLiteDatabase db = getWritableDatabase(); // disable to use static db
 
         db.beginTransaction();
         boolean newEntryCreated = false;
@@ -419,7 +417,7 @@ public class Database extends SQLiteOpenHelper {
      *         exist in the database
      */
     public int getSteps(final long date) {
-        //SQLiteDatabase db = getReadableDatabase(); // disable to use static db
+        SQLiteDatabase db = getReadableDatabase(); // disable to use static db
         Cursor c = db.query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
         int re = Integer.MIN_VALUE;
@@ -658,7 +656,8 @@ public class Database extends SQLiteOpenHelper {
              * String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS +
              * " WHERE " + KEY_STEP_CREATION_DATE + " = '" + todayDate + "'";
              */
-            //SQLiteDatabase db = this.getReadableDatabase(); // disable to use static db
+            SQLiteDatabase db = this.getWritableDatabase(); // disable to use static db
+            //SQLiteDatabase db = this.getReadableDatabase();
             Cursor c = null;
             try {
                 //SQLiteDatabase db = this.getReadableDatabase();
@@ -685,8 +684,7 @@ public class Database extends SQLiteOpenHelper {
             }            
 
             //SQLiteDatabase dbW = this.getWritableDatabase(); // disable to use static db
-            try {
-                //SQLiteDatabase db = this.getWritableDatabase();
+            try {               
                 ContentValues values = new ContentValues();
 
                 values.put(KEY_STEP_SYNCED, 0);
@@ -776,7 +774,7 @@ public class Database extends SQLiteOpenHelper {
         String userid = this.getConfig("userid"); // 10470
 
         try {
-            //SQLiteDatabase db = this.getReadableDatabase(); // disable to use static db
+            SQLiteDatabase db = this.getReadableDatabase(); // disable to use static db
             cursor = db.rawQuery(selectQuery, null);
 
             if (cursor != null) {
@@ -1041,8 +1039,10 @@ public class Database extends SQLiteOpenHelper {
      * @param table the table from where to count the rows.
      * @return the number of entries of the given table.
      */
+    /*
     public int getNumberRows(String table) {
         return (int) DatabaseUtils.queryNumEntries(db, table);
     }
-    
+    */
+
 }
