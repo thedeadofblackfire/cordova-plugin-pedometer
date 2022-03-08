@@ -97,9 +97,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
      */
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-        super.initialize(cordova, webView);
+      super.initialize(cordova, webView);
 		
-		Log.i(TAG, "PedoListener initialize debug="+Util.isDebug());
+		  Log.i(TAG, "PedoListener initialize debug="+Util.isDebug());
     }
 
     /**
@@ -318,15 +318,15 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 			getStepsByPeriod(args);
 		} else if (action.equals("getLastEntries")) {
 			getLastEntries(args);				
-        } else {
-            // Unsupported action
-            Log.e(TAG, "Invalid action called on class " + TAG + ", " + action);
-            //callbackContext.error("Invalid action called on class " + TAG + ", " + action);
-            return false;
-        }
-
-        return true;
+    } else {
+      // Unsupported action
+      Log.e(TAG, "Invalid action called on class " + TAG + ", " + action);
+      //callbackContext.error("Invalid action called on class " + TAG + ", " + action);
+      return false;
     }
+
+    return true;
+  }
 
 	public void onStart() {
 		initSensor();
@@ -337,15 +337,27 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		uninitSensor();
 	}
 
-
     /**
      * Called by the Broker when listener is to be shut down.
      * Stop listener.
      */
     public void onDestroy() {
-        //super.onDestroy();
-		Log.i(TAG, "PedoListener onDestroy");
-        //this.stop();
+      //super.onDestroy();
+		  Log.i(TAG, "PedoListener onDestroy");
+      //this.stop();
+    }
+
+    /**
+     * Called when the view navigates.
+     */
+    @Override
+    public void onReset() {
+      Log.i(TAG, "PedoListener onReset");
+      /*
+          if (this.status == PedoListener.RUNNING) {
+              this.stop();
+          }
+      */
     }
 
     /**
@@ -434,12 +446,12 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		*/
 
 		initSensor();
-	  }
+	}
 
-    /**
-     * Stop listening to sensor.
-     */
-    private void stop() {
+  /**
+   * Stop listening to sensor.
+   */
+  private void stop() {
 		/*
         if (this.status != PedoListener.STOPPED) {
             this.sensorManager.unregisterListener(this);
@@ -460,7 +472,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		status = PedoListener.STOPPED;
 
 		callbackContext.success();
-    }
+  }
 
   private void initSensor() {
     // If already starting or running, then return
@@ -479,7 +491,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     since_boot = db.getCurrentSteps();
     int pauseDifference = since_boot - prefs.getInt("pauseCount", since_boot);
 
-    Log.i(TAG, "PedoListener initSensor todayOffset="+todayOffset+ " since_boot="+since_boot+" pauseDifference="+pauseDifference);
+    Log.i(TAG, "PedoListener initSensor todayOffset="+todayOffset+" since_boot="+since_boot+" pauseDifference="+pauseDifference);
 
     // register a sensor listener to live update the UI if a step is taken
     sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
@@ -574,30 +586,17 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
         }
         since_boot = (int) event.values[0];
 
-        Log.i(TAG, "PedoListener onSensorChanged since_boot="+since_boot+" steps="+steps);
+        Log.i(TAG, "PedoListener onSensorChanged since_boot="+since_boot+" steps="+steps+" todayOffset="+todayOffset);
 
         updateUI();
     }
 
     /**
-     * Called when the view navigates.
-     */
-    @Override
-    public void onReset() {
-      Log.i(TAG, "onReset");
-      /*
-          if (this.status == PedoListener.RUNNING) {
-              this.stop();
-          }
-      */
-    }
-	
-    /**
      * Called when the accuracy of the sensor has changed.
      */
     @Override
     public void onAccuracyChanged(final Sensor sensor, int accuracy) {
-      //nothing to do here
+      //nothing to do here, won't happen
       //return;
     }
 
@@ -712,9 +711,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		  return;
 		}
 		callbackContext.success(joresult);
-	  }
+	}
 
-	  private void getStepsByPeriod(JSONArray args) {
+	private void getStepsByPeriod(JSONArray args) {
 		long startdate = 0;
 		long endate = 0;
 		try {
@@ -739,9 +738,9 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		  return;
 		}
 		callbackContext.success(joresult);
-	  }
+	}
 	  
-		private void getLastEntries(JSONArray args) {
+	private void getLastEntries(JSONArray args) {
 		int num = 0;
 		try {
 		  num = args.getInt(0);
@@ -769,7 +768,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		  return;
 		}
 		callbackContext.success(joresult);
-	  }
+	}
   
 	private void updateUI() {
 		// Today offset might still be Integer.MIN_VALUE on first start

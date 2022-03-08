@@ -110,7 +110,8 @@ public class Database extends SQLiteOpenHelper {
     }
 
     @Override
-    public synchronized void close() {        
+    public void close() {     
+        //public synchronized void close() {      
         if (sInstance != null && openCounter.decrementAndGet() == 0) {
            super.close(); // test nick https://javaallin.com/code/android-database-cannot-perform-this-operation-because-the-connection-pool-has.html           
         }        
@@ -571,7 +572,7 @@ public class Database extends SQLiteOpenHelper {
             getWritableDatabase().insert(TABLE_STEPS, null, values);
         }
         if (Util.isDebug()) {
-            Logger.log("saving steps in db: " + steps);
+            Logger.log("saveCurrentSteps - saving steps in db: " + steps);
         }
     }
 

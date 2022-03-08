@@ -49,8 +49,10 @@ public abstract class Logger {
          if (!Util.isDebug()) return;
         //if (!BuildConfig.DEBUG) return;
         //Log.i(TAG, msg);
-        android.util.Log.i(TAG, msg);
+        //android.util.Log.i(TAG, msg);
         android.util.Log.d(APP, msg);
+
+        //String newPath = mContext.getExternalFilesDir(null).getAbsolutePath();
         /*
         try {
             if (fw == null) {
