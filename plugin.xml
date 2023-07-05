@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-pedometer" version="0.5.0">
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-pedometer" version="0.5.0">
     <name>Core Motion Pedometer</name>
     <author>Nick</author>
     <description>Cordova / PhoneGap Plugin for the Core Motion Pedometer to fetch pedestrian-related data,
@@ -34,19 +34,19 @@
              * This class is triggered upon reboot of the device. It needs to re-register
              * the STEP_COUNTER with the StepsService
              -->
-            <receiver android:name="org.apache.cordova.pedometer.BootReceiver">
+            <receiver android:exported="true" android:name="org.apache.cordova.pedometer.BootReceiver">
                 <intent-filter>
                     <action android:name="android.intent.action.BOOT_COMPLETED" />
 					<action android:name="android.intent.action.QUICKBOOT_POWERON" />
 					<category android:name="android.intent.category.DEFAULT" />
                 </intent-filter>
             </receiver>
-            <receiver android:name="org.apache.cordova.pedometer.AppUpdatedReceiver">
+            <receiver android:exported="true" android:name="org.apache.cordova.pedometer.AppUpdatedReceiver">
                 <intent-filter>
                     <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
                 </intent-filter>
             </receiver>
-			<service android:name="org.apache.cordova.pedometer.StepsService" />            
+			<service android:name="org.apache.cordova.pedometer.StepsService" android:exported="true" />            
 			<!--<service android:name="org.apache.cordova.pedometer.StepsService" android:enabled="true" /> -->
         </config-file>
 	    <config-file target="AndroidManifest.xml" parent="/manifest">
