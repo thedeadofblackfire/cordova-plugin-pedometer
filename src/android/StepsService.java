@@ -420,11 +420,13 @@ public class StepsService extends Service implements SensorEventListener {
          */
 
         // SensorManager.SENSOR_DELAY_FASTEST
+		// SensorManager.SENSOR_DELAY_GAME
         // SensorManager.SENSOR_DELAY_NORMAL
 		// SensorManager.SENSOR_DELAY_UI 
 
-        // enable batching with delay of max 5 min
-        sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_UI,
+		// 010823 change from SENSOR_DELAY_UI to SENSOR_DELAY_GAME
+        // enable batching with delay of max 2 min
+        sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_GAME,
                 (int) (MAX_REPORT_LATENCY_MINUTE * MICROSECONDS_IN_ONE_MINUTE));
     }
 

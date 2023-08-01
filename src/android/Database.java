@@ -103,6 +103,7 @@ public class Database extends SQLiteOpenHelper {
     public static synchronized Database getInstance(final Context c) {
         if (sInstance == null) {
             sInstance = new Database(c.getApplicationContext());
+			//sInstance.clearOldEntries(); // see https://github.com/felicienfrancois/cordova-plugin-stepper/blob/master/src/android/Database.java
             //db = sInstance.getWritableDatabase();
         }
         openCounter.incrementAndGet();
