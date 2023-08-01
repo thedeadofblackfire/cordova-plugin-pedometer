@@ -263,6 +263,7 @@ public class StepsService extends Service implements SensorEventListener {
             */
 
             try {
+				// https://stackoverflow.com/questions/15472383/how-can-i-run-code-on-a-background-thread-on-android
                 Thread thread = new Thread(new Runnable(){
                     @Override
                     public void run() {
@@ -274,6 +275,15 @@ public class StepsService extends Service implements SensorEventListener {
                            //e.printStackTrace();
                            Log.e(TAG, e.getMessage());
                         }
+						
+						//run code on background thread 
+						/*
+						activity.runOnUiThread(()->{
+							//update the UI on main thread
+						});
+						*/
+
+						//here activity is the reference of activity 
                     }
                 });
 
