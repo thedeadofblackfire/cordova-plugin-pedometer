@@ -1,25 +1,10 @@
-/*
- * Copyright 2013 Thomas Hoffmann
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.apache.cordova.pedometer;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Pair;
@@ -39,8 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Calendar;
 import android.util.Log;
 
-import org.apache.cordova.pedometer.Logger;
-import org.apache.cordova.pedometer.StepsUtil;
+import org.apache.cordova.pedometer.util.Logger;
+import org.apache.cordova.pedometer.util.Util;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -93,6 +78,7 @@ public class Database extends SQLiteOpenHelper {
 
     private static Database sInstance;
     private static final AtomicInteger openCounter = new AtomicInteger();
+    //private static SQLiteDatabase db; // add nick
 
     private static int lastSaveSteps = 0;
     private static int lastPeriodSteps = 0;
@@ -117,16 +103,29 @@ public class Database extends SQLiteOpenHelper {
     public static synchronized Database getInstance(final Context c) {
         if (sInstance == null) {
             sInstance = new Database(c.getApplicationContext());
+			//sInstance.clearOldEntries(); // see https://github.com/felicienfrancois/cordova-plugin-stepper/blob/master/src/android/Database.java
+            //db = sInstance.getWritableDatabase();
         }
         openCounter.incrementAndGet();
         return sInstance;
     }
 
     @Override
-    public void close() {
-        if (openCounter.decrementAndGet() == 0) {
-            super.close();
-        }
+    public void close() {     
+        //public synchronized void close() {      
+        if (sInstance != null && openCounter.decrementAndGet() == 0) {
+           super.close(); // test nick https://javaallin.com/code/android-database-cannot-perform-this-operation-because-the-connection-pool-has.html           
+        }        
+        //if (sInstance != null) db.close();
+    }
+
+    // Called when the database connection is being configured.
+    // Configure database settings for things like foreign key support, write-ahead logging, etc.
+    @Override
+    public void onConfigure(final SQLiteDatabase db) {
+        super.onConfigure(db);
+        // This method enables parallel execution of queries from multiple threads on the same database.
+        //db.enableWriteAheadLogging();
     }
 
     @Override
@@ -167,6 +166,33 @@ public class Database extends SQLiteOpenHelper {
      *         (and it was overwritten)
      */
     public boolean setConfig(String key, String value) {
+        // Create and/or open the database for writing
+        SQLiteDatabase db = getWritableDatabase(); // disable to use static db
+
+        db.beginTransaction();
+        boolean newEntryCreated = false;
+        try {
+            Log.i(Database.class.getName(), "StepsService Database setConfig " + key + "=" + value);
+            ContentValues values = new ContentValues();
+            values.put(KEY_SETTINGS_VALUE, value);
+            values.put(KEY_SETTINGS_LASTUPDATE, System.currentTimeMillis());
+            int updatedRows = db.update(TABLE_SETTINGS, values, KEY_SETTINGS_KEY + " = ?",
+                    new String[] { key });
+            if (updatedRows == 0) {
+                values.put(KEY_SETTINGS_KEY, key);
+                db.insert(TABLE_SETTINGS, null, values);
+                newEntryCreated = true;
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            Log.i(Database.class.getName(), "Error while trying to add post to database");
+            Log.i(Database.class.getName(), e.getMessage());
+        } finally {
+            db.endTransaction();
+        }
+        return newEntryCreated;
+
+        /*
         getWritableDatabase().beginTransaction();
         boolean newEntryCreated = false;
         try {
@@ -186,6 +212,7 @@ public class Database extends SQLiteOpenHelper {
             getWritableDatabase().endTransaction();
         }
         return newEntryCreated;
+        */
     }
     /*
      * public boolean setConfig(String userid, String api) {
@@ -277,7 +304,7 @@ public class Database extends SQLiteOpenHelper {
                 getWritableDatabase().insert(TABLE_STEPS, null, values);
             }
             c.close();
-            if (StepsUtil.isDebug()) {
+            if (Util.isDebug()) {
                 Logger.log("insertDay " + date + " / " + steps);
                 logState();
             }
@@ -330,7 +357,7 @@ public class Database extends SQLiteOpenHelper {
      * Writes the current steps database to the log
      */
     public void logState() {
-        if (StepsUtil.isDebug()) {
+        if (Util.isDebug()) {
             Cursor c = getReadableDatabase().query(TABLE_STEPS, null, null, null, null, null, "date DESC", "5");
             Logger.log(c);
             c.close();
@@ -345,7 +372,7 @@ public class Database extends SQLiteOpenHelper {
     public int getTotalWithoutToday() {
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_STEPS + " > 0 AND date > 0 AND date < ?",
-                new String[] { String.valueOf(StepsUtil.getToday()) }, null, null, null);
+                new String[] { String.valueOf(Util.getToday()) }, null, null, null);
         c.moveToFirst();
         int re = c.getInt(0);
         c.close();
@@ -384,7 +411,7 @@ public class Database extends SQLiteOpenHelper {
     /**
      * Get the number of steps taken for a specific date.
      * <p/>
-     * If date is StepsUtil.getToday(), this method returns the offset which needs
+     * If date is Util.getToday(), this method returns the offset which needs
      * to be added to the value returned by getCurrentSteps() to get todays steps.
      *
      * @param date the date in millis since 1970
@@ -392,16 +419,45 @@ public class Database extends SQLiteOpenHelper {
      *         exist in the database
      */
     public int getSteps(final long date) {
-        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "" + KEY_STEP_STEPS },
+        SQLiteDatabase db = getReadableDatabase(); // disable to use static db
+        Cursor c = db.query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
+        int re = Integer.MIN_VALUE;
+        if (c != null && db.isOpen()) {
+            if (c.getCount() > 0) {
+                if (c.moveToFirst()) {
+                    re = c.getInt(0);
+                }
+            }
+        }
+        if (c != null && !c.isClosed()) c.close();
+        return re;
+
+        /*
+        //Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
+                KEY_STEP_DATE + " = ?", new String[] { String.valueOf(date) }, null, null, null);
+        //c.moveToFirst();
+        int re = Integer.MIN_VALUE;
+        if (c != null && c.getCount() > 0) {
+            if (c.moveToFirst()) {
+                re = c.getInt(0);
+            }
+        }
+        if (c != null && !c.isClosed()) c.close();
+        return re;
+        */
+
+        /*
         c.moveToFirst();
         int re;
         if (c.getCount() == 0)
             re = Integer.MIN_VALUE;
-        else
+        else 
             re = c.getInt(0);
         c.close();
         return re;
+        */
     }
 
     /**
@@ -428,14 +484,14 @@ public class Database extends SQLiteOpenHelper {
      * Get the number of steps taken between 'start' and 'end' date
      * <p/>
      * Note that todays entry might have a negative value, so take care of that if
-     * 'end' >= StepsUtil.getToday()!
+     * 'end' >= Util.getToday()!
      *
      * @param start start date in ms since 1970 (steps for this date included)
      * @param end   end date in ms since 1970 (steps for this date included)
      * @return the number of steps from 'start' to 'end'. Can be < 0 as todays entry
      *         might have negative value
      */
-    public int getSteps(final long start, final long end) {
+    public int getSteps(final long start, final long end) {        
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
                 KEY_STEP_DATE + " >= ? AND " + KEY_STEP_DATE + " <= ?",
                 new String[] { String.valueOf(start), String.valueOf(end) }, null, null, null);
@@ -479,7 +535,7 @@ public class Database extends SQLiteOpenHelper {
     public int getDaysWithoutToday() {
         Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "COUNT(*)" },
                 "steps > ? AND date < ? AND date > 0",
-                new String[] { String.valueOf(0), String.valueOf(StepsUtil.getToday()) }, null, null, null);
+                new String[] { String.valueOf(0), String.valueOf(Util.getToday()) }, null, null, null);
         c.moveToFirst();
         int re = c.getInt(0);
         c.close();
@@ -516,8 +572,8 @@ public class Database extends SQLiteOpenHelper {
             values.put(KEY_STEP_DATE, -1);
             getWritableDatabase().insert(TABLE_STEPS, null, values);
         }
-        if (StepsUtil.isDebug()) {
-            Logger.log("saving steps in db: " + steps);
+        if (Util.isDebug()) {
+            Logger.log("saveCurrentSteps - saving steps in db: " + steps);
         }
     }
 
@@ -543,8 +599,8 @@ public class Database extends SQLiteOpenHelper {
         String todayDate = String.valueOf(mCalendar.get(Calendar.YEAR)) + "-"
                 + String.format("%2s", String.valueOf(mCalendar.get(Calendar.MONTH) + 1)).replace(' ', '0') + "-"
                 + String.format("%2s", String.valueOf(mCalendar.get(Calendar.DAY_OF_MONTH))).replace(' ', '0');
-        Long date = StepsUtil.getToday();
-        Long datePeriodTime = StepsUtil.getTodayPeriodTime();
+        Long date = Util.getToday();
+        Long datePeriodTime = Util.getTodayPeriodTime();
 
         // period start >= & < end in 5 min interval
         Calendar mCalendarPeriodStart = Calendar.getInstance();
@@ -575,7 +631,7 @@ public class Database extends SQLiteOpenHelper {
             endDate += String.valueOf(mCalendarPeriodEnd.get(Calendar.MINUTE));
 
         // last save period time
-        lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // pauseCount
+        lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // same as pauseCount ?
         if (lastSaveSteps == 0) {
             lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
             if (lastSaveSteps < 0)
@@ -602,10 +658,13 @@ public class Database extends SQLiteOpenHelper {
              * String selectQuery = "SELECT " + STEPS_COUNT + " FROM " + TABLE_STEPS +
              * " WHERE " + KEY_STEP_CREATION_DATE + " = '" + todayDate + "'";
              */
+            SQLiteDatabase db = this.getWritableDatabase(); // disable to use static db
+            //SQLiteDatabase db = this.getReadableDatabase();
+            Cursor c = null;
             try {
-
-                SQLiteDatabase db = this.getReadableDatabase();
-                Cursor c = db.rawQuery(selectQuery, null);
+                //SQLiteDatabase db = this.getReadableDatabase();
+                //Cursor c = db.rawQuery(selectQuery, null);
+                c = db.rawQuery(selectQuery, null);
                 if (c != null && c.moveToFirst()) {
                     do {
                         isDateAlreadyPresent = true;
@@ -613,16 +672,21 @@ public class Database extends SQLiteOpenHelper {
                         // currentDateStepCounts = c.getInt((c.getColumnIndex(KEY_STEP_TOTAL)));
                     } while (c.moveToNext());
                 }
+                /*
                 if (c != null && !c.isClosed()) {
                     c.close();
                 }
                 db.close();
+                */
             } catch (Exception e) {
                 e.printStackTrace();
-            }
+            } finally {
+                if (c != null && !c.isClosed()) c.close();
+                //db.close(); // disable nick
+            }            
 
-            try {
-                SQLiteDatabase db = this.getWritableDatabase();
+            //SQLiteDatabase dbW = this.getWritableDatabase(); // disable to use static db
+            try {               
                 ContentValues values = new ContentValues();
 
                 values.put(KEY_STEP_SYNCED, 0);
@@ -660,7 +724,7 @@ public class Database extends SQLiteOpenHelper {
                             if (lastPeriodTimeKey == 0) lastPeriodTimeKey = datePeriodTime;
                         }
                     }
-                    db.close();
+                    //db.close();
                 } else {
                     values.put(KEY_STEP_DATE, date);
                     values.put(KEY_STEP_CREATION_DATE, todayDate);
@@ -673,7 +737,7 @@ public class Database extends SQLiteOpenHelper {
                     if (row != -1) {
                         createSuccessful = true;
                     }
-                    db.close();
+                    //db.close();
 
                     prefs.edit().putInt("lastSaveSteps", steps).commit();
                     lastSaveSteps = steps;
@@ -683,6 +747,8 @@ public class Database extends SQLiteOpenHelper {
 
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                //db.close(); // disable nick
             }
         } else if (!algoWithZeroSteps && steps_diff == 0) {
             /*
@@ -710,7 +776,7 @@ public class Database extends SQLiteOpenHelper {
         String userid = this.getConfig("userid"); // 10470
 
         try {
-            SQLiteDatabase db = this.getReadableDatabase();
+            SQLiteDatabase db = this.getReadableDatabase(); // disable to use static db
             cursor = db.rawQuery(selectQuery, null);
 
             if (cursor != null) {
@@ -795,7 +861,14 @@ public class Database extends SQLiteOpenHelper {
 
         return returnObj;
     }
-
+	
+    /**
+     * Clean all data
+     */
+    public void clear() {
+        getWritableDatabase().execSQL("delete from " + TABLE_STEPS + "");
+    }
+	
     /**
      * Clean all synced data
      */
@@ -820,7 +893,7 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
-     * Rollback  the lines to sync for error
+     * Rollback the lines to sync for error
      */
     public void rollbackLinesToSync() {
         getWritableDatabase().execSQL(
@@ -939,7 +1012,7 @@ public class Database extends SQLiteOpenHelper {
         String newPath = mContext.getExternalFilesDir(null).getAbsolutePath();
         Log.i(Database.class.getName(), "newPath found, Here is string: " + newPath);
         String oldPath = (DATABASE_EXTERNAL_DEBUGGING) ? mContext.getExternalFilesDir(null).getAbsolutePath() + "/" + DATABASE_NAME : mContext.getDatabasePath(DATABASE_NAME).toString();
-        Log.i(Database.class.getName(), "oldPath found, Her is string: " + oldPath);
+        Log.i(Database.class.getName(), "oldPath found, Here is string: " + oldPath);
         try {
             File f = new File(newPath);
             f.mkdirs();
@@ -960,5 +1033,18 @@ public class Database extends SQLiteOpenHelper {
         }
         return null;
     }
+
+    /**
+     * Counts the rows of a given table, using a method from {@link DatabaseUtils}.
+     * https://gist.github.com/jcxavier/1486739/f8bcecabbbf4610ec2f21d8988149805906bbf4a
+     * 
+     * @param table the table from where to count the rows.
+     * @return the number of entries of the given table.
+     */
+    /*
+    public int getNumberRows(String table) {
+        return (int) DatabaseUtils.queryNumEntries(db, table);
+    }
+    */
 
 }

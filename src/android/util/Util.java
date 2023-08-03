@@ -1,14 +1,8 @@
-
-/**
- * Pedometer bridge with Cordova, programmed by Dario Salvi </dariosalvi78@gmail.com>
- * Based on the accelerometer plugin: https://github.com/apache/cordova-plugin-device-motion
- * License: MIT
- */
-package org.apache.cordova.pedometer;
+package org.apache.cordova.pedometer.util;
 
 import java.util.Calendar;
 
-public abstract class StepsUtil {
+public abstract class Util {
 
     /**
      * @return milliseconds since 1.1.1970 for today 0:00:00 local timezone
@@ -36,8 +30,8 @@ public abstract class StepsUtil {
         c.add(Calendar.DATE, 1);
         return c.getTimeInMillis();
     }
-
-    /**
+	
+	/**
      * Get Period Time (5min)
      * @return milliseconds since 1.1.1970 for today 0:00:00 local timezone
      */
@@ -84,5 +78,4 @@ public abstract class StepsUtil {
         //BuildConfig.DEBUG
         return true;
     }
-
 }

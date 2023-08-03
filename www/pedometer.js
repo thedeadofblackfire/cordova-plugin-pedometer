@@ -1,9 +1,19 @@
-
 var exec = require("cordova/exec");
 
 var Pedometer = function () {
     this.name = "Pedometer";
 };
+
+Pedometer.prototype.startStepperUpdates = function (offset, onSuccess, onError, options) {
+    offset = parseInt(offset) || 0;
+    options = options || {};
+    exec(onSuccess, onError, "Pedometer", "startStepperUpdates", [offset, options]);
+};
+
+Pedometer.prototype.stopStepperUpdates = function (onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "stopStepperUpdates", []);
+};
+
 
 Pedometer.prototype.isStepCountingAvailable = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "isStepCountingAvailable", []);
@@ -75,6 +85,27 @@ Pedometer.prototype.setConfig = function (onSuccess, onError, options) {
 
 Pedometer.prototype.debug = function (onSuccess, onError) {
     exec(onSuccess, onError, "Pedometer", "debug", []);
+};
+
+// inspired from cordova-plugin-stepper
+Pedometer.prototype.setNotificationLocalizedStrings = function (keyValueObj, onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "setNotificationLocalizedStrings", [keyValueObj]);
+};
+
+Pedometer.prototype.setGoal = function (num, onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "setGoal", [num]);
+};
+
+Pedometer.prototype.getSteps = function (date, onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "getSteps", [date]);
+};
+
+Pedometer.prototype.getStepsByPeriod = function (start, end, onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "getStepsByPeriod", [start, end]);
+};
+
+Pedometer.prototype.getLastEntries = function (num, onSuccess, onError) {
+    exec(onSuccess, onError, "Pedometer", "getLastEntries", [num]);
 };
 
 module.exports = new Pedometer();

@@ -28,7 +28,7 @@ import java.util.Date;
 import android.util.Log;
 
 //import de.j4velin.pedometer.BuildConfig;
-import org.apache.cordova.pedometer.StepsUtil;
+import org.apache.cordova.pedometer.util.Util;
 
 public abstract class Logger {
 
@@ -45,7 +45,7 @@ public abstract class Logger {
     }
 
     public static void log(final Cursor c) {
-        if (!StepsUtil.isDebug())
+        if (!Util.isDebug())
             return;
         // if (!BuildConfig.DEBUG) return;
         c.moveToFirst();
@@ -64,7 +64,7 @@ public abstract class Logger {
 
     @SuppressWarnings("deprecation")
     public static void log(String msg) {
-        if (!StepsUtil.isDebug())
+        if (!Util.isDebug())
             return;
         // if (!BuildConfig.DEBUG) return;
         Log.i(TAG, msg);

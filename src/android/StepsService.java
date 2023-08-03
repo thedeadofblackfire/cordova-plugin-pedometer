@@ -10,18 +10,24 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
+import android.os.IBinder;
 
 import android.widget.Toast;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Build;
-import android.os.IBinder;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+
+import org.apache.cordova.BuildConfig;
+import org.apache.cordova.pedometer.util.API23Wrapper;
+import org.apache.cordova.pedometer.util.API26Wrapper;
+import org.apache.cordova.pedometer.util.Util;
 
 import java.text.NumberFormat;
 import java.util.Date;
@@ -30,26 +36,33 @@ import java.util.Locale;
 import org.json.JSONObject;
 
 import android.util.Log;
-import org.apache.cordova.pedometer.Logger;
+import org.apache.cordova.pedometer.util.Logger;
 
+/**
+ * Background service which keeps the step-sensor listener alive to always get
+ * the number of steps since boot.
+ * <p/>
+ * This service won't be needed any more if there is a way to read the
+ * step-value without waiting for a sensor event
+ */
 public class StepsService extends Service implements SensorEventListener {
 
     private static final String TAG = "cordova-plugin-pedometer";
 
     public final static int NOTIFICATION_ID = 1;
-    private final static long MAX_REPORT_LATENCY_MINUTE = 1; // 5
+    private final static long MAX_REPORT_LATENCY_MINUTE = 2; // 5
     private final static long MICROSECONDS_IN_ONE_MINUTE = 60000000;
     private final static long SAVE_OFFSET_TIME = 720000; // 12 min to send to server if slowly activity on step (AlarmManager.INTERVAL_HOUR)
     private final static int SAVE_OFFSET_STEPS = 10; // trigger the send to server if at least 10 steps of difference (500)
-    private final static long RESTART_SERVICE_OFFSET_TIME = 120000; // 2 min
-
-    private SensorManager mSensorManager;
-    private Sensor mStepDetectorSensor;
-    //private StepsDBHelper mStepsDBHelper;
+    private final static long RESTART_SERVICE_OFFSET_TIME = 150000; // 2 min = 120000, 1H=3600000
+    //MAX_REPORT_LATENCY_MINUTE : 1 
+    //RESTART_SERVICE_OFFSET_TIME : 3600000
 
     private static int steps;
     private static int lastSaveSteps;
     private static long lastSaveTime;
+	
+	private static int notificationIconId = 0;
 
     private static int protectSensorLastSteps = 0;
     private static long protectSensorLastTime = 0;
@@ -66,33 +79,18 @@ public class StepsService extends Service implements SensorEventListener {
         super.onCreate();
 
         Log.i(TAG, "StepsService onCreate");
-        context = this;
-        //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        //StrictMode.setThreadPolicy(policy);
-        //mStepsDBHelper = new StepsDBHelper(this);
-        //Log.i(TAG, "StepsService onCreate end");
-        
-        /*
-         * mSensorManager = (SensorManager)
-         * this.getSystemService(Context.SENSOR_SERVICE); if
-         * (mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null) {
-         * mStepDetectorSensor =
-         * mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-         * mSensorManager.registerListener(this, mStepDetectorSensor,
-         * SensorManager.SENSOR_DELAY_NORMAL); mStepsDBHelper = new StepsDBHelper(this);
-         * Log.i(TAG, "StepsService onCreate end"); // mStepsDBHelper =
-         * StepsDBHelper.getInstance(this); }
-         */
+        context = this;   
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(final Intent intent, int flags, int startId) {
         Log.i(TAG, "StepsService [onStartCommand] id="+startId);
         // Toast.makeText(this, "StepsService Service started...",
         // Toast.LENGTH_LONG).show();
 
         //https://stackoverflow.com/questions/43251528/android-o-old-start-foreground-service-still-working
-        if (Build.VERSION.SDK_INT >= 26) {
+        /*
+		if (Build.VERSION.SDK_INT >= 26) {
             Notification.Builder builder = new Notification.Builder(this, "NOTIFICATION")
             .setContentTitle("Jebooj") //etString(R.string.app_name)
             .setContentText("Booj service ON")
@@ -101,22 +99,24 @@ public class StepsService extends Service implements SensorEventListener {
             Notification notification = builder.build();
             startForeground(NOTIFICATION_ID, notification);
         }
+		*/
 
         this.currentStartId = startId;
 
         reRegisterSensor();
         registerBroadcastReceiver();
-        /*
-         * if (!updateIfNecessary()) { showNotification(); }
-         */
-
+        
+        if (!updateIfNecessary()) { 
+			showNotification(); 
+		}
+         
         // get service status and launch alarm if no STOP
         Database db = Database.getInstance(context); 
         String statusService = db.getConfig("status_service"); 
-        //db.close();
+        db.close();
         if (statusService != null && !"stop".equals(statusService)) {
             // restart service every hour to save the current step count
-            long nextUpdate = Math.min(StepsUtil.getTomorrow(), System.currentTimeMillis() + RESTART_SERVICE_OFFSET_TIME); // INTERVAL_HOUR
+            long nextUpdate = Math.min(Util.getTomorrow(), System.currentTimeMillis() + RESTART_SERVICE_OFFSET_TIME); // INTERVAL_HOUR
                                                                                                     // INTERVAL_HALF_HOUR=1800000
                                                                                                     // AlarmManager.INTERVAL_FIFTEEN_MINUTES=900000
             Log.i(TAG, "StepsService [onStartCommand] - next update: " + new Date(nextUpdate).toLocaleString());
@@ -167,7 +167,7 @@ public class StepsService extends Service implements SensorEventListener {
 
     // @Nullable
     @Override
-    public IBinder onBind(Intent intent) {
+    public IBinder onBind(final Intent intent) {
         return null;
     }
 
@@ -186,10 +186,11 @@ public class StepsService extends Service implements SensorEventListener {
             ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 500,
                     PendingIntent.getService(this, 3, new Intent(this, StepsService.class), 0));
         }
+		db.close();
     }
 
     @Override
-    public void onSensorChanged(SensorEvent event) {
+    public void onSensorChanged(final SensorEvent event) {
         // Only look at step counter events
         if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) {
             return;
@@ -198,7 +199,7 @@ public class StepsService extends Service implements SensorEventListener {
         //Logger.log("StepsService [onSensorChanged] - start ["+this.currentStartId+"] - type=" + event.sensor.getType());
 
         if (event.values[0] > Integer.MAX_VALUE) {
-            if (StepsUtil.isDebug())
+            if (Util.isDebug())
                 Logger.log("StepsService [onSensorChanged] - start ["+this.currentStartId+"] - probably not a real value: " + event.values[0]);
        
             return;
@@ -223,22 +224,34 @@ public class StepsService extends Service implements SensorEventListener {
      * @return true, if notification was updated
      */
     private boolean updateIfNecessary() {
-        //mStepsDBHelper.createStepsEntryValue(steps);
         Database db = Database.getInstance(context); // this
         db.createStepsEntryValue(steps);
         db.close();
 
         if (steps > lastSaveSteps + SAVE_OFFSET_STEPS
                 || (steps > 0 && System.currentTimeMillis() > lastSaveTime + SAVE_OFFSET_TIME)) {
-            if (StepsUtil.isDebug())
+            if (Util.isDebug())
                 Logger.log("StepsService [updateIfNecessary] - saving steps: steps=" + steps + " lastSave=" + lastSaveSteps + " lastSaveTime="
                         + new Date(lastSaveTime));
-                        /*
-            //Database db = Database.getInstance(this);
-            if (db.getSteps(StepsUtil.getToday()) == Integer.MIN_VALUE) {
+                        
+            Database db2 = Database.getInstance(context);
+            if (db2.getSteps(Util.getToday()) == Integer.MIN_VALUE) {
+                int pauseDifference = steps - getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("pauseCount", steps);
+                //db.insertNewDay(Util.getToday(), steps - pauseDifference);
+                if (pauseDifference > 0) {
+                    // update pauseCount for the new day
+                    getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
+                }                
+            }
+            
+            db2.saveCurrentSteps(steps);
+            db2.close();
+            /*
+            Database db = Database.getInstance(this);
+            if (db.getSteps(Util.getToday()) == Integer.MIN_VALUE) {
                 int pauseDifference = steps
                         - getSharedPreferences("pedometer", Context.MODE_PRIVATE).getInt("pauseCount", steps);
-                db.insertNewDay(StepsUtil.getToday(), steps - pauseDifference);
+                db.insertNewDay(Util.getToday(), steps - pauseDifference);
                 if (pauseDifference > 0) {
                     // update pauseCount for the new day
                     getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit().putInt("pauseCount", steps).commit();
@@ -250,6 +263,7 @@ public class StepsService extends Service implements SensorEventListener {
             */
 
             try {
+				// https://stackoverflow.com/questions/15472383/how-can-i-run-code-on-a-background-thread-on-android
                 Thread thread = new Thread(new Runnable(){
                     @Override
                     public void run() {
@@ -261,6 +275,15 @@ public class StepsService extends Service implements SensorEventListener {
                            //e.printStackTrace();
                            Log.e(TAG, e.getMessage());
                         }
+						
+						//run code on background thread 
+						/*
+						activity.runOnUiThread(()->{
+							//update the UI on main thread
+						});
+						*/
+
+						//here activity is the reference of activity 
                     }
                 });
 
@@ -270,20 +293,27 @@ public class StepsService extends Service implements SensorEventListener {
             }
 
             lastSaveSteps = steps;
-            lastSaveTime = System.currentTimeMillis();
-            /*
-            showNotification(); // update notification
-            startService(new Intent(this, WidgetUpdateService.class));
-            */
+            lastSaveTime = System.currentTimeMillis();     
+			showNotification(); // update notification
             return true;
         } else {
+			showNotification(); // update notification
             return false;
         }
-        //return true;
     }
+	
+	private void showNotification() {
+		if (Build.VERSION.SDK_INT >= 26) {
+		  startForeground(NOTIFICATION_ID, getNotification(this));
+		} else if (getSharedPreferences("pedometer", Context.MODE_PRIVATE)
+		  .getBoolean("notification", true)) {
+		  ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
+			.notify(NOTIFICATION_ID, getNotification(this));
+		}
+	}
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    public void onAccuracyChanged(final Sensor sensor, int accuracy) {
         // nobody knows what happens here: step value might magically decrease
         // when this method is called...
         Log.i(TAG, sensor.getName() + " accuracy changed: " + accuracy);
@@ -291,6 +321,68 @@ public class StepsService extends Service implements SensorEventListener {
         // accuracy);
     }
 
+	private static int getNotificationIconId(Context context) {
+		int drawableId = context.getResources().getIdentifier("ic_footsteps_silhouette_variant", "drawable",
+		  context.getApplicationInfo().packageName);
+		if (drawableId == 0) {
+		  drawableId = context.getApplicationInfo().icon;
+		}
+		return drawableId;
+	}
+  
+	public static Notification getNotification(final Context context) {
+		SharedPreferences prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+		Database db = Database.getInstance(context);
+		int today_offset = db.getSteps(Util.getToday());
+		if (steps == 0) steps = db.getCurrentSteps(); // use saved value if we haven't anything better
+		db.close();
+		
+		int goal = prefs.getInt(PedoListener.GOAL_PREF_INT, PedoListener.DEFAULT_GOAL);
+		
+		Notification.Builder notificationBuilder =
+		  Build.VERSION.SDK_INT >= 26 ? API26Wrapper.getNotificationBuilder(context) :
+			new Notification.Builder(context);
+
+		if (steps > 0) {
+            //if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
+            // if goal = 1, we don't show progress and replace "653 steps to go" by "347 steps today"
+            if (goal <= 1) {
+                if (today_offset == Integer.MIN_VALUE) today_offset = 0;
+                notificationBuilder.setContentText(String.format(prefs.getString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps today"), NumberFormat.getInstance(Locale.getDefault()).format((today_offset))));
+                //notificationBuilder.setContentText(String.format(prefs.getString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps today"), NumberFormat.getInstance(Locale.getDefault()).format((today_offset + steps))));                
+            } else {
+		        if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
+		        notificationBuilder.setProgress(goal, today_offset + steps, false).setContentText(
+			today_offset + steps >= goal ?
+			  String.format(prefs.getString(PedoListener.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, "Goal reached! %s steps and counting"),
+				NumberFormat.getInstance(Locale.getDefault())
+				  .format((today_offset + steps))) :
+			  String.format(prefs.getString(PedoListener.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps to go"),
+				NumberFormat.getInstance(Locale.getDefault())
+				  .format((goal - today_offset - steps))));
+            }
+		} else { 
+            // still no step value?
+		    notificationBuilder.setContentText(prefs.getString(PedoListener.PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT, "Your progress will be shown here soon"));
+		}
+
+		PackageManager packageManager = context.getPackageManager();
+		Intent launchIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
+
+		PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
+		  launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		if (notificationIconId == 0) {
+		  notificationIconId = getNotificationIconId(context);
+		}
+
+		notificationBuilder.setPriority(Notification.PRIORITY_DEFAULT).setShowWhen(false)
+		  .setContentTitle(prefs.getString(PedoListener.PEDOMETER_IS_COUNTING_TEXT, "Pedometer is counting"))
+		  .setContentIntent(contentIntent).setSmallIcon(notificationIconId)
+		  .setOngoing(true);
+		return notificationBuilder.build();
+	}
+  
     private void registerBroadcastReceiver() {
         // if (BuildConfig.DEBUG) Logger.log("register broadcastreceiver");
         Log.i(TAG, "StepsService [registerBroadcastReceiver] - register broadcastreceiver");
@@ -301,9 +393,9 @@ public class StepsService extends Service implements SensorEventListener {
 
     private void reRegisterSensor() {
         // if (BuildConfig.DEBUG) Logger.log("re-register sensor listener");
-        // SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         Log.i(TAG, "StepsService [reRegisterSensor] - re-register sensor listener");
-        SensorManager sm = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        //SensorManager sm = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+		SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         try {
             sm.unregisterListener(this);
@@ -313,12 +405,11 @@ public class StepsService extends Service implements SensorEventListener {
             e.printStackTrace();
         }
 
-        Log.i(TAG,
-                "StepsService [reRegisterSensor] - step sensors: " + sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size());
-        if (sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size() < 1)
-            return; // emulator
-        Log.i(TAG, "StepsService [reRegisterSensor] - default: "
-                + sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER).getName());
+        Log.i(TAG, "StepsService [reRegisterSensor] - step sensors: " + sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size());
+        
+		if (sm.getSensorList(Sensor.TYPE_STEP_COUNTER).size() < 1) return; // emulator
+		
+        Log.i(TAG, "StepsService [reRegisterSensor] - default: " + sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER).getName());
 
         /*
          * if (BuildConfig.DEBUG) { Logger.log("step sensors: " +
@@ -329,10 +420,13 @@ public class StepsService extends Service implements SensorEventListener {
          */
 
         // SensorManager.SENSOR_DELAY_FASTEST
+		// SensorManager.SENSOR_DELAY_GAME
         // SensorManager.SENSOR_DELAY_NORMAL
+		// SensorManager.SENSOR_DELAY_UI 
 
-        // enable batching with delay of max 5 min
-        sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_FASTEST,
+		// 010823 change from SENSOR_DELAY_UI to SENSOR_DELAY_GAME
+        // enable batching with delay of max 2 min
+        sm.registerListener(this, sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_GAME,
                 (int) (MAX_REPORT_LATENCY_MINUTE * MICROSECONDS_IN_ONE_MINUTE));
     }
 
