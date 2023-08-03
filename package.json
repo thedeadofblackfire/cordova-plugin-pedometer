@@ -14,6 +14,9 @@
     "type": "git",
     "url": "git+https://github.com/felixchong98/cordova-plugin-pedometer.git"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "keywords": [
     "cordova",
     "core motion",
