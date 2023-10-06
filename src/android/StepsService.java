@@ -369,12 +369,14 @@ public class StepsService extends Service implements SensorEventListener {
 		PackageManager packageManager = context.getPackageManager();
 		Intent launchIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
 
+		// for the FLAG_MUTABLE yes, it should be S as it was added in SDK 31, FLAG_IMMUTABLE was added in SDK 23, so M is ok 
+		
 		//PendingIntent contentIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		PendingIntent contentIntent = null;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {		
-			contentIntent = PendingIntent.getActivity(context, 0,  launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE);
+			contentIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 		} else {
-			contentIntent = PendingIntent.getActivity(context, 0,  launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			contentIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		}
 
 		if (notificationIconId == 0) {
