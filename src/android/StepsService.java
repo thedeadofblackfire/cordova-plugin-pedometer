@@ -369,8 +369,13 @@ public class StepsService extends Service implements SensorEventListener {
 		PackageManager packageManager = context.getPackageManager();
 		Intent launchIntent = packageManager.getLaunchIntentForPackage(context.getPackageName());
 
-		PendingIntent contentIntent = PendingIntent.getActivity(context, 0,
-		  launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		//PendingIntent contentIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent contentIntent = null;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {		
+			contentIntent = PendingIntent.getActivity(context, 0,  launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE);
+		} else {
+			contentIntent = PendingIntent.getActivity(context, 0,  launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		}
 
 		if (notificationIconId == 0) {
 		  notificationIconId = getNotificationIconId(context);
