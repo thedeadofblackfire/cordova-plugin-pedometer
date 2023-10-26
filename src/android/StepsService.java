@@ -123,9 +123,17 @@ public class StepsService extends Service implements SensorEventListener {
             // if (BuildConfig.DEBUG) Logger.log("next update: " + new
             // Date(nextUpdate).toLocaleString());
             AlarmManager am = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+			/*
             PendingIntent pi = PendingIntent.getService(getApplicationContext(), 2, new Intent(this, StepsService.class),
                     PendingIntent.FLAG_UPDATE_CURRENT);
-
+			*/
+			PendingIntent pi = null;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {	
+				pi = PendingIntent.getService(getApplicationContext(), 2, new Intent(this, StepsService.class), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+			} else {
+				pi = PendingIntent.getService(getApplicationContext(), 2, new Intent(this, StepsService.class), PendingIntent.FLAG_UPDATE_CURRENT);
+			}
+	
             Log.i(TAG, "StepsService [onStartCommand] - Build.VERSION.SDK_INT=" + Build.VERSION.SDK_INT);
             if (Build.VERSION.SDK_INT >= 23) {
                 Log.i(TAG, "StepsService [onStartCommand] - API23Wrapper.setAlarmWhileIdle");
