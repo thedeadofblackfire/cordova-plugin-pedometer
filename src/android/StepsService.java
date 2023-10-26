@@ -190,10 +190,20 @@ public class StepsService extends Service implements SensorEventListener {
         String statusService = db.getConfig("status_service"); 
         //db.close();
         if (statusService != null && !"stop".equals(statusService)) {
+			PendingIntent pi = null;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {	
+				pi = PendingIntent.getService(this, 3, new Intent(this, StepsService.class), PendingIntent.FLAG_IMMUTABLE | 0);
+			} else {
+				pi = PendingIntent.getService(this, 3, new Intent(this, StepsService.class), 0);
+			}
+			
             // Restart service in 500 ms
-            ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 500,
-                    PendingIntent.getService(this, 3, new Intent(this, StepsService.class), 0));
+            ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 500, pi);
+					
+			//((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC, System.currentTimeMillis() + 500,
+            //        PendingIntent.getService(this, 3, new Intent(this, StepsService.class), 0));
         }
+			
 		db.close();
     }
 
