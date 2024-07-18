@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 
 import android.util.Log;
-import org.apache.cordova.BuildConfig;
+//import org.apache.cordova.BuildConfig;
 import org.apache.cordova.pedometer.util.API26Wrapper;
 //import de.j4velin.pedometer.util.API26Wrapper;
 //import de.j4velin.pedometer.util.Logger;
