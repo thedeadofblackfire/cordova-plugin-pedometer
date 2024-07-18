@@ -321,6 +321,8 @@ public class StepsService extends Service implements SensorEventListener {
     }
 	
 	// https://stackoverflow.com/questions/70044393/fatal-android-12-exception-startforegroundservice-not-allowed-due-to-mallows
+	// https://developer.android.com/develop/background-work/services/foreground-services?hl=fr#kotlin
+	// https://developer.android.com/develop/background-work/services/fg-service-types?hl=fr : android:foregroundServiceType = health
 	private void showNotification() {
 		if (Build.VERSION.SDK_INT >= 26) {
 		  startForeground(NOTIFICATION_ID, getNotification(this));
