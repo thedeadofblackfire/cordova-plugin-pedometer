@@ -24,7 +24,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 
-import org.apache.cordova.BuildConfig;
+//import org.apache.cordova.BuildConfig;
 import org.apache.cordova.pedometer.util.API23Wrapper;
 import org.apache.cordova.pedometer.util.API26Wrapper;
 import org.apache.cordova.pedometer.util.Util;
