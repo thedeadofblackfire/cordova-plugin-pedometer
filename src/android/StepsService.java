@@ -331,10 +331,10 @@ public class StepsService extends Service implements SensorEventListener {
 		  
 		    //Specifying the type requires Android Q, so you’ll have to wrap it into a statement in order to use the old startForeground() for android versions lower than Q. If your minSDK is 29 or higher — just use the one with foreground service type.
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-				startForeground(NOTIFICATION_ID, getNotification(this), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
+				startForeground(NOTIFICATION_ID, getNotification(this), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
 				//startForeground(NOTIFICATION_ID, notification.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
 			} else {
-				startForeground(NOTIFICATION_ID, getNotification(this),)
+				startForeground(NOTIFICATION_ID, getNotification(this));
 				//startForeground(NOTIFICATION_ID, notification.build(),)
 			}
 		} else if (getSharedPreferences("pedometer", Context.MODE_PRIVATE)
