@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -323,9 +324,19 @@ public class StepsService extends Service implements SensorEventListener {
 	// https://stackoverflow.com/questions/70044393/fatal-android-12-exception-startforegroundservice-not-allowed-due-to-mallows
 	// https://developer.android.com/develop/background-work/services/foreground-services?hl=fr#kotlin
 	// https://developer.android.com/develop/background-work/services/fg-service-types?hl=fr : android:foregroundServiceType = health
+	// https://proandroiddev.com/foreground-services-in-android-14-whats-changing-dcd56ad72788
 	private void showNotification() {
-		if (Build.VERSION.SDK_INT >= 26) {
-		  startForeground(NOTIFICATION_ID, getNotification(this));
+		if (Build.VERSION.SDK_INT >= 26) {			
+		    //startForeground(NOTIFICATION_ID, getNotification(this)); // older
+		  
+		    //Specifying the type requires Android Q, so you’ll have to wrap it into a statement in order to use the old startForeground() for android versions lower than Q. If your minSDK is 29 or higher — just use the one with foreground service type.
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+				startForeground(NOTIFICATION_ID, getNotification(this), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
+				//startForeground(NOTIFICATION_ID, notification.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
+			} else {
+				startForeground(NOTIFICATION_ID, getNotification(this),)
+				//startForeground(NOTIFICATION_ID, notification.build(),)
+			}
 		} else if (getSharedPreferences("pedometer", Context.MODE_PRIVATE)
 		  .getBoolean("notification", true)) {
 		  ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
