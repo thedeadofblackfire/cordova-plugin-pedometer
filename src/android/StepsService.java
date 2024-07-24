@@ -329,10 +329,35 @@ public class StepsService extends Service implements SensorEventListener {
 		if (Build.VERSION.SDK_INT >= 26) {			
 		    //startForeground(NOTIFICATION_ID, getNotification(this)); // older
 		  
-		    // https://medium.com/@domen.lanisnik/guide-to-foreground-services-on-android-9d0127dc8f9a
-		    // Build.VERSION_CODES.Q : Released publicly as Android 10 in September 2019. (29)
-			// Build.VERSION_CODES.R : Released publicly as Android 11 in September 2020. (30)
+		    // https://medium.com/@domen.lanisnik/guide-to-foreground-services-on-android-9d0127dc8f9a			
+			// Build.VERSION_CODES.TIRAMISU (android 13)
+			// Build.VERSION_CODES.UPSIDE_DOWN_CAKE (android 14)
+		    // Build.VERSION_CODES.Q : Android 10 in September 2019. (29)
+			// Build.VERSION_CODES.R : Android 11 in September 2020. (30)
+			// Build.VERSION_CODES.S : Android 12 (31)
 		    //Specifying the type requires Android Q, so you’ll have to wrap it into a statement in order to use the old startForeground() for android versions lower than Q. If your minSDK is 29 or higher — just use the one with foreground service type.
+			
+			//https://developer.android.com/develop/background-work/services/foreground-services?hl=fr#java
+			
+			try {
+				int type = 0;
+					
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+					type = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH;				
+				} 
+				
+				startForeground(NOTIFICATION_ID, getNotification(this), type);
+			} catch (Exception e) {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+						e instanceof ForegroundServiceStartNotAllowedException
+				) {
+					// App not in a valid state to start foreground service
+					// (e.g started from bg)
+				}
+				// ...
+			}
+				
+			/*
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 				startForeground(NOTIFICATION_ID, getNotification(this), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
 				//startForeground(NOTIFICATION_ID, notification.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
@@ -340,6 +365,7 @@ public class StepsService extends Service implements SensorEventListener {
 				startForeground(NOTIFICATION_ID, getNotification(this));
 				//startForeground(NOTIFICATION_ID, notification.build(),)
 			}
+			*/
 		} else if (getSharedPreferences("pedometer", Context.MODE_PRIVATE)
 		  .getBoolean("notification", true)) {
 		  ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE))
