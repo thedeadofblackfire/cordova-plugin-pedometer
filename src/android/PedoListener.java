@@ -52,7 +52,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     public static int RUNNING = 2;
     public static int ERROR_FAILED_TO_START = 3;
     public static int ERROR_NO_SENSOR_FOUND = 4;
-	  public static int PAUSED = 5;
+	public static int PAUSED = 5;
 
     public static int DEFAULT_GOAL = 1000;
   
@@ -67,8 +67,8 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
     private float startsteps; //first value, to be substracted
     private long starttimestamp; //time stamp of when the measurement starts
 	
-	  private int startOffset = 0, todayOffset, total_start, goal, since_boot, total_days;
-	  public final static NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
+	private int startOffset = 0, todayOffset, total_start, goal, since_boot, total_days;
+	public final static NumberFormat formatter = NumberFormat.getInstance(Locale.getDefault());
 
     private SensorManager sensorManager; // Sensor manager
     private Sensor sensor;             // Pedometer sensor returned by sensor manager
@@ -523,7 +523,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 	
   	status = PedoListener.STARTING;
 	
-	  db.setConfig("status_service", "start");
+	db.setConfig("status_service", "start");
        
     db.close();
 
@@ -774,6 +774,7 @@ public class PedoListener extends CordovaPlugin implements SensorEventListener {
 		// Today offset might still be Integer.MIN_VALUE on first start
 		int steps_today = Math.max(todayOffset + since_boot, 0);
 		int total = total_start + steps_today;
+		if (total_days <= 0) total_days = 1; // to prevent : Fatal Exception: java.lang.ArithmeticException divide by zero
 		int average = (total_start + steps_today) / total_days;
 
 		JSONObject result = new JSONObject();
