@@ -347,7 +347,17 @@ public class StepsService extends Service implements SensorEventListener {
 					type = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH;				
 				} 
 				
-				startForeground(NOTIFICATION_ID, getNotification(this), type);
+				// before 200126
+				//startForeground(NOTIFICATION_ID, getNotification(this), type);
+				
+				if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+					// For Android 10 (API 29) and above
+					startForeground(NOTIFICATION_ID, getNotification(this), type);
+				} else {
+					// For Android 9 and below
+					startForeground(NOTIFICATION_ID, getNotification(this));
+				}
+				
 			} catch (Exception e) {
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
 						e instanceof ForegroundServiceStartNotAllowedException
