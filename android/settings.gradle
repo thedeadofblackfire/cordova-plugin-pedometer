@@ -1,0 +1,4 @@
+// Standalone compile check only. When consumed by an app, Capacitor's own settings.gradle
+// includes this project and provides :capacitor-android — this file is not used then.
+include ':capacitor-android'
+project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')

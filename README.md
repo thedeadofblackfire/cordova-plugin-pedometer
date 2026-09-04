@@ -1,111 +1,139 @@
-## Core Motion Pedometer Plugin for Cordova [![npm version](https://badge.fury.io/js/cordova-plugin-pedometer.svg)](http://badge.fury.io/js/cordova-plugin-pedometer)
+# @jebooj/capacitor-pedometer
 
-**Fetch pedestrian-related pedometer data, such as step counts and other information about the distance travelled.**
+Compteur de pas interne pour Capacitor, avec **synchronisation autonome** vers un serveur.
 
-## Install
+Le plugin compte les pas dans un *foreground service* Android et les envoie à intervalle régulier
+**application fermée**. C'est sa raison d'être : ne pas dépendre de l'ouverture de l'app pour tracer
+et remonter l'activité.
 
-#### Latest published version on npm (with Cordova CLI >= 5.0.0)
+Portage Capacitor du fork Cordova `cordova-plugin-pedometer` (branche `master`), dont il conserve le
+service, la base SQLite et la synchro HTTP.
 
-```
-cordova plugin add cordova-plugin-pedometer
-```
+## Les deux sens de fonctionnement
 
-#### Latest version from GitHub
+Ils sont complémentaires, pas alternatifs :
 
-```
-cordova plugin add https://github.com/leecrossley/cordova-plugin-pedometer.git
-```
+| Sens | Qui agit | Quand |
+| --- | --- | --- |
+| **Push autonome** | le service, via `SyncWorker` | à intervalle régulier, app fermée |
+| **Lecture à la demande** | l'app, via `getEntries()` | quand un écran a besoin des données, synchronisées ou non |
 
-You **do not** need to reference any JavaScript, the Cordova plugin architecture will add a pedometer object to your root automatically when you build.
+## Installation
 
-## Check feature support (iOS only)
-
-### isStepCountingAvailable
-
-```js
-pedometer.isStepCountingAvailable(successCallback, failureCallback);
-```
-- => `successCallback` is called with true if the feature is supported, otherwise false
-- => `failureCallback` is called if there was an error determining if the feature is supported
-
-### isDistanceAvailable
-
-```js
-pedometer.isDistanceAvailable(successCallback, failureCallback);
+```bash
+npm install @jebooj/capacitor-pedometer
+npx cap sync android
 ```
 
-Distance estimation indicates the ability to use step information to supply the approximate distance travelled by the user.
+Aucune permission à déclarer côté app : le manifeste du plugin est fusionné par Gradle.
 
-This capability is not supported on all devices, even with iOS 8.
+## Utilisation
 
-### isFloorCountingAvailable
+```ts
+import { Pedometer } from '@jebooj/capacitor-pedometer';
 
-```js
-pedometer.isFloorCountingAvailable(successCallback, failureCallback);
+// 1. cibler la synchro autonome (à refaire à chaque changement d'utilisateur)
+await Pedometer.configure({
+  userId: '10470',
+  apiUrl: 'https://startr-api.jebooj.com/v1/partners/dynafit',
+  syncIntervalMinutes: 15,
+});
+
+// 2. permissions puis démarrage du service
+const permissions = await Pedometer.requestPermissions();
+if (permissions.activity === 'granted') {
+  await Pedometer.start({ goal: 10000 });
+}
+
+// 3. mises à jour live (uniquement au premier plan ; le service compte quand même sans elles)
+await Pedometer.addListener('stepsUpdate', ({ stepsToday }) => {
+  console.log(stepsToday);
+});
+
+// 4. relecture de la base locale, lignes synchronisées ou non
+const { entries } = await Pedometer.getEntries({
+  start: Date.now() - 7 * 864e5,
+  end: Date.now(),
+  synced: 'all',
+});
+
+// 5. forcer un envoi immédiat (optionnel)
+const { sent, pending, lastSyncAt } = await Pedometer.sync();
 ```
 
-Floor counting indicates the ability to count the number of floors the user walks up or down using stairs.
+## Configuration de la synchro autonome
 
-This capability is not supported on all devices, even with iOS 8.
+`configure()` écrit dans la table `settings` de la base SQLite du plugin — c'est l'équivalent du
+`setConfig({userid, api})` de la version Cordova.
 
+| Champ | Rôle |
+| --- | --- |
+| `userId` | identifie l'utilisateur dans la charge postée par le service |
+| `apiUrl` | URL absolue de destination |
+| `syncIntervalMinutes` | période souhaitée ; Android impose un plancher de **15 minutes** pour le travail périodique |
 
-## Live pedometer data
+> ⚠️ Le service continue de poster vers ce qui est stocké **même après une déconnexion**. Rappeler
+> `configure()` à chaque changement d'utilisateur, sinon les pas seraient attribués au compte
+> précédent.
 
-### startPedometerUpdates
+## États de synchronisation
 
-Starts the delivery of recent pedestrian-related data to your Cordova app.
+La colonne `synced` de la table `steps`, telle que la manipulent `queueLinesToSync()`,
+`updateLinesSynced()` et `rollbackLinesToSync()` :
 
-```js
-var successHandler = function (pedometerData) {
-    // pedometerData.startDate; -> ms since 1970
-    // pedometerData.endDate; -> ms since 1970
-    // pedometerData.numberOfSteps;
-    // pedometerData.distance;
-    // pedometerData.floorsAscended;
-    // pedometerData.floorsDescended;
-};
-pedometer.startPedometerUpdates(successHandler, onError);
-```
+| Valeur | Filtre `getEntries` | Sens |
+| --- | --- | --- |
+| `0` | `pending` | en attente d'envoi |
+| `1` | `queued` | inclus dans l'envoi en cours |
+| `2` | `synced` | acquitté par le serveur |
 
-The success handler is executed when data is available and is called repeatedly from a background thread as new data arrives.
+## Ce qui a changé depuis la version Cordova
 
-When the app is suspended, the delivery of updates stops temporarily. Upon returning to foreground or background execution, the pedometer object begins updates again.
+| Sujet | Avant | Maintenant |
+| --- | --- | --- |
+| Entrée JS | `PedoListener` (Cordova) | `PedometerPlugin` (`@CapacitorPlugin`) |
+| Mises à jour | callback Cordova maintenu en vie | événement `stepsUpdate` |
+| Permissions | déclarées, **jamais demandées** | `ACTIVITY_RECOGNITION` et `POST_NOTIFICATIONS` demandées à l'exécution |
+| Relance périodique | `AlarmManager` toutes les 2 min | `WorkManager` (`PeriodicWorkRequest`) — l'ancienne voie est refusée sur Android 12+ |
+| Synchro HTTP | thread nu depuis le service | portée par le Worker, avec contrainte réseau et réessai |
+| Détection réseau | `getActiveNetworkInfo()` (déprécié) | `NetworkCapabilities` |
+| Base SQLite | stockage **externe** | stockage **interne** |
+| Support | `android.support.*` | AndroidX |
+| Lecture | `getNoSyncResults()` | `getEntries({start, end, synced})` |
+| Service exporté | `exported="true"` | `exported="false"` |
 
-### stopPedometerUpdates
+Les clés de préférences et le nom de la base sont **inchangés** : une app qui migre depuis la version
+Cordova conserve son objectif, ses compteurs et ses textes de notification.
 
-Stops the delivery of recent pedestrian data updates to your Cordova app.
+## API
 
-```js
-pedometer.stopPedometerUpdates(successCallback, failureCallback);
-```
+Voir [`src/definitions.ts`](src/definitions.ts) — l'interface `PedometerPlugin` est documentée
+méthode par méthode.
 
-## Historical pedometer data (iOS only)
+## iOS
 
-### queryData
+Volontairement partiel. L'app Start'R lit ses pas depuis **HealthKit** sur iOS ; le podomètre interne
+est une fonctionnalité **Android**. L'implémentation Swift couvre ce que `CMPedometer` sait faire
+(disponibilité, mises à jour live, historique **7 jours maximum**) ; tout ce qui relève du service
+Android — base locale, synchro autonome, notification, réglages batterie — répond `UNAVAILABLE`
+plutôt que de faire semblant. iOS ne permet pas à une app en arrière-plan de tenir un compteur
+persistant et de poster seule.
 
-Retrieves the data between the specified start and end dates.
+Ajouter `NSMotionUsageDescription` dans l'`Info.plist` de l'app si l'implémentation iOS est utilisée
+(Capacitor n'écrit pas l'`Info.plist`).
 
-The `startDate` and `endDate` options are required and can be constructed in any valid JavaScript way (e.g. `new Date(2015, 4, 1, 15, 20, 00)` is also valid, as is milliseconds).
+## Play Console
 
-```js
-var successHandler = function (pedometerData) {
-    // pedometerData.numberOfSteps;
-    // pedometerData.distance;
-    // pedometerData.floorsAscended;
-    // pedometerData.floorsDescended;
-};
-var options = {
-    "startDate": new Date("Fri May 01 2015 15:20:00"),
-    "endDate": new Date("Fri May 01 2015 15:25:00")
-};
-pedometer.queryData(successHandler, onError, options);
-```
+Le service est de type `health`. Prévoir la déclaration du *foreground service* correspondante, avec
+la vidéo de démonstration exigée par Google.
 
-## Platform and device support
+## Sécurité — à savoir
 
-- iOS 8+. These capabilities are not supported on all devices, even with iOS 8, so please ensure you use the *check feature support* functions.
-- Android (when associated hardware is available). Only live pedometer data is supported.
+Le service tourne sans l'application, donc **sans JWT valide**. L'endpoint de destination doit donc
+accepter une requête non authentifiée identifiant l'utilisateur par son `userId`. Piste de
+durcissement sans perdre l'autonomie : stocker un **jeton d'appareil de longue durée** dans la table
+`settings` à côté de `userid`, délivré à l'enregistrement du capteur et vérifié côté serveur.
 
-## License
+## Licence
 
-[MIT License](http://ilee.mit-license.org)
+MIT

@@ -7,3 +7,10 @@
 .vscode/*
 typings/*
 jsconfig.json
+# Capacitor plugin build artefacts
+node_modules/
+dist/
+android/build/
+android/.gradle/
+android/local.properties
+.DS_Store

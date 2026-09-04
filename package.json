@@ -1,38 +1,66 @@
 {
-  "name": "cordova-plugin-pedometer",
-  "version": "0.4.2",
-  "description": "Cordova / PhoneGap Plugin for the Core Motion Pedometer to fetch pedestrian-related data, such as step counts and other information about the distance travelled.",
-  "cordova": {
-    "id": "cordova-plugin-pedometer",
-    "platforms": [
-      "ios",
-      "android"
-    ]
-  },
+  "name": "@jebooj/capacitor-pedometer",
+  "version": "1.0.0",
+  "description": "Capacitor plugin counting steps in a foreground service and pushing them to a server autonomously, with the app closed.",
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "unpkg": "dist/plugin.js",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources/",
+    "Package.swift",
+    "JeboojCapacitorPedometer.podspec"
+  ],
+  "author": "Nick <thedeadofblackfire@yahoo.com>",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leecrossley/cordova-plugin-pedometer.git"
+    "url": "git+https://github.com/thedeadofblackfire/cordova-plugin-pedometer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thedeadofblackfire/cordova-plugin-pedometer/issues"
   },
   "keywords": [
-    "cordova",
-    "core motion",
+    "capacitor",
+    "plugin",
+    "native",
     "pedometer",
     "steps",
-    "distance",
-    "pedestrian",
-    "ecosystem:cordova",
-    "cordova-ios",
-    "cordova-android"
+    "step-counter",
+    "health"
   ],
-  "engines": [
-    {
-      "name": "cordova",
-      "version": ">=3.0.0"
-    }
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/leecrossley/cordova-plugin-pedometer/issues"
+  "scripts": {
+    "verify": "npm run verify:android && npm run verify:web",
+    "verify:android": "cd android && ./gradlew clean build test",
+    "verify:web": "npm run build",
+    "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
+    "clean": "rimraf ./dist",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build"
   },
-  "homepage": "https://github.com/leecrossley/cordova-plugin-pedometer#readme"
+  "devDependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.30.0",
+    "typescript": "~5.6.3"
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  },
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

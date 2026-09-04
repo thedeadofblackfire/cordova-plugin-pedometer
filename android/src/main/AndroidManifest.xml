@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Permissions of the plugin. Gradle merges them into the host app's manifest, so the app has
+      nothing to declare — unlike the Cordova version, where plugin.xml patched the app manifest.
+
+      ACTIVITY_RECOGNITION and POST_NOTIFICATIONS are runtime permissions: PedometerPlugin asks for
+      them before starting the service. The Cordova version declared them but never asked.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- Android 13+: required to show the persistent notification of the foreground service -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- the app must still install on devices without a step counter -->
+    <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
+
+    <application>
+
+        <!--
+          Foreground service of type `health`. Android 15 forbids starting dataSync / camera /
+          mediaPlayback / phoneCall / mediaProjection / microphone services from BOOT_COMPLETED,
+          but `health` is still allowed — which is why the boot receiver below keeps working.
+
+          exported="false": nothing outside the app has any reason to start it. The Cordova
+          version exported it, which was unnecessary.
+        -->
+        <service
+            android:name="fr.jebooj.plugins.pedometer.StepsService"
+            android:foregroundServiceType="health"
+            android:exported="false" />
+
+        <!-- re-registers the step counter after a reboot -->
+        <receiver
+            android:name="fr.jebooj.plugins.pedometer.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- restarts the service after the app is updated -->
+        <receiver
+            android:name="fr.jebooj.plugins.pedometer.AppUpdatedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
