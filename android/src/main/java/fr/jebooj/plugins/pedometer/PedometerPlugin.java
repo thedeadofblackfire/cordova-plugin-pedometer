@@ -2,6 +2,7 @@ package fr.jebooj.plugins.pedometer;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,10 +11,14 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.Pair;
 
+import androidx.activity.result.ActivityResult;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSArray;
@@ -22,6 +27,7 @@ import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
@@ -484,6 +490,11 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
     // Battery optimisation
     // =============================================================================================
 
+    /**
+     * OEM "protected apps / autostart" screen when the manufacturer has one; otherwise the system
+     * battery optimisation list. `BatteryOptimizationUtil` only knows OEM screens: on a Pixel or any
+     * stock Android the dialog is null, and this method used to do nothing at all.
+     */
     @PluginMethod
     public void openBatteryOptimizationSettings(final PluginCall call) {
         getActivity().runOnUiThread(new Runnable() {
@@ -491,13 +502,70 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
             public void run() {
                 try {
                     AlertDialog dialog = BatteryOptimizationUtil.getBatteryOptimizationDialog(getActivity());
-                    if (dialog != null) dialog.show();
+                    if (dialog != null) {
+                        dialog.show();
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        getActivity().startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+                    }
                     call.resolve();
                 } catch (Exception e) {
                     call.reject("SETTINGS_FAILED: " + e.getMessage());
                 }
             }
         });
+    }
+
+    @PluginMethod
+    public void getBatteryOptimizationStatus(PluginCall call) {
+        call.resolve(buildBatteryStatus());
+    }
+
+    /**
+     * The standard "Allow the app to always run in the background?" system dialog.
+     *
+     * Being exempt is what makes the counting permanent: an exempt app may start its foreground
+     * service from the background, so START_STICKY and onTaskRemoved can bring the service back
+     * after its process was killed. Needs REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (plugin manifest) —
+     * a Play Console declaration: step counting in the background is the app's core feature.
+     */
+    @PluginMethod
+    public void requestIgnoreBatteryOptimizations(PluginCall call) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || isIgnoringBatteryOptimizations()) {
+            call.resolve(buildBatteryStatus());
+            return;
+        }
+
+        Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getContext().getPackageName()));
+        try {
+            startActivityForResult(call, intent, "batteryOptimizationResult");
+        } catch (ActivityNotFoundException e) {
+            // some OEM builds drop the dialog: fall back to the system list
+            try {
+                getActivity().startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+            } catch (Exception ignored) {
+            }
+            call.resolve(buildBatteryStatus());
+        }
+    }
+
+    @ActivityCallback
+    private void batteryOptimizationResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        // the dialog's result code is unreliable across OEMs: read the actual state instead
+        call.resolve(buildBatteryStatus());
+    }
+
+    private boolean isIgnoringBatteryOptimizations() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
+        PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+        return pm != null && pm.isIgnoringBatteryOptimizations(getContext().getPackageName());
+    }
+
+    private JSObject buildBatteryStatus() {
+        JSObject status = new JSObject();
+        status.put("ignoring", isIgnoringBatteryOptimizations());
+        status.put("oemSettingsAvailable", BatteryOptimizationUtil.isBatteryOptimizationAvailable(getContext()));
+        return status;
     }
 
     // =============================================================================================
@@ -507,8 +575,14 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
     @Override
     protected void handleOnResume() {
         super.handleOnResume();
-        // only re-attach when the user actually started the pedometer
-        if (ServiceControl.shouldRun(getContext())) attachSensor();
+        // only when the user actually started the pedometer
+        if (ServiceControl.shouldRun(getContext())) {
+            // bring the service back if it was killed and could not restart itself (OEM killer, user
+            // "force stop", battery optimisation). The app is in the foreground, so the start is
+            // always allowed; on a running service it only re-runs onStartCommand.
+            ServiceControl.startIfEnabled(getContext(), "app resumed");
+            attachSensor();
+        }
     }
 
     @Override

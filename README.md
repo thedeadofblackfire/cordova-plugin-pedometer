@@ -105,6 +105,25 @@ La colonne `synced` de la table `steps`, telle que la manipulent `queueLinesToSy
 Les clés de préférences et le nom de la base sont **inchangés** : une app qui migre depuis la version
 Cordova conserve son objectif, ses compteurs et ses textes de notification.
 
+## Fonctionnement permanent (Android)
+
+L'app décide, le service tient seul :
+
+- **Activation** : uniquement par `start()`, qui exige `ACTIVITY_RECOGNITION` et écrit
+  `status_service = "start"` dans la table `settings`. **Arrêt** : uniquement par `stop()`
+  (`status_service = "stop"`, service arrêté, synchro annulée). Rien d'autre ne change cet état.
+- **Relances automatiques**, toutes conditionnées par `ServiceControl` (activé **et** permission
+  accordée) : mise à jour de l'app, redémarrage du téléphone (après le premier déverrouillage),
+  retrait de la tâche des récents, mort du process (`START_STICKY`), et à chaque retour de l'app au
+  premier plan — ce dernier point rattrape un service tué par l'OEM ou par un « Forcer l'arrêt ».
+- **Batterie** : `getBatteryOptimizationStatus()`, puis `requestIgnoreBatteryOptimizations()` (boîte
+  de dialogue système standard) ; `openBatteryOptimizationSettings()` pour les écrans constructeur
+  (Xiaomi, Huawei, Oppo…), avec repli sur la liste système. L'exemption autorise le service à revenir
+  au premier plan depuis l'arrière-plan : c'est elle qui garantit la permanence sur les téléphones
+  agressifs.
+- Limite d'Android, non contournable : après un **« Forcer l'arrêt »** manuel, rien ne redémarre
+  tant que l'utilisateur n'a pas rouvert l'app.
+
 ## API
 
 Voir [`src/definitions.ts`](src/definitions.ts) — l'interface `PedometerPlugin` est documentée
@@ -126,6 +145,9 @@ Ajouter `NSMotionUsageDescription` dans l'`Info.plist` de l'app si l'implémenta
 
 Le service est de type `health`. Prévoir la déclaration du *foreground service* correspondante, avec
 la vidéo de démonstration exigée par Google.
+
+`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` est soumise à la politique Play « Optimisations de la
+batterie » : justifier le comptage de pas permanent en arrière-plan comme fonction principale.
 
 ## Sécurité — à savoir
 

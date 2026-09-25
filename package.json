@@ -1,6 +1,6 @@
 {
   "name": "@jebooj/capacitor-pedometer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Capacitor plugin counting steps in a foreground service and pushing them to a server autonomously, with the app closed.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

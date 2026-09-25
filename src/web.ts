@@ -1,6 +1,7 @@
 import { WebPlugin } from '@capacitor/core';
 
 import type {
+  PedometerBatteryStatus,
   PedometerConfig,
   PedometerEntriesQuery,
   PedometerNotificationStrings,
@@ -84,6 +85,14 @@ export class PedometerWeb extends WebPlugin implements PedometerPlugin {
 
   async getSyncStatus(): Promise<PedometerSyncResult> {
     return { sent: 0, pending: 0, lastSyncAt: null };
+  }
+
+  async getBatteryOptimizationStatus(): Promise<PedometerBatteryStatus> {
+    return { ignoring: true, oemSettingsAvailable: false };
+  }
+
+  async requestIgnoreBatteryOptimizations(): Promise<PedometerBatteryStatus> {
+    return { ignoring: true, oemSettingsAvailable: false };
   }
 
   async openBatteryOptimizationSettings(): Promise<void> {

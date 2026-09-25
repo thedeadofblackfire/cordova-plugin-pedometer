@@ -75,6 +75,8 @@ public class StepsService extends Service implements SensorEventListener {
     private Context context;
 
     private final BroadcastReceiver shutdownReceiver = new ShutdownReceiver();
+    /** onStartCommand runs on every start request: register the shutdown receiver only once. */
+    private boolean shutdownReceiverRegistered = false;
 
     @Override
     public void onCreate() {
@@ -152,7 +154,8 @@ public class StepsService extends Service implements SensorEventListener {
         // Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
         // if (BuildConfig.DEBUG) Logger.log("SensorListener onDestroy");
         try {
-            unregisterReceiver(shutdownReceiver);
+            if (shutdownReceiverRegistered) unregisterReceiver(shutdownReceiver);
+            shutdownReceiverRegistered = false;
 
             SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
             sm.unregisterListener(this);
@@ -453,9 +456,12 @@ public class StepsService extends Service implements SensorEventListener {
     private void registerBroadcastReceiver() {
         // if (BuildConfig.DEBUG) Logger.log("register broadcastreceiver");
         Log.i(TAG, "StepsService [registerBroadcastReceiver] - register broadcastreceiver");
+        // registered twice, ShutdownReceiver would run twice and add the pending steps twice
+        if (shutdownReceiverRegistered) return;
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SHUTDOWN);
         registerReceiver(shutdownReceiver, filter);
+        shutdownReceiverRegistered = true;
     }
 
     private void reRegisterSensor() {

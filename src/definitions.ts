@@ -90,6 +90,18 @@ export interface PedometerEntriesQuery {
 
 export type PedometerServiceStatus = 'running' | 'stopped' | 'unknown';
 
+/** Android battery optimisation state (Doze / App Standby exemption). */
+export interface PedometerBatteryStatus {
+  /**
+   * `PowerManager.isIgnoringBatteryOptimizations()`. When true, the system also lets the service
+   * restart itself in the foreground after its process was killed (START_STICKY, task removal) —
+   * the exemption that keeps the counting permanent. Always `true` below Android 6 and on the web.
+   */
+  ignoring: boolean;
+  /** an OEM-specific screen (Xiaomi, Huawei, Oppo…) exists, see `openBatteryOptimizationSettings` */
+  oemSettingsAvailable: boolean;
+}
+
 export interface PedometerSyncResult {
   /** rows pushed during this run (or acknowledged in total, for `getSyncStatus`) */
   sent: number;
@@ -146,7 +158,21 @@ export interface PedometerPlugin {
   sync(): Promise<PedometerSyncResult>;
   getSyncStatus(): Promise<PedometerSyncResult>;
 
-  /** Android: open the battery optimisation dialog, so the service is not suspended. */
+  /** Android: whether the app is exempt from battery optimisations. */
+  getBatteryOptimizationStatus(): Promise<PedometerBatteryStatus>;
+
+  /**
+   * Android: ask the system to exempt the app from battery optimisations — the standard
+   * "Allow the app to always run in the background?" dialog
+   * (`ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`). Resolves with the state once the dialog is
+   * closed; falls back to the system list when the dialog is not available.
+   */
+  requestIgnoreBatteryOptimizations(): Promise<PedometerBatteryStatus>;
+
+  /**
+   * Android: open the OEM "protected apps / autostart" screen when the manufacturer has one
+   * (Xiaomi, Huawei, Oppo…), otherwise the system battery optimisation list.
+   */
   openBatteryOptimizationSettings(): Promise<void>;
 
   /** Emitted while the app is in the foreground; the service keeps counting without it. */
