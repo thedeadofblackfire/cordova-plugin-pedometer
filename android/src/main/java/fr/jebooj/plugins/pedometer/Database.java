@@ -41,7 +41,8 @@ import androidx.core.content.FileProvider;
 
 public class Database extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "steps.db";
+    /** package-private: {@link PedometerPlugin#exportDatabase} locates the file with it */
+    static final String DATABASE_NAME = "steps.db";
     private static final int DATABASE_VERSION = 1;
 
     /**
@@ -601,6 +602,15 @@ public class Database extends SQLiteOpenHelper {
     public boolean createStepsEntryValue(int steps) {
         Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue steps=" + steps);
 
+        // StepsService.onStartCommand() calls this before the sensor delivered anything: `steps` is
+        // then 0. Recording it reset the "lastSaveSteps" reference to 0 (the next reading replayed
+        // the "-5" bootstrap below, +5 phantom steps per service restart) and overwrote the current
+        // period with 0 steps (the steps already counted in it were lost).
+        if (steps <= 0) {
+            Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue - no sensor reading yet, skipped");
+            return false;
+        }
+
         boolean algoWithZeroSteps = true;
         boolean isDateAlreadyPresent = false;
         boolean createSuccessful = false;
@@ -712,27 +722,22 @@ public class Database extends SQLiteOpenHelper {
                 if (isDateAlreadyPresent) {
                     // values.put(KEY_STEP_TOTAL, ++currentDateStepCounts);
                     // values.put(KEY_STEP_TOTAL, steps);
-                    // if (lastPeriodTimeKey == 0 || lastPeriodTimeKey == datePeriodTime) {
-                    if (lastPeriodTimeKey == datePeriodTime) {
-                        Log.i(Database.class.getName(),
-                                "StepsService Database createStepsEntryValue same lastPeriodTimeKey="+datePeriodTime);
-                        // to fix bug on steps when insert & update inside the same period of time on
-                        // the frontier border of 5min
-                        values.remove(KEY_STEP_STEPS);
-                        values.put(KEY_STEP_STEPS, steps_diff + currentDateStepCounts);
-                    }
+                    // steps_diff counts the steps since the last saved reference, so an existing period
+                    // always accumulates. It used to accumulate only when lastPeriodTimeKey matched: that
+                    // key is static, back to 0 after a process restart, and the period was then
+                    // overwritten with steps_diff alone.
+                    values.remove(KEY_STEP_STEPS);
+                    values.put(KEY_STEP_STEPS, steps_diff + currentDateStepCounts);
                     int row = db.update(TABLE_STEPS, values, KEY_STEP_PERIODTIME + " = " + datePeriodTime, null);
                     // int row = db.update(TABLE_STEPS, values, KEY_STEP_CREATION_DATE + " = '" +
                     // todayDate + "'", null);
                     if (row == 1) {
                         createSuccessful = true;
-                        // for to update the reference parameter
-                        if (lastPeriodTimeKey == 0 || lastPeriodTimeKey == datePeriodTime) {
-                            prefs.edit().putInt("lastSaveSteps", steps).commit();
-                            lastSaveSteps = steps;
-                            lastSaveTime = System.currentTimeMillis();
-                            if (lastPeriodTimeKey == 0) lastPeriodTimeKey = datePeriodTime;
-                        }
+                        // the steps are recorded: move the reference, or they would be counted again
+                        prefs.edit().putInt("lastSaveSteps", steps).commit();
+                        lastSaveSteps = steps;
+                        lastSaveTime = System.currentTimeMillis();
+                        lastPeriodTimeKey = datePeriodTime;
                     }
                     //db.close();
                 } else {
@@ -771,10 +776,20 @@ public class Database extends SQLiteOpenHelper {
 
     // public JSONArray 
     public JSONObject getNoSyncResults(boolean strict) {
+        return getResultsBySyncState(0, strict);
+    }
+
+    /** Rows marked by {@link #queueLinesToSync()} — exactly what the current POST carries. */
+    public JSONObject getQueuedResults() {
+        return getResultsBySyncState(1, true);
+    }
+
+    private JSONObject getResultsBySyncState(int syncState, boolean strict) {
         // String myPath = DB_PATH + DB_NAME;// Set path to your database
         // SQLiteDatabase myDataBase = SQLiteDatabase.openDatabase(myPath, null,
         // SQLiteDatabase.OPEN_READONLY);
-        String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = 0";
+        String selectQuery = "SELECT * FROM " + TABLE_STEPS + " WHERE " + KEY_STEP_SYNCED + " = " + syncState
+                + " AND " + KEY_STEP_DATE + " > 0"; // date = -1 is the "current steps" bookkeeping row, not data
         if (!strict)
             selectQuery += " and " + KEY_STEP_STEPS + " > 0";
         selectQuery += " order by id asc";
@@ -1078,20 +1093,36 @@ public class Database extends SQLiteOpenHelper {
         return 0;
     }
 
-    public JSONObject syncData() {
+    /**
+     * Push the pending rows to the configured API.
+     *
+     * {@code synchronized}: the service thread, the SyncWorker and the plugin's {@code sync()} can
+     * call it at the same time, and they would POST the same rows twice. Being serialised, any row
+     * still QUEUED on entry is a leftover of an interrupted run and is put back to PENDING first.
+     *
+     * The API is checked <b>before</b> queueing: rows used to be queued and never rolled back when no
+     * API was configured, and since only PENDING rows are sent they were stuck for good. The payload is
+     * read <b>after</b> queueing, so a row inserted in between cannot be acknowledged without being sent.
+     */
+    public synchronized JSONObject syncData() {
         JSONObject response = new JSONObject();
         try {
+            this.rollbackLinesToSync();
+
+            String api = this.getConfig("api");
+            if (api == null || "".equals(api)) {
+                Log.i(Database.class.getName(), "StepsService Database syncData - no api configured, nothing queued");
+                return response;
+            }
+
             if (this.isOnline()) {
-                JSONObject dataToSync = this.getNoSyncResults(true);
                 this.queueLinesToSync();
-                String api = this.getConfig("api"); 
-                if (api != null && !"".equals(api)) {
-                    response = this.sendToServer(api, dataToSync.toString());
-                    if (response.has("success")) {
-                        this.updateLinesSynced();
-                    } else {
-                        this.rollbackLinesToSync();
-                    }
+                JSONObject dataToSync = this.getQueuedResults();
+                response = this.sendToServer(api, dataToSync.toString());
+                if (response.has("success")) {
+                    this.updateLinesSynced();
+                } else {
+                    this.rollbackLinesToSync();
                 }
             } else {
                 Log.i(Database.class.getName(), "StepsService Database syncData isOnline=false - not connected to Internet");

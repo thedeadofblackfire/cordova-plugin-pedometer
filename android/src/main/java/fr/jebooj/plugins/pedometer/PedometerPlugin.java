@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -35,7 +36,15 @@ import com.getcapacitor.annotation.PermissionCallback;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import fr.jebooj.plugins.pedometer.util.Util;
 
@@ -513,6 +522,62 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
                 }
             }
         });
+    }
+
+    // =============================================================================================
+    // Debug
+    // =============================================================================================
+
+    /**
+     * Snapshot of the local SQLite database ({@code steps.db}), for inspection in a SQLite viewer.
+     *
+     * The WAL is checkpointed first (Android enables write-ahead logging by default on 9+), otherwise
+     * the copy would miss the rows still sitting in {@code steps.db-wal}. The copy lands in the cache,
+     * under {@code pedometer-export/} — covered by the app's FileProvider {@code cache-path}, so the
+     * returned {@code uri} can be handed to {@code @capacitor/share}. Only the latest export is kept.
+     */
+    @PluginMethod
+    public void exportDatabase(PluginCall call) {
+        File source = getContext().getDatabasePath(Database.DATABASE_NAME);
+        if (!source.exists()) {
+            call.reject("EXPORT_FAILED: " + Database.DATABASE_NAME + " does not exist yet");
+            return;
+        }
+
+        File dir = new File(getContext().getCacheDir(), "pedometer-export");
+        String name = "steps-" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date()) + ".db";
+        File target = new File(dir, name);
+
+        // the reference is held for the whole copy: no other close() can shut the helper meanwhile
+        Database db = Database.getInstance(getContext());
+        try {
+            Cursor checkpoint = db.getWritableDatabase().rawQuery("PRAGMA wal_checkpoint(FULL)", null);
+            checkpoint.moveToFirst();
+            checkpoint.close();
+
+            if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("cannot create " + dir);
+            File[] previous = dir.listFiles();
+            if (previous != null) for (File file : previous) file.delete();
+
+            try (InputStream in = new FileInputStream(source); OutputStream out = new FileOutputStream(target)) {
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "exportDatabase failed", e);
+            call.reject("EXPORT_FAILED: " + e.getMessage());
+            return;
+        } finally {
+            db.close();
+        }
+
+        JSObject result = new JSObject();
+        result.put("name", name);
+        result.put("path", target.getAbsolutePath());
+        result.put("uri", Uri.fromFile(target).toString());
+        result.put("size", target.length());
+        call.resolve(result);
     }
 
     @PluginMethod

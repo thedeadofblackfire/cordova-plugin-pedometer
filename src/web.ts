@@ -2,6 +2,7 @@ import { WebPlugin } from '@capacitor/core';
 
 import type {
   PedometerBatteryStatus,
+  PedometerDatabaseExport,
   PedometerConfig,
   PedometerEntriesQuery,
   PedometerNotificationStrings,
@@ -85,6 +86,10 @@ export class PedometerWeb extends WebPlugin implements PedometerPlugin {
 
   async getSyncStatus(): Promise<PedometerSyncResult> {
     return { sent: 0, pending: 0, lastSyncAt: null };
+  }
+
+  async exportDatabase(): Promise<PedometerDatabaseExport> {
+    throw this.unavailable(PedometerWeb.UNAVAILABLE);
   }
 
   async getBatteryOptimizationStatus(): Promise<PedometerBatteryStatus> {

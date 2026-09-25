@@ -90,6 +90,18 @@ export interface PedometerEntriesQuery {
 
 export type PedometerServiceStatus = 'running' | 'stopped' | 'unknown';
 
+/** Result of {@link PedometerPlugin.exportDatabase}. */
+export interface PedometerDatabaseExport {
+  /** e.g. `steps-20260925-203000.db` */
+  name: string;
+  /** absolute path in the app cache */
+  path: string;
+  /** `file://` URI — can be passed to `@capacitor/share` (`files: [uri]`) */
+  uri: string;
+  /** bytes */
+  size: number;
+}
+
 /** Android battery optimisation state (Doze / App Standby exemption). */
 export interface PedometerBatteryStatus {
   /**
@@ -157,6 +169,12 @@ export interface PedometerPlugin {
    */
   sync(): Promise<PedometerSyncResult>;
   getSyncStatus(): Promise<PedometerSyncResult>;
+
+  /**
+   * Android, debug: snapshot of the local SQLite database (`steps.db`, tables `steps` and `settings`)
+   * into the app cache, WAL checkpointed first. Only the latest export is kept.
+   */
+  exportDatabase(): Promise<PedometerDatabaseExport>;
 
   /** Android: whether the app is exempt from battery optimisations. */
   getBatteryOptimizationStatus(): Promise<PedometerBatteryStatus>;
