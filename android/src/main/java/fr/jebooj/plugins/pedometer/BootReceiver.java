@@ -38,13 +38,10 @@ public class BootReceiver extends BroadcastReceiver {
 			db.removeNegativeEntries();
 			db.saveCurrentSteps(0);
 			db.close();
-			prefs.edit().remove("correctShutdown").apply();			
-			
-			if (Build.VERSION.SDK_INT >= 26) {
-				API26Wrapper.startForegroundService(context, new Intent(context, StepsService.class));
-			} else {
-				context.startService(new Intent(context, StepsService.class));
-			}
+			prefs.edit().remove("correctShutdown").apply();
+
+			// only when the user had started it and ACTIVITY_RECOGNITION is still granted
+			ServiceControl.startIfEnabled(context, "device booted");
 		  }
 		}
     }

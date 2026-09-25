@@ -3,26 +3,20 @@ package fr.jebooj.plugins.pedometer;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import android.util.Log;
-//import org.apache.cordova.BuildConfig;
-import fr.jebooj.plugins.pedometer.util.API26Wrapper;
-//import de.j4velin.pedometer.util.API26Wrapper;
-//import de.j4velin.pedometer.util.Logger;
 
+/**
+ * Restarts the service after the app is updated — only when the user had started it and
+ * ACTIVITY_RECOGNITION is still granted (see {@link ServiceControl}).
+ */
 public class AppUpdatedReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
-        //if (BuildConfig.DEBUG) Logger.log("app updated");
         Log.i("cordova-plugin-pedometer", "app updated");
-		
-        if (Build.VERSION.SDK_INT >= 26) {
-            API26Wrapper.startForegroundService(context, new Intent(context, StepsService.class));
-        } else {
-            context.startService(new Intent(context, StepsService.class));
-        }
+
+        ServiceControl.startIfEnabled(context, "app updated");
     }
 
 }

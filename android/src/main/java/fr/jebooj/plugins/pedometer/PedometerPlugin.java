@@ -235,7 +235,7 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
 
         Database db = Database.getInstance(getContext());
         String interval = db.getConfig("sync_interval_minutes");
-        db.setConfig("status_service", "start");
+        db.setConfig(ServiceControl.STATUS_KEY, ServiceControl.STATUS_START);
         db.close();
 
         try {
@@ -268,7 +268,7 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
         detachSensor();
 
         Database db = Database.getInstance(getContext());
-        db.setConfig("status_service", "stop");
+        db.setConfig(ServiceControl.STATUS_KEY, ServiceControl.STATUS_STOP);
         db.close();
 
         getContext().stopService(new Intent(getContext(), StepsService.class));
@@ -279,12 +279,10 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
 
     @PluginMethod
     public void getStatus(PluginCall call) {
-        Database db = Database.getInstance(getContext());
-        String status = db.getConfig("status_service");
-        db.close();
-
+        // getConfig() returns "" for a missing key: a pedometer never started is "stopped", not
+        // "running"; a revoked ACTIVITY_RECOGNITION means nothing is counted, so "stopped" too
         JSObject result = new JSObject();
-        result.put("status", status == null ? "unknown" : ("stop".equals(status) ? "stopped" : "running"));
+        result.put("status", ServiceControl.shouldRun(getContext()) ? "running" : "stopped");
         call.resolve(result);
     }
 
@@ -510,11 +508,7 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
     protected void handleOnResume() {
         super.handleOnResume();
         // only re-attach when the user actually started the pedometer
-        Database db = Database.getInstance(getContext());
-        String status = db.getConfig("status_service");
-        db.close();
-
-        if (status != null && !"stop".equals(status)) attachSensor();
+        if (ServiceControl.shouldRun(getContext())) attachSensor();
     }
 
     @Override

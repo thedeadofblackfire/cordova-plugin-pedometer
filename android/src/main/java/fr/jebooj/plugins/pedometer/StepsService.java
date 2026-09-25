@@ -121,11 +121,10 @@ public class StepsService extends Service implements SensorEventListener {
         // scar of it). WorkManager does the same job in a supported way: it survives reboots,
         // respects Doze, retries on failure and does not need to wake this service at all.
         Database db = Database.getInstance(context);
-        String statusService = db.getConfig("status_service");
         String intervalConfig = db.getConfig("sync_interval_minutes");
         db.close();
 
-        if (statusService != null && !"stop".equals(statusService)) {
+        if (ServiceControl.isEnabled(context)) {
             long interval = SyncWorker.DEFAULT_INTERVAL_MINUTES;
             try {
                 if (intervalConfig != null && !intervalConfig.isEmpty()) interval = Long.parseLong(intervalConfig);
@@ -184,10 +183,7 @@ public class StepsService extends Service implements SensorEventListener {
         // path is refused: starting a foreground service from a background alarm throws
         // ForegroundServiceStartNotAllowedException. Restarting it directly from onTaskRemoved is
         // allowed, because the app still holds a valid start reason at this exact moment.
-        Database db = Database.getInstance(context);
-        String statusService = db.getConfig("status_service");
-
-        if (statusService != null && !"stop".equals(statusService)) {
+        if (ServiceControl.shouldRun(context)) {
             try {
                 Intent restart = new Intent(this, StepsService.class);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -201,8 +197,6 @@ public class StepsService extends Service implements SensorEventListener {
                 Log.w(TAG, "StepsService [onTaskRemoved] - restart refused: " + e);
             }
         }
-
-		db.close();
     }
 
     @Override
@@ -355,13 +349,11 @@ public class StepsService extends Service implements SensorEventListener {
 				}
 				
 			} catch (Exception e) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-						e instanceof ForegroundServiceStartNotAllowedException
-				) {
-					// App not in a valid state to start foreground service
-					// (e.g started from bg)
-				}
-				// ...
+				// ForegroundServiceStartNotAllowedException (started from background) or, on Android
+				// 14+, SecurityException for the `health` type without ACTIVITY_RECOGNITION. The
+				// service then runs as a plain background service that counts nothing until the system
+				// kills it — so say it loudly. ServiceControl gates the starts to avoid getting here.
+				Log.e(TAG, "StepsService [showNotification] - startForeground refused, the service is not in the foreground", e);
 			}
 				
 			/*
