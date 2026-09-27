@@ -132,6 +132,11 @@ Deux objectifs cohabitent dans la notification du service :
   `baseSteps` (valeur serveur lue à `baseAt`) plus les tranches de 5 min enregistrées depuis ;
   sans `baseSteps`, les pas locaux entre `start` et `end`.
 
+Canal `pedometer_steps` (« Podomètre »), en importance **basse** : silencieux, mais la notification
+reste dépliée dans le volet (titre, texte et barre). L'ancien canal `Notification`, en importance
+minimale, n'affichait que le titre et la barre ; il est supprimé à la mise à jour, car Android ne
+permet pas de remonter l'importance d'un canal existant.
+
 `getGoals()` relit les deux. Chaque modification redessine la notification immédiatement. Un format
 de texte invalide ne fait plus tomber le service : le texte par défaut est affiché à la place.
 
