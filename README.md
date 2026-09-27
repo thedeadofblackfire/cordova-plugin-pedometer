@@ -122,8 +122,10 @@ Deux objectifs cohabitent dans la notification du service :
 
 - **Objectif du jour** (`setGoal`) : pas du jour **local** du téléphone, affichés dans la barre de
   progression. Pas de remise à zéro à faire : les pas sont regroupés par jour, le compte repart de 0
-  à minuit. Le `MidnightReceiver` (alarme inexacte, sans `SCHEDULE_EXACT_ALARM`) et les changements
-  de date, d'heure ou de fuseau redessinent la notification tout de suite. `0` (ou l'ancienne valeur
+  à minuit. La notification est redessinée par `DATE_CHANGED` (envoyé par le système à minuit), par
+  le `MidnightReceiver` (alarme inexacte `setWindow` de 10 min, sans `SCHEDULE_EXACT_ALARM`), par les
+  changements d'heure ou de fuseau, et à l'allumage de l'écran si le jour a changé entre-temps (Doze
+  peut retarder l'alarme quand le téléphone dort). `0` (ou l'ancienne valeur
   `1`) = aucun objectif, aucune barre ; il n'y a plus de valeur par défaut à 1000 pas.
 - **Objectif du défi** (`setChallengeGoal` / `clearChallengeGoal`) : deuxième ligne de la
   notification dépliée (`challengeFormat`), tant que `start <= now <= end`. Le cumul vaut

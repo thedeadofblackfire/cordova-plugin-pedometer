@@ -85,11 +85,20 @@ public class StepsService extends Service implements SensorEventListener {
     private final BroadcastReceiver timeChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context ctx, Intent intent) {
+            // screen on: only when the notification still shows a previous day (midnight alarm
+            // deferred by Doze) — the user is about to look at it
+            if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
+                if (lastDrawnDay != Util.getToday()) refreshNotification(ctx);
+                return;
+            }
             Log.i(TAG, "StepsService [timeChangeReceiver] - " + intent.getAction());
             refreshNotification(ctx);
             MidnightReceiver.schedule(ctx);
         }
     };
+
+    /** local day (Util.getToday()) of the last notification drawn */
+    private static long lastDrawnDay = 0;
     private boolean timeChangeReceiverRegistered = false;
 
     @Override
@@ -447,7 +456,8 @@ public class StepsService extends Service implements SensorEventListener {
 		// steps of the current local day: the rows of Util.getToday(), so 0 again after midnight.
 		// No "+ steps" (raw since-boot counter): that was the offset model of the Cordova version,
 		// the period rows already hold the real count.
-		int today = db.getSteps(Util.getToday());
+		lastDrawnDay = Util.getToday();
+		int today = db.getSteps(lastDrawnDay);
 		if (today == Integer.MIN_VALUE || today < 0) today = 0;
 		if (steps == 0) steps = db.getCurrentSteps(); // use saved value if we haven't anything better
 		Goals.Challenge challenge = Goals.getActiveChallenge(context, now);
@@ -531,6 +541,7 @@ public class StepsService extends Service implements SensorEventListener {
             timeFilter.addAction(Intent.ACTION_DATE_CHANGED);
             timeFilter.addAction(Intent.ACTION_TIME_CHANGED);
             timeFilter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+            timeFilter.addAction(Intent.ACTION_SCREEN_ON);
             registerReceiver(timeChangeReceiver, timeFilter);
             timeChangeReceiverRegistered = true;
         }
