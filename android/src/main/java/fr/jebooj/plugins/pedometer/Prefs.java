@@ -29,6 +29,8 @@ public final class Prefs {
     /** text without a daily goal; falls back to {@link #PEDOMETER_STEPS_TO_GO_FORMAT_TEXT} (legacy) */
     public static final String PEDOMETER_STEPS_TODAY_FORMAT_TEXT = "pedometerStepsTodayFormatText";
     public static final String PEDOMETER_CHALLENGE_FORMAT_TEXT = "pedometerChallengeFormatText";
+    /** "low" (default) or "min" (former collapsed notification), see API26Wrapper */
+    public static final String NOTIFICATION_IMPORTANCE = "notificationImportance";
 
     /** challenge goal, see {@link Goals} */
     public static final String CHALLENGE_ID = "challengeId";

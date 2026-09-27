@@ -38,6 +38,7 @@ public class PedometerPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "clearChallengeGoal", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getGoals", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setNotificationStrings", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setNotificationImportance", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getSteps", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getStepsByPeriod", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getLastEntries", returnType: CAPPluginReturnPromise),
@@ -228,6 +229,10 @@ public class PedometerPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func setNotificationStrings(_ call: CAPPluginCall) {
+        call.resolve()
+    }
+
+    @objc func setNotificationImportance(_ call: CAPPluginCall) {
         call.resolve()
     }
 

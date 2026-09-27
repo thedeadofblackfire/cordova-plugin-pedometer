@@ -82,12 +82,21 @@ export interface PedometerGoals {
   challenge: (PedometerChallengeGoal & { steps: number; active: boolean }) | null;
 }
 
+/**
+ * Android importance of the service notification.
+ * `low` (default): silent, shown expanded in the shade (title, text, progress bar) with a status bar
+ * icon. `min`: the former behaviour, collapsed to one line (title and bar), no status bar icon.
+ */
+export type PedometerNotificationImportance = 'low' | 'min';
+
 export interface PedometerStartOptions {
   /** steps already counted today server-side — the legacy `offset` of `startStepperUpdates` */
   startOffset?: number;
   /** daily goal, see `setGoal`; omitted keeps the stored one */
   goal?: number;
   notification?: PedometerNotificationStrings;
+  /** omitted keeps the stored one (`low` when never set) */
+  notificationImportance?: PedometerNotificationImportance;
 }
 
 export interface StepsUpdateEvent {
@@ -204,6 +213,8 @@ export interface PedometerPlugin {
   clearChallengeGoal(): Promise<void>;
   getGoals(): Promise<PedometerGoals>;
   setNotificationStrings(options: PedometerNotificationStrings): Promise<void>;
+  /** Android: importance of the service notification, applied immediately. */
+  setNotificationImportance(options: { importance: PedometerNotificationImportance }): Promise<void>;
 
   /** Steps of one day; `date` is the epoch ms of its **local** midnight. */
   getSteps(options: { date: number }): Promise<{ steps: number }>;
