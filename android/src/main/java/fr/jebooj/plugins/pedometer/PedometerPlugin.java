@@ -247,15 +247,6 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
         JSObject notification = call.getObject("notification");
         if (notification != null) applyNotificationStrings(editor, notification);
 
-        String importance = call.getString("notificationImportance");
-        if (importance != null) {
-            if (!isValidImportance(importance)) {
-                call.reject("INVALID_IMPORTANCE: notificationImportance must be 'low' or 'min'");
-                return;
-            }
-            editor.putString(Prefs.NOTIFICATION_IMPORTANCE, importance);
-        }
-
         editor.apply();
 
         Database db = Database.getInstance(getContext());
@@ -396,26 +387,6 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
         call.resolve(result);
     }
 
-    /**
-     * Importance of the service notification: {@code "low"} (default) shows it expanded in the
-     * shade, {@code "min"} is the former one-line notification. Applied immediately.
-     */
-    @PluginMethod
-    public void setNotificationImportance(PluginCall call) {
-        String importance = call.getString("importance");
-        if (!isValidImportance(importance)) {
-            call.reject("INVALID_IMPORTANCE: importance must be 'low' or 'min'");
-            return;
-        }
-        Prefs.get(getContext()).edit().putString(Prefs.NOTIFICATION_IMPORTANCE, importance).commit();
-        StepsService.refreshNotification(getContext());
-        call.resolve();
-    }
-
-    private static boolean isValidImportance(String value) {
-        return "low".equals(value) || "min".equals(value);
-    }
-
     @PluginMethod
     public void setNotificationStrings(PluginCall call) {
         SharedPreferences.Editor editor = Prefs.get(getContext()).edit();
@@ -445,6 +416,21 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
 
         String challenge = source.optString("challengeFormat", null);
         if (challenge != null) editor.putString(Prefs.PEDOMETER_CHALLENGE_FORMAT_TEXT, challenge);
+
+        // dynamic title; "" goes back to the static isCounting title
+        String title = source.optString("titleFormat", null);
+        if (title != null) editor.putString(Prefs.PEDOMETER_TITLE_FORMAT_TEXT, title);
+
+        String titleReached = source.optString("titleGoalReachedFormat", null);
+        if (titleReached != null) editor.putString(Prefs.PEDOMETER_TITLE_GOAL_REACHED_FORMAT_TEXT, titleReached);
+
+        String titleNoGoal = source.optString("titleNoGoalFormat", null);
+        if (titleNoGoal != null) editor.putString(Prefs.PEDOMETER_TITLE_NO_GOAL_FORMAT_TEXT, titleNoGoal);
+
+        if (source.has("titleWarmupSteps")) {
+            int warmup = source.optInt("titleWarmupSteps", Prefs.DEFAULT_TITLE_WARMUP_STEPS);
+            editor.putInt(Prefs.PEDOMETER_TITLE_WARMUP_STEPS, Math.max(0, warmup));
+        }
     }
 
     // =============================================================================================

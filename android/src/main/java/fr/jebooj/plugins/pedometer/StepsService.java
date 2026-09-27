@@ -448,6 +448,36 @@ public class StepsService extends Service implements SensorEventListener {
 		}
 	}
 
+	/**
+	 * Title of the notification — the only line always visible, the text being hidden while the
+	 * notification is collapsed. Every format comes from the app ({@code setNotificationStrings}):
+	 * <ul>
+	 *   <li>warm-up — fewer than {@code titleWarmupSteps} steps today (service just started, or a new
+	 *       day): {@code isCounting}, e.g. "En route 🏆 🥇";</li>
+	 *   <li>daily goal: {@code titleFormat} ({@code %1$s} steps today, {@code %2$s} goal), and
+	 *       {@code titleGoalReachedFormat} once reached (falls back to {@code titleFormat});</li>
+	 *   <li>no daily goal: {@code titleNoGoalFormat} ({@code %s} steps today).</li>
+	 * </ul>
+	 * A format that was never set, or set to "", keeps the static {@code isCounting} title — the
+	 * Cordova behaviour.
+	 */
+	private static String buildTitle(final SharedPreferences prefs, final NumberFormat nf, final int today, final int goal) {
+		String warmup = prefs.getString(Prefs.PEDOMETER_IS_COUNTING_TEXT, "Pedometer is counting");
+		if (today < prefs.getInt(Prefs.PEDOMETER_TITLE_WARMUP_STEPS, Prefs.DEFAULT_TITLE_WARMUP_STEPS)) return warmup;
+
+		if (goal > 0) {
+			String format = prefs.getString(Prefs.PEDOMETER_TITLE_FORMAT_TEXT, "");
+			String reached = prefs.getString(Prefs.PEDOMETER_TITLE_GOAL_REACHED_FORMAT_TEXT, "");
+			if (today >= goal && !reached.isEmpty()) format = reached;
+			if (format.isEmpty()) return warmup;
+			return safeFormat(format, "%1$s / %2$s steps today", nf.format(today), nf.format(goal));
+		}
+
+		String format = prefs.getString(Prefs.PEDOMETER_TITLE_NO_GOAL_FORMAT_TEXT, "");
+		if (format.isEmpty()) return warmup;
+		return safeFormat(format, "%s steps today", nf.format(today));
+	}
+
 	public static Notification getNotification(final Context context) {
 		SharedPreferences prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
 		long now = System.currentTimeMillis();
@@ -518,7 +548,7 @@ public class StepsService extends Service implements SensorEventListener {
 		}
 
 		notificationBuilder.setPriority(Notification.PRIORITY_DEFAULT).setShowWhen(false)
-		  .setContentTitle(prefs.getString(Prefs.PEDOMETER_IS_COUNTING_TEXT, "Pedometer is counting"))
+		  .setContentTitle(buildTitle(prefs, nf, today, goal))
 		  .setContentIntent(contentIntent).setSmallIcon(notificationIconId)
 		  .setOngoing(true);
 		return notificationBuilder.build();

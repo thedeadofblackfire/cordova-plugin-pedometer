@@ -7,7 +7,6 @@ import type {
   PedometerConfig,
   PedometerEntriesQuery,
   PedometerGoals,
-  PedometerNotificationImportance,
   PedometerNotificationStrings,
   PedometerPermissionStatus,
   PedometerPlugin,
@@ -76,10 +75,6 @@ export class PedometerWeb extends WebPlugin implements PedometerPlugin {
   }
 
   async setNotificationStrings(_options: PedometerNotificationStrings): Promise<void> {
-    // no-op
-  }
-
-  async setNotificationImportance(_options: { importance: PedometerNotificationImportance }): Promise<void> {
     // no-op
   }
 

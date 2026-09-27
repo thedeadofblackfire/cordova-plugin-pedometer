@@ -32,8 +32,24 @@ export interface PedometerConfig {
 }
 
 export interface PedometerNotificationStrings {
-  /** title of the persistent notification, e.g. "Jebooj is counting your steps" */
+  /**
+   * Title while the sensor warms up (fewer than `titleWarmupSteps` steps today: service just
+   * started, or a new day), e.g. "En route 🏆 🥇". Also the static title when no dynamic title
+   * format is set — the Cordova behaviour.
+   */
   isCounting?: string;
+  /**
+   * Dynamic title with a daily goal — the only line visible while the notification is collapsed:
+   * `%1$s` steps today, `%2$s` daily goal, e.g. "%1$s / %2$s pas aujourd'hui". `""` goes back to
+   * the static `isCounting` title.
+   */
+  titleFormat?: string;
+  /** title once the daily goal is reached, same placeholders; falls back to `titleFormat` */
+  titleGoalReachedFormat?: string;
+  /** title without a daily goal: `%s` steps today, e.g. "%s pas aujourd'hui"; `""` = static title */
+  titleNoGoalFormat?: string;
+  /** steps today below which the title stays `isCounting` (warm-up); default 10 */
+  titleWarmupSteps?: number;
   /**
    * With a daily goal: `%s` is replaced by the remaining step count.
    * Also the text without a goal when `stepsTodayFormat` is not set (legacy behaviour).
@@ -82,21 +98,12 @@ export interface PedometerGoals {
   challenge: (PedometerChallengeGoal & { steps: number; active: boolean }) | null;
 }
 
-/**
- * Android importance of the service notification.
- * `low` (default): silent, shown expanded in the shade (title, text, progress bar) with a status bar
- * icon. `min`: the former behaviour, collapsed to one line (title and bar), no status bar icon.
- */
-export type PedometerNotificationImportance = 'low' | 'min';
-
 export interface PedometerStartOptions {
   /** steps already counted today server-side — the legacy `offset` of `startStepperUpdates` */
   startOffset?: number;
   /** daily goal, see `setGoal`; omitted keeps the stored one */
   goal?: number;
   notification?: PedometerNotificationStrings;
-  /** omitted keeps the stored one (`low` when never set) */
-  notificationImportance?: PedometerNotificationImportance;
 }
 
 export interface StepsUpdateEvent {
@@ -213,8 +220,6 @@ export interface PedometerPlugin {
   clearChallengeGoal(): Promise<void>;
   getGoals(): Promise<PedometerGoals>;
   setNotificationStrings(options: PedometerNotificationStrings): Promise<void>;
-  /** Android: importance of the service notification, applied immediately. */
-  setNotificationImportance(options: { importance: PedometerNotificationImportance }): Promise<void>;
 
   /** Steps of one day; `date` is the epoch ms of its **local** midnight. */
   getSteps(options: { date: number }): Promise<{ steps: number }>;

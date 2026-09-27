@@ -29,8 +29,17 @@ public final class Prefs {
     /** text without a daily goal; falls back to {@link #PEDOMETER_STEPS_TO_GO_FORMAT_TEXT} (legacy) */
     public static final String PEDOMETER_STEPS_TODAY_FORMAT_TEXT = "pedometerStepsTodayFormatText";
     public static final String PEDOMETER_CHALLENGE_FORMAT_TEXT = "pedometerChallengeFormatText";
-    /** "low" (default) or "min" (former collapsed notification), see API26Wrapper */
-    public static final String NOTIFICATION_IMPORTANCE = "notificationImportance";
+
+    /**
+     * Dynamic title, see {@code StepsService.buildTitle}. Not set (or empty): the static
+     * {@link #PEDOMETER_IS_COUNTING_TEXT} title of the Cordova version.
+     */
+    public static final String PEDOMETER_TITLE_FORMAT_TEXT = "pedometerTitleFormatText";
+    public static final String PEDOMETER_TITLE_GOAL_REACHED_FORMAT_TEXT = "pedometerTitleGoalReachedFormatText";
+    public static final String PEDOMETER_TITLE_NO_GOAL_FORMAT_TEXT = "pedometerTitleNoGoalFormatText";
+    /** below this many steps today, the title stays {@link #PEDOMETER_IS_COUNTING_TEXT} (warm-up) */
+    public static final String PEDOMETER_TITLE_WARMUP_STEPS = "pedometerTitleWarmupSteps";
+    public static final int DEFAULT_TITLE_WARMUP_STEPS = 10;
 
     /** challenge goal, see {@link Goals} */
     public static final String CHALLENGE_ID = "challengeId";
