@@ -42,8 +42,22 @@ await Pedometer.configure({
 // 2. permissions puis démarrage du service
 const permissions = await Pedometer.requestPermissions();
 if (permissions.activity === 'granted') {
-  await Pedometer.start({ goal: 10000 });
+  await Pedometer.start();
 }
+
+// objectif du jour (barre de la notification, remis à 0 à minuit local) ; 0 = aucun
+await Pedometer.setGoal({ goal: 2500 });
+
+// objectif d'un défi sur plusieurs jours (2e ligne de la notification dépliée)
+await Pedometer.setChallengeGoal({
+  id: '42',
+  name: 'Défi Printemps',
+  goal: 50000,
+  start: Date.parse('2026-09-01T00:00:00'),
+  end: Date.parse('2026-09-30T23:59:59'),
+  baseSteps: 12000, // cumul connu du serveur, les pas locaux s'y ajoutent
+  baseAt: Date.now(),
+});
 
 // 3. mises à jour live (uniquement au premier plan ; le service compte quand même sans elles)
 await Pedometer.addListener('stepsUpdate', ({ stepsToday }) => {
@@ -101,6 +115,23 @@ La colonne `synced` de la table `steps`, telle que la manipulent `queueLinesToSy
 | Support | `android.support.*` | AndroidX |
 | Lecture | `getNoSyncResults()` | `getEntries({start, end, synced})` |
 | Service exporté | `exported="true"` | `exported="false"` |
+
+## Objectifs de la notification (Android)
+
+Deux objectifs cohabitent dans la notification du service :
+
+- **Objectif du jour** (`setGoal`) : pas du jour **local** du téléphone, affichés dans la barre de
+  progression. Pas de remise à zéro à faire : les pas sont regroupés par jour, le compte repart de 0
+  à minuit. Le `MidnightReceiver` (alarme inexacte, sans `SCHEDULE_EXACT_ALARM`) et les changements
+  de date, d'heure ou de fuseau redessinent la notification tout de suite. `0` (ou l'ancienne valeur
+  `1`) = aucun objectif, aucune barre ; il n'y a plus de valeur par défaut à 1000 pas.
+- **Objectif du défi** (`setChallengeGoal` / `clearChallengeGoal`) : deuxième ligne de la
+  notification dépliée (`challengeFormat`), tant que `start <= now <= end`. Le cumul vaut
+  `baseSteps` (valeur serveur lue à `baseAt`) plus les tranches de 5 min enregistrées depuis ;
+  sans `baseSteps`, les pas locaux entre `start` et `end`.
+
+`getGoals()` relit les deux. Chaque modification redessine la notification immédiatement. Un format
+de texte invalide ne fait plus tomber le service : le texte par défaut est affiché à la place.
 
 Les clés de préférences et le nom de la base sont **inchangés** : une app qui migre depuis la version
 Cordova conserve son objectif, ses compteurs et ses textes de notification.

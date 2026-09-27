@@ -34,6 +34,9 @@ public class PedometerPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getStatus", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setGoal", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setChallengeGoal", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "clearChallengeGoal", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getGoals", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setNotificationStrings", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getSteps", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getStepsByPeriod", returnType: CAPPluginReturnPromise),
@@ -210,6 +213,18 @@ public class PedometerPlugin: CAPPlugin, CAPBridgedPlugin {
     /// No persistent notification on iOS, so no goal or strings to store for one.
     @objc func setGoal(_ call: CAPPluginCall) {
         call.resolve()
+    }
+
+    @objc func setChallengeGoal(_ call: CAPPluginCall) {
+        call.resolve()
+    }
+
+    @objc func clearChallengeGoal(_ call: CAPPluginCall) {
+        call.resolve()
+    }
+
+    @objc func getGoals(_ call: CAPPluginCall) {
+        call.resolve(["dailyGoal": 0, "stepsToday": 0, "challenge": NSNull()])
     }
 
     @objc func setNotificationStrings(_ call: CAPPluginCall) {

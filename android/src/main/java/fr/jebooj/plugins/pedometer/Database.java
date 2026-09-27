@@ -518,6 +518,20 @@ public class Database extends SQLiteOpenHelper {
     }
 
     /**
+     * Steps of the 5-minute periods starting between 'from' and 'to' (epoch ms, inclusive) — unlike
+     * {@link #getSteps(long, long)}, which works on whole days. Used for the challenge count.
+     */
+    public int getStepsByPeriodTime(final long from, final long to) {
+        Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "SUM(" + KEY_STEP_STEPS + ")" },
+                KEY_STEP_DATE + " > 0 AND " + KEY_STEP_PERIODTIME + " >= ? AND " + KEY_STEP_PERIODTIME + " <= ?",
+                new String[] { String.valueOf(from), String.valueOf(to) }, null, null, null);
+        int re = 0;
+        if (c.moveToFirst()) re = c.getInt(0);
+        c.close();
+        return re;
+    }
+
+    /**
      * Removes all entries with negative values.
      * <p/>
      * Only call this directly after boot, otherwise it might remove the current day

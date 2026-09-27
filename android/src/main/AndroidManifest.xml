@@ -58,6 +58,11 @@
             </intent-filter>
         </receiver>
 
+        <!-- redraws the notification after local midnight (daily goal back to 0); inexact alarm -->
+        <receiver
+            android:name="fr.jebooj.plugins.pedometer.MidnightReceiver"
+            android:exported="false" />
+
         <!-- restarts the service after the app is updated -->
         <receiver
             android:name="fr.jebooj.plugins.pedometer.AppUpdatedReceiver"

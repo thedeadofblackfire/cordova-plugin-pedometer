@@ -78,6 +78,20 @@ public class StepsService extends Service implements SensorEventListener {
     /** onStartCommand runs on every start request: register the shutdown receiver only once. */
     private boolean shutdownReceiverRegistered = false;
 
+    /**
+     * Date, clock or timezone changed: "today" moved, so redraw the daily goal now and re-arm the
+     * midnight alarm for the new local midnight.
+     */
+    private final BroadcastReceiver timeChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context ctx, Intent intent) {
+            Log.i(TAG, "StepsService [timeChangeReceiver] - " + intent.getAction());
+            refreshNotification(ctx);
+            MidnightReceiver.schedule(ctx);
+        }
+    };
+    private boolean timeChangeReceiverRegistered = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -109,7 +123,9 @@ public class StepsService extends Service implements SensorEventListener {
 
         reRegisterSensor();
         registerBroadcastReceiver();
-        
+        // the daily goal restarts from 0 at local midnight: redraw it then, even without a step
+        MidnightReceiver.schedule(context);
+
         if (!updateIfNecessary()) { 
 			showNotification(); 
 		}
@@ -156,6 +172,8 @@ public class StepsService extends Service implements SensorEventListener {
         try {
             if (shutdownReceiverRegistered) unregisterReceiver(shutdownReceiver);
             shutdownReceiverRegistered = false;
+            if (timeChangeReceiverRegistered) unregisterReceiver(timeChangeReceiver);
+            timeChangeReceiverRegistered = false;
 
             SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
             sm.unregisterListener(this);
@@ -393,40 +411,83 @@ public class StepsService extends Service implements SensorEventListener {
 		return drawableId;
 	}
   
+	/**
+	 * Redraw the persistent notification now — after a goal or text change, at midnight, after a
+	 * clock change — instead of waiting for the next sensor event. Same id as the foreground
+	 * notification, so it replaces it in place.
+	 */
+	public static void refreshNotification(final Context context) {
+		if (!ServiceControl.shouldRun(context)) return;
+		try {
+			NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+			if (nm != null) nm.notify(NOTIFICATION_ID, getNotification(context));
+		} catch (Exception e) {
+			Log.w(TAG, "StepsService [refreshNotification] - " + e);
+		}
+	}
+
+	/**
+	 * The format strings come from the app: a stray '%' used to throw and kill the service. Fall back
+	 * to the built-in text instead.
+	 */
+	private static String safeFormat(final String format, final String fallback, final Object... args) {
+		try {
+			return String.format(format, args);
+		} catch (Exception e) {
+			Log.w(TAG, "StepsService [getNotification] - invalid format \"" + format + "\": " + e);
+			return String.format(fallback, args);
+		}
+	}
+
 	public static Notification getNotification(final Context context) {
 		SharedPreferences prefs = context.getSharedPreferences("pedometer", Context.MODE_PRIVATE);
+		long now = System.currentTimeMillis();
+
 		Database db = Database.getInstance(context);
-		int today_offset = db.getSteps(Util.getToday());
+		// steps of the current local day: the rows of Util.getToday(), so 0 again after midnight.
+		// No "+ steps" (raw since-boot counter): that was the offset model of the Cordova version,
+		// the period rows already hold the real count.
+		int today = db.getSteps(Util.getToday());
+		if (today == Integer.MIN_VALUE || today < 0) today = 0;
 		if (steps == 0) steps = db.getCurrentSteps(); // use saved value if we haven't anything better
+		Goals.Challenge challenge = Goals.getActiveChallenge(context, now);
+		int challengeSteps = challenge != null ? Goals.getChallengeSteps(db, challenge) : 0;
 		db.close();
-		
-		int goal = prefs.getInt(Prefs.GOAL_PREF_INT, Prefs.DEFAULT_GOAL);
-		
+
+		int goal = Goals.getDailyGoal(context);
+		NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+
 		Notification.Builder notificationBuilder =
 		  Build.VERSION.SDK_INT >= 26 ? API26Wrapper.getNotificationBuilder(context) :
 			new Notification.Builder(context);
 
-		if (steps > 0) {
-            //if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
-            // if goal = 1, we don't show progress and replace "653 steps to go" by "347 steps today"
-            if (goal <= 1) {
-                if (today_offset == Integer.MIN_VALUE) today_offset = 0;
-                notificationBuilder.setContentText(String.format(prefs.getString(Prefs.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps today"), NumberFormat.getInstance(Locale.getDefault()).format((today_offset))));
-                //notificationBuilder.setContentText(String.format(prefs.getString(Prefs.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps today"), NumberFormat.getInstance(Locale.getDefault()).format((today_offset + steps))));                
-            } else {
-		        if (today_offset == Integer.MIN_VALUE) today_offset = -steps;
-		        notificationBuilder.setProgress(goal, today_offset + steps, false).setContentText(
-			today_offset + steps >= goal ?
-			  String.format(prefs.getString(Prefs.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, "Goal reached! %s steps and counting"),
-				NumberFormat.getInstance(Locale.getDefault())
-				  .format((today_offset + steps))) :
-			  String.format(prefs.getString(Prefs.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps to go"),
-				NumberFormat.getInstance(Locale.getDefault())
-				  .format((goal - today_offset - steps))));
-            }
-		} else { 
-            // still no step value?
-		    notificationBuilder.setContentText(prefs.getString(Prefs.PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT, "Your progress will be shown here soon"));
+		String text;
+		if (steps > 0 || today > 0) {
+			if (goal <= 0) {
+				// no daily goal: no progress bar, "347 steps today"
+				String format = prefs.getString(Prefs.PEDOMETER_STEPS_TODAY_FORMAT_TEXT,
+					prefs.getString(Prefs.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps today"));
+				text = safeFormat(format, "%s steps today", nf.format(today));
+			} else {
+				notificationBuilder.setProgress(goal, Math.min(today, goal), false);
+				text = today >= goal
+					? safeFormat(prefs.getString(Prefs.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, "Goal reached! %s steps and counting"),
+						"Goal reached! %s steps and counting", nf.format(today))
+					: safeFormat(prefs.getString(Prefs.PEDOMETER_STEPS_TO_GO_FORMAT_TEXT, "%s steps to go"),
+						"%s steps to go", nf.format(goal - today));
+			}
+		} else {
+			// still no step value?
+			text = prefs.getString(Prefs.PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT, "Your progress will be shown here soon");
+		}
+		notificationBuilder.setContentText(text);
+
+		// the challenge is a second line, visible when the notification is expanded
+		if (challenge != null) {
+			String name = challenge.name == null || challenge.name.isEmpty() ? "Challenge" : challenge.name;
+			String line = safeFormat(prefs.getString(Prefs.PEDOMETER_CHALLENGE_FORMAT_TEXT, "%1$s: %2$s / %3$s steps"),
+				"%1$s: %2$s / %3$s steps", name, nf.format(challengeSteps), nf.format(challenge.goal));
+			notificationBuilder.setStyle(new Notification.BigTextStyle().bigText(text + "\n" + line));
 		}
 
 		PackageManager packageManager = context.getPackageManager();
@@ -457,11 +518,22 @@ public class StepsService extends Service implements SensorEventListener {
         // if (BuildConfig.DEBUG) Logger.log("register broadcastreceiver");
         Log.i(TAG, "StepsService [registerBroadcastReceiver] - register broadcastreceiver");
         // registered twice, ShutdownReceiver would run twice and add the pending steps twice
-        if (shutdownReceiverRegistered) return;
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_SHUTDOWN);
-        registerReceiver(shutdownReceiver, filter);
-        shutdownReceiverRegistered = true;
+        if (!shutdownReceiverRegistered) {
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(Intent.ACTION_SHUTDOWN);
+            registerReceiver(shutdownReceiver, filter);
+            shutdownReceiverRegistered = true;
+        }
+
+        // system broadcasts: no RECEIVER_EXPORTED flag needed on Android 14
+        if (!timeChangeReceiverRegistered) {
+            IntentFilter timeFilter = new IntentFilter();
+            timeFilter.addAction(Intent.ACTION_DATE_CHANGED);
+            timeFilter.addAction(Intent.ACTION_TIME_CHANGED);
+            timeFilter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+            registerReceiver(timeChangeReceiver, timeFilter);
+            timeChangeReceiverRegistered = true;
+        }
     }
 
     private void reRegisterSensor() {

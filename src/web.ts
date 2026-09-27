@@ -2,9 +2,11 @@ import { WebPlugin } from '@capacitor/core';
 
 import type {
   PedometerBatteryStatus,
+  PedometerChallengeGoal,
   PedometerDatabaseExport,
   PedometerConfig,
   PedometerEntriesQuery,
+  PedometerGoals,
   PedometerNotificationStrings,
   PedometerPermissionStatus,
   PedometerPlugin,
@@ -58,6 +60,18 @@ export class PedometerWeb extends WebPlugin implements PedometerPlugin {
 
   async setGoal(_options: { goal: number }): Promise<void> {
     // no-op
+  }
+
+  async setChallengeGoal(_options: PedometerChallengeGoal): Promise<void> {
+    // no-op
+  }
+
+  async clearChallengeGoal(): Promise<void> {
+    // no-op
+  }
+
+  async getGoals(): Promise<PedometerGoals> {
+    return { dailyGoal: 0, stepsToday: 0, challenge: null };
   }
 
   async setNotificationStrings(_options: PedometerNotificationStrings): Promise<void> {

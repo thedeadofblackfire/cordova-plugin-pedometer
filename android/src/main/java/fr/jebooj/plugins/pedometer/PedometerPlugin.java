@@ -240,8 +240,9 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
         Integer startOffset = call.getInt("startOffset");
         if (startOffset != null) editor.putInt(Prefs.START_OFFSET, startOffset);
 
+        // daily goal; 0 (or the legacy 1) = no goal. Omitted: the stored goal is kept
         Integer requestedGoal = call.getInt("goal");
-        if (requestedGoal != null && requestedGoal > 0) editor.putInt(Prefs.GOAL_PREF_INT, requestedGoal);
+        if (requestedGoal != null && requestedGoal >= 0) editor.putInt(Prefs.GOAL_PREF_INT, requestedGoal);
 
         JSObject notification = call.getObject("notification");
         if (notification != null) applyNotificationStrings(editor, notification);
@@ -288,6 +289,7 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
 
         getContext().stopService(new Intent(getContext(), StepsService.class));
         SyncWorker.cancel(getContext());
+        MidnightReceiver.cancel(getContext());
 
         call.resolve();
     }
@@ -305,24 +307,92 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
     // Settings
     // =============================================================================================
 
+    /**
+     * Daily goal: steps of the current local day, the progress bar of the notification. It starts
+     * again from 0 at local midnight on its own. 0 (or the legacy 1) removes it.
+     */
     @PluginMethod
     public void setGoal(PluginCall call) {
         Integer value = call.getInt("goal");
-        if (value == null || value <= 0) {
-            call.reject("INVALID_GOAL: goal must be a positive number");
+        if (value == null || value < 0) {
+            call.reject("INVALID_GOAL: goal must be 0 (no goal) or a positive number");
             return;
         }
 
         goal = value;
-        Prefs.get(getContext()).edit().putInt(Prefs.GOAL_PREF_INT, value).apply();
+        Prefs.get(getContext()).edit().putInt(Prefs.GOAL_PREF_INT, value).commit();
+        StepsService.refreshNotification(getContext());
         call.resolve();
+    }
+
+    /**
+     * Multi-day challenge goal, shown as a second line of the notification while it runs. The count
+     * is {@code baseSteps} (server total read at {@code baseAt}) plus the local steps since; call it
+     * again whenever the app reads a fresher server total.
+     */
+    @PluginMethod
+    public void setChallengeGoal(PluginCall call) {
+        Integer challengeGoal = call.getInt("goal");
+        Long start = call.getLong("start");
+        Long end = call.getLong("end");
+        if (challengeGoal == null || challengeGoal <= 0 || start == null || end == null) {
+            call.reject("INVALID_CHALLENGE: goal (> 0), start and end are required");
+            return;
+        }
+
+        Goals.Challenge c = new Goals.Challenge();
+        c.id = call.getString("id", "");
+        c.name = call.getString("name", "");
+        c.goal = challengeGoal;
+        c.start = start;
+        c.end = end;
+        Integer baseSteps = call.getInt("baseSteps");
+        if (baseSteps != null && baseSteps >= 0) {
+            c.baseSteps = baseSteps;
+            Long baseAt = call.getLong("baseAt");
+            c.baseAt = baseAt != null ? baseAt : System.currentTimeMillis();
+        }
+
+        Goals.setChallenge(getContext(), c);
+        StepsService.refreshNotification(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void clearChallengeGoal(PluginCall call) {
+        Goals.clearChallenge(getContext());
+        StepsService.refreshNotification(getContext());
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getGoals(PluginCall call) {
+        long now = System.currentTimeMillis();
+        Goals.Challenge challenge = Goals.getChallenge(getContext());
+
+        Database db = Database.getInstance(getContext());
+        int stepsToday;
+        int challengeSteps = 0;
+        try {
+            stepsToday = db.getSteps(Util.getToday());
+            if (challenge != null) challengeSteps = Goals.getChallengeSteps(db, challenge);
+        } finally {
+            db.close();
+        }
+
+        JSObject result = new JSObject();
+        result.put("dailyGoal", Goals.getDailyGoal(getContext()));
+        result.put("stepsToday", stepsToday == Integer.MIN_VALUE ? 0 : Math.max(stepsToday, 0));
+        result.put("challenge", challenge != null ? challenge.toJSObject(challengeSteps, now) : JSObject.NULL);
+        call.resolve(result);
     }
 
     @PluginMethod
     public void setNotificationStrings(PluginCall call) {
         SharedPreferences.Editor editor = Prefs.get(getContext()).edit();
         applyNotificationStrings(editor, call.getData());
-        editor.apply();
+        editor.commit();
+        StepsService.refreshNotification(getContext());
         call.resolve();
     }
 
@@ -340,6 +410,12 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
 
         String goalReached = source.optString("goalReachedFormat", null);
         if (goalReached != null) editor.putString(Prefs.PEDOMETER_GOAL_REACHED_FORMAT_TEXT, goalReached);
+
+        String stepsToday = source.optString("stepsTodayFormat", null);
+        if (stepsToday != null) editor.putString(Prefs.PEDOMETER_STEPS_TODAY_FORMAT_TEXT, stepsToday);
+
+        String challenge = source.optString("challengeFormat", null);
+        if (challenge != null) editor.putString(Prefs.PEDOMETER_CHALLENGE_FORMAT_TEXT, challenge);
     }
 
     // =============================================================================================
@@ -732,7 +808,27 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
     }
 
     private void emitStepsUpdate() {
-        int stepsToday = Math.max(todayOffset + sinceBoot, 0);
+        // Same count as the notification: the rows of the current local day (read again on every
+        // event, so it follows midnight), plus the steps the service has not written yet — it
+        // batches the sensor for up to 2 minutes. The former `todayOffset + sinceBoot` mixed in
+        // the raw since-boot counter of the Cordova offset model and over-counted.
+        long now = System.currentTimeMillis();
+        Database db = Database.getInstance(getContext());
+        int challengeSteps = -1;
+        int stepsToday;
+        try {
+            stepsToday = db.getSteps(Util.getToday());
+            if (stepsToday == Integer.MIN_VALUE || stepsToday < 0) stepsToday = 0;
+            Goals.Challenge challenge = Goals.getActiveChallenge(getContext(), now);
+            if (challenge != null) challengeSteps = Goals.getChallengeSteps(db, challenge);
+        } finally {
+            db.close();
+        }
+        int lastSaved = Prefs.get(getContext()).getInt("lastSaveSteps", 0);
+        int unsaved = lastSaved > 0 ? Math.max(0, sinceBoot - lastSaved) : 0;
+        stepsToday += unsaved;
+        if (challengeSteps >= 0) challengeSteps += unsaved;
+
         int total = totalStart + stepsToday;
         // guard kept from the legacy: total_days was 0 on a fresh install and divided by zero
         int days = totalDays <= 0 ? 1 : totalDays;
@@ -741,7 +837,9 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
         event.put("stepsToday", stepsToday);
         event.put("total", total);
         event.put("average", total / days);
-        event.put("timestamp", System.currentTimeMillis());
+        event.put("timestamp", now);
+        event.put("dailyGoal", Goals.getDailyGoal(getContext()));
+        if (challengeSteps >= 0) event.put("challengeSteps", challengeSteps);
 
         notifyListeners("stepsUpdate", event);
     }

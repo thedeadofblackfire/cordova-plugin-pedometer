@@ -26,8 +26,24 @@ public final class Prefs {
     public static final String PEDOMETER_STEPS_TO_GO_FORMAT_TEXT = "pedometerStepsToGoFormatText";
     public static final String PEDOMETER_YOUR_PROGRESS_FORMAT_TEXT = "pedometerYourProgressFormatText";
     public static final String PEDOMETER_GOAL_REACHED_FORMAT_TEXT = "pedometerGoalReachedFormatText";
+    /** text without a daily goal; falls back to {@link #PEDOMETER_STEPS_TO_GO_FORMAT_TEXT} (legacy) */
+    public static final String PEDOMETER_STEPS_TODAY_FORMAT_TEXT = "pedometerStepsTodayFormatText";
+    public static final String PEDOMETER_CHALLENGE_FORMAT_TEXT = "pedometerChallengeFormatText";
 
-    public static final int DEFAULT_GOAL = 1000;
+    /** challenge goal, see {@link Goals} */
+    public static final String CHALLENGE_ID = "challengeId";
+    public static final String CHALLENGE_NAME = "challengeName";
+    public static final String CHALLENGE_GOAL = "challengeGoal";
+    public static final String CHALLENGE_START = "challengeStart";
+    public static final String CHALLENGE_END = "challengeEnd";
+    public static final String CHALLENGE_BASE_STEPS = "challengeBaseSteps";
+    public static final String CHALLENGE_BASE_AT = "challengeBaseAt";
+
+    /**
+     * No daily goal until the user sets one. The Cordova version defaulted to 1000, a target nobody
+     * chose; values {@code <= 1} mean "no goal".
+     */
+    public static final int DEFAULT_GOAL = 0;
 
     private Prefs() {
     }

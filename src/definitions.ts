@@ -34,15 +34,58 @@ export interface PedometerConfig {
 export interface PedometerNotificationStrings {
   /** title of the persistent notification, e.g. "Jebooj is counting your steps" */
   isCounting?: string;
-  /** `%s` is replaced by the remaining step count */
+  /**
+   * With a daily goal: `%s` is replaced by the remaining step count.
+   * Also the text without a goal when `stepsTodayFormat` is not set (legacy behaviour).
+   */
   stepsToGoFormat?: string;
+  /** shown as is (not formatted) until the first step value is known */
   yourProgressFormat?: string;
+  /** daily goal reached: `%s` is replaced by today's steps */
   goalReachedFormat?: string;
+  /** no daily goal: `%s` is replaced by today's steps, e.g. "%s pas aujourd'hui" */
+  stepsTodayFormat?: string;
+  /**
+   * Second line (expanded notification) while a challenge runs:
+   * `%1$s` challenge name, `%2$s` steps, `%3$s` challenge goal — e.g. "%1$s : %2$s / %3$s pas".
+   */
+  challengeFormat?: string;
+}
+
+/**
+ * Multi-day challenge goal, shown as a second line of the Android notification while
+ * `start <= now <= end`.
+ */
+export interface PedometerChallengeGoal {
+  id?: string;
+  name?: string;
+  /** steps to reach over the whole challenge */
+  goal: number;
+  /** epoch ms */
+  start: number;
+  /** epoch ms */
+  end: number;
+  /**
+   * Challenge total known by the server at `baseAt`. The notification shows it plus the steps
+   * recorded locally since. Omitted: the local steps between `start` and `end`.
+   */
+  baseSteps?: number;
+  /** epoch ms at which `baseSteps` was read; defaults to now */
+  baseAt?: number;
+}
+
+export interface PedometerGoals {
+  /** daily goal (steps of the current local day), 0 when there is none */
+  dailyGoal: number;
+  stepsToday: number;
+  /** the stored challenge, `active` false once it ended; null when none */
+  challenge: (PedometerChallengeGoal & { steps: number; active: boolean }) | null;
 }
 
 export interface PedometerStartOptions {
   /** steps already counted today server-side — the legacy `offset` of `startStepperUpdates` */
   startOffset?: number;
+  /** daily goal, see `setGoal`; omitted keeps the stored one */
   goal?: number;
   notification?: PedometerNotificationStrings;
 }
@@ -53,6 +96,10 @@ export interface StepsUpdateEvent {
   average: number;
   /** epoch ms */
   timestamp: number;
+  /** Android: daily goal, 0 when there is none */
+  dailyGoal?: number;
+  /** Android: steps of the running challenge, absent when none runs */
+  challengeSteps?: number;
 }
 
 /**
@@ -146,7 +193,16 @@ export interface PedometerPlugin {
   stop(): Promise<void>;
   getStatus(): Promise<{ status: PedometerServiceStatus }>;
 
+  /**
+   * Daily goal: steps of the current **local** day, the progress bar of the Android notification.
+   * It starts again from 0 at local midnight on its own. `0` (or the legacy `1`) removes it.
+   * The notification is redrawn immediately.
+   */
   setGoal(options: { goal: number }): Promise<void>;
+  /** Multi-day challenge goal, coexisting with the daily goal. Call again with a fresher `baseSteps`. */
+  setChallengeGoal(options: PedometerChallengeGoal): Promise<void>;
+  clearChallengeGoal(): Promise<void>;
+  getGoals(): Promise<PedometerGoals>;
   setNotificationStrings(options: PedometerNotificationStrings): Promise<void>;
 
   /** Steps of one day; `date` is the epoch ms of its **local** midnight. */
