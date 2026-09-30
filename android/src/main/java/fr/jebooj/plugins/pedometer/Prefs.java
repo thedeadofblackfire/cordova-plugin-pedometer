@@ -21,6 +21,11 @@ public final class Prefs {
     public static final String GOAL_PREF_INT = "GoalPrefInt";
     public static final String START_OFFSET = "startOffset";
     public static final String PAUSE_COUNT = "pauseCount";
+    /**
+     * Set by {@link BootReceiver}: TYPE_STEP_COUNTER restarted from 0, the next reading is counted
+     * from 0 rather than from the pre-reboot {@code lastSaveSteps}. Cleared once a reading is recorded.
+     */
+    public static final String COUNTER_RESET = "counterReset";
 
     public static final String PEDOMETER_IS_COUNTING_TEXT = "pedometerIsCountingText";
     public static final String PEDOMETER_STEPS_TO_GO_FORMAT_TEXT = "pedometerStepsToGoFormatText";

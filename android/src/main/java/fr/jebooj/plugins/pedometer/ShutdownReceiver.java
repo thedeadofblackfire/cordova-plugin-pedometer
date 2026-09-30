@@ -7,7 +7,6 @@ import android.os.Build;
 
 import android.util.Log;
 //import de.j4velin.pedometer.util.Logger;
-import fr.jebooj.plugins.pedometer.util.Util;
 import fr.jebooj.plugins.pedometer.util.API26Wrapper;
 
 public class ShutdownReceiver extends BroadcastReceiver {
@@ -30,18 +29,12 @@ public class ShutdownReceiver extends BroadcastReceiver {
         // setting on the next boot and displays an error message if it's not
         // set to true        
         context.getSharedPreferences("pedometer", Context.MODE_PRIVATE).edit()
-                .putBoolean("correctShutdown", true).commit();                
-                
-        Database db = Database.getInstance(context);
-        // if it's already a new day, add the temp. steps to the last one
-        if (db.getSteps(Util.getToday()) == Integer.MIN_VALUE) {
-            int steps = db.getCurrentSteps();
-            db.insertNewDay(Util.getToday(), steps);
-        } else {
-            db.addToLastEntry(db.getCurrentSteps());
-        }
-        // current steps will be reset on boot @see BootReceiver
-        db.close();        
+                .putBoolean("correctShutdown", true).commit();
+
+        // Nothing to write: the Cordova version added the since-boot counter to the last day here,
+        // which with the 5-minute periods added it to every period of the day (10.5 M steps after
+        // one reboot). The periods already hold their deltas; current steps are reset on boot, see
+        // BootReceiver.
     }
 
 }

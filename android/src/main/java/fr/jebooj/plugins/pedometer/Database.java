@@ -282,58 +282,11 @@ public class Database extends SQLiteOpenHelper {
                 limit);
     }
 
-    /**
-     * Inserts a new entry in the database, if there is no entry for the given date
-     * yet. Steps should be the current number of steps and it's negative value will
-     * be used as offset for the new date. Also adds 'steps' steps to the previous
-     * day, if there is an entry for that date.
-     * <p/>
-     * This method does nothing if there is already an entry for 'date' - use
-     * {@link #updateSteps} in this case.
-     * <p/>
-     * To restore data from a backup, use {@link #insertDayFromBackup}
-     *
-     * @param date  the date in ms since 1970
-     * @param steps the current step value to be used as negative offset for the new
-     *              day; must be >= 0
-     */
-    public void insertNewDay(long date, int steps) {
-        getWritableDatabase().beginTransaction();
-        try {
-            Cursor c = getReadableDatabase().query(TABLE_STEPS, new String[] { "date" }, "date = ?",
-                    new String[] { String.valueOf(date) }, null, null, null);
-            if (c.getCount() == 0 && steps >= 0) {
-
-                // add 'steps' to yesterdays count
-                addToLastEntry(steps);
-
-                // add today
-                ContentValues values = new ContentValues();
-                values.put("date", date);
-                // use the negative steps as offset
-                values.put("steps", -steps);
-                getWritableDatabase().insert(TABLE_STEPS, null, values);
-            }
-            c.close();
-            if (Util.isDebug()) {
-                Logger.log("insertDay " + date + " / " + steps);
-                logState();
-            }
-            getWritableDatabase().setTransactionSuccessful();
-        } finally {
-            getWritableDatabase().endTransaction();
-        }
-    }
-
-    /**
-     * Adds the given number of steps to the last entry in the database
-     *
-     * @param steps the number of steps to add
-     */
-    public void addToLastEntry(int steps) {
-        getWritableDatabase().execSQL("UPDATE " + TABLE_STEPS + " SET steps = steps + " + steps
-                + " WHERE date = (SELECT MAX(date) FROM " + TABLE_STEPS + ")");
-    }
+    // insertNewDay() and addToLastEntry() are gone: they belonged to the Cordova "one row per day,
+    // negative offset" model. Every row of a day now shares the same `date` (its local midnight), so
+    // addToLastEntry's `WHERE date = MAX(date)` added the pre-reboot counter to EVERY 5-minute
+    // period of the day — 45 periods x 234,775 = 10.5 M steps after one reboot (Pixel 9a,
+    // 2026-09-30). The periods record deltas as they come, there is nothing to recover on shutdown.
 
     /**
      * Inserts a new entry in the database, overwriting any existing entry for the
@@ -666,7 +619,18 @@ public class Database extends SQLiteOpenHelper {
 
         // last save period time
         lastSaveSteps = prefs.getInt("lastSaveSteps", 0); // same as pauseCount ?
-        if (lastSaveSteps == 0) {
+        // TYPE_STEP_COUNTER restarts from 0 on reboot. The reference is then the value before the
+        // reboot, far above the new readings: every step after boot was dropped (steps_diff < 0)
+        // until the counter caught up again. Count from 0 instead — all of them were taken after the
+        // boot. The flag set by BootReceiver covers a short uptime, where the new reading may already
+        // exceed the old reference.
+        boolean counterReset = prefs.getBoolean(Prefs.COUNTER_RESET, false)
+                || (lastSaveSteps > 0 && steps < lastSaveSteps);
+        if (counterReset) {
+            Log.i(Database.class.getName(), "StepsService Database createStepsEntryValue - step counter restarted (reboot), reference "
+                    + lastSaveSteps + " -> 0");
+            lastSaveSteps = 0;
+        } else if (lastSaveSteps == 0) {
             lastSaveSteps = steps - 5; // first time we decrease 5 steps to init the process
             if (lastSaveSteps < 0)
                 lastSaveSteps = 0; // to prevent zero with boot
@@ -748,7 +712,7 @@ public class Database extends SQLiteOpenHelper {
                     if (row == 1) {
                         createSuccessful = true;
                         // the steps are recorded: move the reference, or they would be counted again
-                        prefs.edit().putInt("lastSaveSteps", steps).commit();
+                        prefs.edit().putInt("lastSaveSteps", steps).remove(Prefs.COUNTER_RESET).commit();
                         lastSaveSteps = steps;
                         lastSaveTime = System.currentTimeMillis();
                         lastPeriodTimeKey = datePeriodTime;
@@ -768,7 +732,7 @@ public class Database extends SQLiteOpenHelper {
                     }
                     //db.close();
 
-                    prefs.edit().putInt("lastSaveSteps", steps).commit();
+                    prefs.edit().putInt("lastSaveSteps", steps).remove(Prefs.COUNTER_RESET).commit();
                     lastSaveSteps = steps;
                     lastSaveTime = System.currentTimeMillis();
                     lastPeriodTimeKey = datePeriodTime;

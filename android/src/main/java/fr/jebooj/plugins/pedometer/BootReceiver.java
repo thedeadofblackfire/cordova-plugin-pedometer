@@ -24,21 +24,16 @@ public class BootReceiver extends BroadcastReceiver {
 			
 			Database db = Database.getInstance(context);
 
-			if (!prefs.getBoolean("correctShutdown", false)) {
-				//if (BuildConfig.DEBUG) Logger.log("Incorrect shutdown");
-				Log.i("cordova-plugin-pedometer", "Incorrect shutdown");
-				// can we at least recover some steps?
-				int steps = Math.max(0, db.getCurrentSteps());
-				//if (BuildConfig.DEBUG) Logger.log("Trying to recover " + steps + " steps");
-				Log.i("cordova-plugin-pedometer", "Trying to recover " + steps + " steps");
-				db.addToLastEntry(steps);
-			}
-			// last entry might still have a negative step value, so remove that
-			// row if that's the case
+			// No "recover the steps of an incorrect shutdown" any more: it added the pre-reboot
+			// counter to every period of the last day (see Database, insertNewDay() removed). The
+			// periods already hold their deltas.
+			// Cordova-era rows may still carry a negative day offset, so remove them
 			db.removeNegativeEntries();
 			db.saveCurrentSteps(0);
 			db.close();
-			prefs.edit().remove("correctShutdown").apply();
+			// the counter restarted from 0: the next reading is counted from 0, not from the
+			// pre-reboot lastSaveSteps (the steps after boot were dropped until it caught up)
+			prefs.edit().remove("correctShutdown").putBoolean(Prefs.COUNTER_RESET, true).apply();
 
 			// only when the user had started it and ACTIVITY_RECOGNITION is still granted
 			ServiceControl.startIfEnabled(context, "device booted");

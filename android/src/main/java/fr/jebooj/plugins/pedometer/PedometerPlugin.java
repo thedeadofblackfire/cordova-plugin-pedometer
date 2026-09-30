@@ -88,8 +88,6 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
     private SensorManager sensorManager;
     private Sensor sensor;
 
-    /** Steps already recorded today when the listener attached. */
-    private int todayOffset;
     private int sinceBoot;
     private int totalStart;
     private int totalDays;
@@ -767,7 +765,6 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
         Database db = Database.getInstance(getContext());
         SharedPreferences prefs = Prefs.get(getContext());
 
-        todayOffset = db.getSteps(Util.getToday());
         goal = prefs.getInt(Prefs.GOAL_PREF_INT, Prefs.DEFAULT_GOAL);
         // legacy `initSensor`: the steps counted while the service was paused must not be replayed
         sinceBoot = db.getCurrentSteps();
@@ -803,16 +800,9 @@ public class PedometerPlugin extends Plugin implements SensorEventListener {
         if (event.sensor.getType() != SENSOR_TYPE) return;
         if (event.values[0] > Integer.MAX_VALUE || event.values[0] == 0) return;
 
-        if (todayOffset == Integer.MIN_VALUE) {
-            // no row for today yet: we do not know when the reboot happened, so today starts at
-            // -stepsSinceBoot — same reasoning as the Cordova version
-            todayOffset = -(int) event.values[0];
-
-            Database db = Database.getInstance(getContext());
-            db.insertNewDay(Util.getToday(), (int) event.values[0]);
-            db.close();
-        }
-
+        // The Cordova version inserted a "-stepsSinceBoot" day row here when today had none yet,
+        // adding the counter to every period of the previous day on the way. The service records
+        // the periods; this listener only reports.
         sinceBoot = (int) event.values[0];
         emitStepsUpdate();
     }
